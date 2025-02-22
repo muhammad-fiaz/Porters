@@ -1,0 +1,18 @@
+[package]
+name = "porters"
+version = "0.0.0"
+authors = ["muhammad-fiaz <contact@muhammadfiaz.com>"]
+edition = "2021"
+
+[dependencies]
+colored = "2.0"
+dialoguer = "0.10"
+indicatif = "0.16"
+toml = "0.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0"
+serde_json = "1.0"
+
+[[bin]]
+name = "porters"
+path = "src/main.rs"
