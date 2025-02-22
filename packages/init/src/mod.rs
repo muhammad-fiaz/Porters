@@ -1,3 +1,5 @@
+mod project_metadata;
+
 use std::env;
 use colored::*;
 use dialoguer::{theme::ColorfulTheme, Input, Select};

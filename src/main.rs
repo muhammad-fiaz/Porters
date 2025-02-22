@@ -1,9 +1,3 @@
-mod dependency;
-mod build_system;
-mod build_config;
-mod project_metadata;
-mod init;
-mod build;
 
 use colored::*;
 use std::env;
@@ -25,7 +19,7 @@ fn main() {
             }
             init::create_new_project(&args[2]);
         }
-        "build" => build::run(),
+        "build" => build_system::run(),
         _ => {
             eprintln!("{}", "Unknown command".red());
             process::exit(1);
