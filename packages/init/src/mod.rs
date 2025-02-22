@@ -1,18 +1,19 @@
 mod project_metadata;
 
 use std::env;
+use std::collections::HashMap;
 use colored::*;
 use dialoguer::{theme::ColorfulTheme, Input, Select};
-use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize, ser::SerializeStruct};
 use std::fs::{self, File};
-use std::io::{self, Write};
+use std::io::{ Write};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct PortersConfig {
     build_system: BuildSystem,
     project: Project,
-    dependencies: Option<Dependencies>,
-    optional_dependencies: Option<Dependencies>,
+    dependencies: Option<HashMap<String, Dependency>>,
+    optional_dependencies: Option<HashMap<String, Dependency>>,
     build: Build,
     scripts: Option<Scripts>,
     env: Option<Env>,
@@ -24,16 +25,64 @@ struct BuildSystem {
     build_backend: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive( Deserialize, Debug)]
 struct Project {
     name: String,
-    description: String,
+    description: Option<String>,
+    project_type: String,
     version: String,
-    license: String,
-    requires_cpp: String,
-    keywords: Vec<String>,
-    maintainers: Vec<Contact>,
-    authors: Vec<Contact>,
+    license: Option<String>,
+    requires_cpp: Option<String>,
+    keywords: Option<Vec<String>>,
+    maintainers: Option<Vec<Contact>>,
+    authors: Option<Vec<Contact>>,
+    homepage: Option<String>,
+    documentation: Option<String>,
+    repository: Option<String>,
+    readme: Option<String>,
+}
+
+impl Serialize for Project {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("Project", 4)?;
+        s.serialize_field("name", &self.name)?;
+        s.serialize_field("project_type", &self.project_type)?;
+        s.serialize_field("version", &self.version)?;
+        if let Some(description) = &self.description {
+            s.serialize_field("description", description)?;
+        }
+        if let Some(license) = &self.license {
+            s.serialize_field("license", license)?;
+        }
+        if let Some(requires_cpp) = &self.requires_cpp {
+            s.serialize_field("requires_cpp", requires_cpp)?;
+        }
+        if let Some(keywords) = &self.keywords {
+            s.serialize_field("keywords", keywords)?;
+        }
+        if let Some(maintainers) = &self.maintainers {
+            s.serialize_field("maintainers", maintainers)?;
+        }
+        if let Some(authors) = &self.authors {
+            s.serialize_field("authors", authors)?;
+        }
+        if let Some(homepage) = &self.homepage {
+            s.serialize_field("homepage", homepage)?;
+        }
+        if let Some(documentation) = &self.documentation {
+            s.serialize_field("documentation", documentation)?;
+        }
+        if let Some(repository) = &self.repository {
+            s.serialize_field("repository", repository)?;
+        }
+        if let Some(readme) = &self.readme {
+            s.serialize_field("readme", readme)?;
+        }
+        s.end()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,13 +92,7 @@ struct Contact {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Dependencies {
-    dependencies: Vec<Dependency>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 struct Dependency {
-    name: String,
     version: Option<String>,
     git: Option<String>,
     rev: Option<String>,
@@ -59,12 +102,27 @@ struct Dependency {
 struct Build {
     toolchain: String,
     flags: Vec<String>,
+    targets: Vec<BuildTarget>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct BuildTarget {
+    name: String,
+    platform: Option<String>,
+    type_: String,
+    sources: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Scripts {
-    pre_build: Option<Vec<String>>,
-    post_build: Option<Vec<String>>,
+    build: String,
+    test: String,
+    run: String,
+    clean: String,
+    exec: String,
+    install: String,
+    uninstall: String,
+    package: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -87,53 +145,29 @@ pub fn run() {
         .interact_text()
         .unwrap();
 
-    let project_description: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Project description")
-        .default("A modern C++ library for high-performance computing.".into())
-        .interact_text()
+    let project_type = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select project type")
+        .default(0)
+        .item("Library")
+        .item("Executable")
+        .interact()
         .unwrap();
 
+    let project_description: Option<String> = optional_input("Project description", "A modern C++ library for high-performance computing.");
     let project_version: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Project version")
         .default("0.1.0".into())
         .interact_text()
         .unwrap();
 
-    let project_license: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Project license")
-        .default("MIT".into())
-        .interact_text()
-        .unwrap();
+    let project_license: Option<String> = optional_input("Project license", "MIT");
+    let requires_cpp: Option<String> = optional_input("Minimum C++ version", ">=17");
 
-    let requires_cpp: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Minimum C++ version")
-        .default(">=17".into())
-        .interact_text()
-        .unwrap();
+    let maintainer_name: Option<String> = optional_input("Maintainer name", "Your Name");
+    let maintainer_email: Option<String> = optional_input("Maintainer email", "your-email@example.com");
 
-    let maintainer_name: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Maintainer name")
-        .default("Your Name".into())
-        .interact_text()
-        .unwrap();
-
-    let maintainer_email: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Maintainer email")
-        .default("your-email@example.com".into())
-        .interact_text()
-        .unwrap();
-
-    let author_name: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Author name")
-        .default("Your Name".into())
-        .interact_text()
-        .unwrap();
-
-    let author_email: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Author email")
-        .default("your-email@example.com".into())
-        .interact_text()
-        .unwrap();
+    let author_name: Option<String> = optional_input("Author name", "Your Name");
+    let author_email: Option<String> = optional_input("Author email", "your-email@example.com");
 
     let build_toolchain: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Build toolchain (e.g., gcc, clang)")
@@ -147,31 +181,77 @@ pub fn run() {
         .interact_text()
         .unwrap();
 
+    let requires: Vec<String> = vec![
+        "cmake>=3.20".to_string(),
+        "ninja>=1.10".to_string(),
+        "porters".to_string(),
+    ];
+    let build_backend: String = "porters.build".to_string();
+
+    let homepage: Option<String> = optional_input("Homepage URL", "https://github.com/owner/repo");
+    let documentation: Option<String> = optional_input("Documentation URL", "https://github.com/owner/repo");
+    let repository: Option<String> = optional_input("Repository URL", "https://github.com/owner/repo");
+    let readme: Option<String> = optional_input("Readme file path", "README.md");
+
+    let targets: Vec<BuildTarget> = vec![
+        BuildTarget {
+            name: "porters".to_string(),
+            platform: None,
+            type_: "library".to_string(),
+            sources: Some(vec!["src/lib.rs".to_string()]),
+        },
+        BuildTarget {
+            name: "porters".to_string(),
+            platform: Some("linux".to_string()),
+            type_: "binary".to_string(),
+            sources: None,
+        },
+    ];
+
+    let scripts = Scripts {
+        build: "porters build".to_string(),
+        test: "porters test".to_string(),
+        run: "porters run".to_string(),
+        clean: "porters clean".to_string(),
+        exec: "porters exec".to_string(),
+        install: "porters install".to_string(),
+        uninstall: "porters uninstall".to_string(),
+        package: "porters package".to_string(),
+    };
+
     let build_system = BuildSystem {
-        requires: vec!["cmake>=3.20".to_string(), "ninja>=1.10".to_string()],
-        build_backend: "porters.build".to_string(),
+        requires,
+        build_backend,
     };
 
     let project = Project {
         name: project_name,
         description: project_description,
+        project_type: project_type_to_str(project_type),
         version: project_version,
         license: project_license,
         requires_cpp,
-        keywords: vec!["c++".to_string(), "high-performance".to_string(), "library".to_string()],
-        maintainers: vec![Contact {
-            name: maintainer_name,
-            email: maintainer_email,
-        }],
-        authors: vec![Contact {
-            name: author_name,
-            email: author_email,
-        }],
+        keywords: None,
+        maintainers: if let (Some(name), Some(email)) = (maintainer_name, maintainer_email) {
+            Some(vec![Contact { name, email }])
+        } else {
+            None
+        },
+        authors: if let (Some(name), Some(email)) = (author_name, author_email) {
+            Some(vec![Contact { name, email }])
+        } else {
+            None
+        },
+        homepage,
+        documentation,
+        repository,
+        readme,
     };
 
     let build = Build {
         toolchain: build_toolchain,
         flags: build_flags.split(',').map(|s| s.trim().to_string()).collect(),
+        targets,
     };
 
     let porters_config = PortersConfig {
@@ -180,7 +260,7 @@ pub fn run() {
         dependencies: None,
         optional_dependencies: None,
         build,
-        scripts: None,
+        scripts: Some(scripts),
         env: None,
     };
 
@@ -204,7 +284,7 @@ pub fn create_new_project(project_name: &str) {
         .interact()
         .unwrap();
 
-    let project_type_str = if project_type == 0 { "C" } else { "C++" };
+    //let project_type_str = if project_type == 0 { "C" } else { "C++" };
 
     run();
 
@@ -243,15 +323,26 @@ int main() {
     );
 }
 
-fn prompt(message: &str, default: &str) -> String {
-    print!("{} [{}]: ", message.blue(), default);
-    io::stdout().flush().unwrap();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
-    let input = input.trim();
-    if input.is_empty() {
-        default.to_string()
+fn optional_input(prompt: &str, default: &str) -> Option<String> {
+    let input: String = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt(prompt)
+        .default(default.into())
+        .allow_empty(true)
+        .interact_text()
+        .unwrap();
+
+    // Return None if input matches default or is empty
+    if input == default || input.is_empty() {
+        None
     } else {
-        input.to_string()
+        Some(input)
+    }
+}
+
+fn project_type_to_str(project_type: usize) -> String {
+    match project_type {
+        0 => "Library".to_string(),
+        1 => "Executable".to_string(),
+        _ => unreachable!(),
     }
 }
