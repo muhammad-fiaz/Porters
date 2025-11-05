@@ -1,0 +1,3850 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Porters Documentation</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Porters Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/muhammad-fiaz/Porters" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="porters-documentation"><a class="header" href="#porters-documentation">Porters Documentation</a></h1>
+<p>Welcome to the official documentation for <strong>Porters</strong> - a modern, universal package manager for C and C++ projects.</p>
+<h2 id="what-is-porters"><a class="header" href="#what-is-porters">What is Porters?</a></h2>
+<p>Porters is a comprehensive project management tool designed specifically for C/C++ developers. It simplifies the entire development workflow from project creation to building, dependency management, and publishing.</p>
+<h3 id="key-features"><a class="header" href="#key-features">Key Features</a></h3>
+<ul>
+<li>🚀 <strong>Universal Build System Support</strong> - Works with CMake, XMake, Meson, Make, and custom build systems</li>
+<li>📦 <strong>Smart Dependency Management</strong> - Supports Git, local paths, and registries</li>
+<li>🌍 <strong>Global and Local Dependencies</strong> - Install packages globally or isolate them per-project</li>
+<li>🔄 <strong>Lock File Support</strong> - Ensures reproducible builds across environments</li>
+<li>🎯 <strong>Auto-Detection</strong> - Automatically detects existing build systems and project structure</li>
+<li>🔧 <strong>Interactive Project Creation</strong> - Step-by-step project setup with customizable options</li>
+<li>📚 <strong>GitHub Integration</strong> - Seamlessly publish releases and manage versions</li>
+<li>⚡ <strong>Self-Updating</strong> - Keep Porters up-to-date with a single command</li>
+</ul>
+<h3 id="why-porters"><a class="header" href="#why-porters">Why Porters?</a></h3>
+<p>C and C++ projects have historically lacked a unified package management solution. Porters bridges this gap by providing:</p>
+<ul>
+<li><strong>Consistency</strong>: Manage all your C/C++ projects the same way</li>
+<li><strong>Simplicity</strong>: Intuitive commands that just work</li>
+<li><strong>Flexibility</strong>: Support for multiple build systems and workflows</li>
+<li><strong>Isolation</strong>: Virtual environments per project using the <code>ports/</code> folder</li>
+<li><strong>Reliability</strong>: Lock files ensure your builds are reproducible</li>
+</ul>
+<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
+<pre><code class="language-bash"># Install Porters
+cargo install porters
+
+# Create a new project
+porters create my-project
+
+# Or initialize an existing project
+cd my-existing-project
+porters init
+
+# Add dependencies
+porters add fmt --git https://github.com/fmtlib/fmt
+
+# Build your project
+porters build
+
+# Publish to GitHub
+porters publish
+</code></pre>
+<h2 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h2>
+<p>Porters uses a dual-layer dependency system:</p>
+<ul>
+<li><strong>Global Dependencies</strong> (<code>~/.porters/</code>): Centralized cache for packages used across projects</li>
+<li><strong>Local Dependencies</strong> (<code>ports/</code>): Project-specific isolated environments</li>
+</ul>
+<p>This design provides:</p>
+<ul>
+<li>Faster dependency resolution (cached globally)</li>
+<li>Complete isolation between projects</li>
+<li>Reproducible builds via lock files</li>
+</ul>
+<h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
+<ul>
+<li>📖 Browse the <a href="./getting-started.html">User Guide</a> for detailed instructions</li>
+<li>🔍 Check the <a href="./commands.html">Command Reference</a> for all available commands</li>
+<li>🐛 Visit the <a href="./troubleshooting.html">Troubleshooting</a> section for common issues</li>
+<li>💡 Read the <a href="./contributing.html">Contributing</a> guide to get involved</li>
+</ul>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>Porters is licensed under the Apache License 2.0. See the LICENSE file for details.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>This guide will help you install Porters on your system.</p>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before installing Porters, ensure you have the following:</p>
+<h3 id="required"><a class="header" href="#required">Required</a></h3>
+<ul>
+<li><strong>Rust Toolchain</strong> (for building from source or installing via Cargo)
+<ul>
+<li>Install from <a href="https://rustup.rs/">rustup.rs</a></li>
+<li>Minimum version: Rust 1.70+</li>
+</ul>
+</li>
+</ul>
+<h3 id="build-tools-at-least-one"><a class="header" href="#build-tools-at-least-one">Build Tools (At least one)</a></h3>
+<p>Porters works with various build systems. You'll need at least one installed:</p>
+<ul>
+<li>
+<p><strong>CMake</strong> (Recommended)</p>
+<ul>
+<li>Download from <a href="https://cmake.org/download/">cmake.org</a></li>
+<li>Minimum version: 3.15+</li>
+</ul>
+</li>
+<li>
+<p><strong>XMake</strong></p>
+<ul>
+<li>Install from <a href="https://xmake.io/#/guide/installation">xmake.io</a></li>
+</ul>
+</li>
+<li>
+<p><strong>Meson</strong></p>
+<ul>
+<li>Install via pip: <code>pip install meson ninja</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Make</strong></p>
+<ul>
+<li>Usually pre-installed on Linux/macOS</li>
+<li>Windows: Install via <a href="http://www.mingw.org/">MinGW</a> or <a href="https://www.cygwin.com/">Cygwin</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="cc-compiler"><a class="header" href="#cc-compiler">C/C++ Compiler</a></h3>
+<p>You'll need a C/C++ compiler:</p>
+<ul>
+<li><strong>Windows</strong>: MSVC (Visual Studio), MinGW-w64, or Clang</li>
+<li><strong>macOS</strong>: Xcode Command Line Tools (<code>xcode-select --install</code>)</li>
+<li><strong>Linux</strong>: GCC or Clang (usually pre-installed)</li>
+</ul>
+<h2 id="installing-porters"><a class="header" href="#installing-porters">Installing Porters</a></h2>
+<h3 id="via-cargo-recommended"><a class="header" href="#via-cargo-recommended">Via Cargo (Recommended)</a></h3>
+<p>The easiest way to install Porters is through Cargo:</p>
+<pre><code class="language-bash">cargo install porters
+</code></pre>
+<p>This will download, compile, and install the latest version of Porters.</p>
+<h4 id="automatic-path-setup"><a class="header" href="#automatic-path-setup">Automatic PATH Setup</a></h4>
+<p>On first run, Porters will check if the cargo bin directory is in your PATH. If not, it will show instructions to add it automatically.</p>
+<p><strong>Windows PowerShell (Run as Administrator):</strong></p>
+<pre><code class="language-powershell">[Environment]::SetEnvironmentVariable(
+  "Path",
+  [Environment]::GetEnvironmentVariable("Path", "User") + ";$env:USERPROFILE\.cargo\bin",
+  "User"
+)
+</code></pre>
+<p><strong>Linux/macOS (add to ~/.bashrc or ~/.zshrc):</strong></p>
+<pre><code class="language-bash">export PATH="$HOME/.cargo/bin:$PATH"
+</code></pre>
+<p>Then restart your terminal or run:</p>
+<pre><code class="language-bash">source ~/.bashrc  # or source ~/.zshrc
+</code></pre>
+<p><strong>Quick Setup (Current Session Only):</strong></p>
+<pre><code class="language-powershell"># Windows PowerShell
+$env:Path += ";$env:USERPROFILE\.cargo\bin"
+</code></pre>
+<pre><code class="language-bash"># Linux/macOS
+export PATH="$HOME/.cargo/bin:$PATH"
+</code></pre>
+<h3 id="using-installation-script-windows"><a class="header" href="#using-installation-script-windows">Using Installation Script (Windows)</a></h3>
+<p>For Windows users, we provide an automated installation script:</p>
+<pre><code class="language-powershell"># Download and run the installer
+cd path\to\Porters
+.\install.ps1
+</code></pre>
+<p>This script will:</p>
+<ol>
+<li>Check Rust installation</li>
+<li>Install Porters via cargo</li>
+<li>Automatically add to PATH (with your permission)</li>
+<li>Verify the installation</li>
+</ol>
+<h3 id="from-github-releases"><a class="header" href="#from-github-releases">From GitHub Releases</a></h3>
+<p>Download pre-built binaries from the <a href="https://github.com/muhammad-fiaz/Porters/releases">GitHub Releases</a> page:</p>
+<ol>
+<li>Download the appropriate binary for your platform</li>
+<li>Extract the archive</li>
+<li>Move the <code>porters</code> binary to a directory in your PATH</li>
+</ol>
+<p><strong>For Linux/macOS:</strong></p>
+<pre><code class="language-bash">sudo mv porters /usr/local/bin/
+chmod +x /usr/local/bin/porters
+</code></pre>
+<p><strong>For Windows:</strong>
+Move <code>porters.exe</code> to a directory in your PATH (e.g., <code>C:\Program Files\Porters\</code>)</p>
+<h3 id="building-from-source"><a class="header" href="#building-from-source">Building from Source</a></h3>
+<p>Clone the repository and build:</p>
+<pre><code class="language-bash"># Clone the repository
+git clone https://github.com/muhammad-fiaz/Porters.git
+cd Porters
+
+# Build in release mode
+cargo build --release
+
+# The binary will be in target/release/porters
+# Copy it to your PATH
+sudo cp target/release/porters /usr/local/bin/  # Linux/macOS
+</code></pre>
+<h2 id="verify-installation"><a class="header" href="#verify-installation">Verify Installation</a></h2>
+<p>Confirm Porters is installed correctly:</p>
+<pre><code class="language-bash">porters --version
+</code></pre>
+<p>You should see output similar to:</p>
+<pre><code>porters 0.1.0
+</code></pre>
+<h2 id="global-configuration"><a class="header" href="#global-configuration">Global Configuration</a></h2>
+<p>On first run, Porters will create a global configuration directory:</p>
+<ul>
+<li><strong>Linux/macOS</strong>: <code>~/.porters/</code></li>
+<li><strong>Windows</strong>: <code>C:\Users\&lt;username&gt;\.porters\</code></li>
+</ul>
+<p>This directory contains:</p>
+<ul>
+<li><code>config.toml</code> - Global settings</li>
+<li><code>packages/</code> - Globally installed packages</li>
+<li><code>cache/</code> - Download cache</li>
+</ul>
+<h2 id="updating-porters"><a class="header" href="#updating-porters">Updating Porters</a></h2>
+<p>Keep Porters up-to-date with:</p>
+<pre><code class="language-bash">porters self-update
+</code></pre>
+<p>Or via Cargo:</p>
+<pre><code class="language-bash">cargo install porters --force
+</code></pre>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Now that Porters is installed, continue to the <a href="./getting-started.html">Getting Started</a> guide to create your first project!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="installing-porters-1"><a class="header" href="#installing-porters-1">Installing Porters</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="building-from-source-1"><a class="header" href="#building-from-source-1">Building from Source</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+<p>This guide will walk you through creating and managing your first C/C++ project with Porters.</p>
+<h2 id="creating-a-new-project"><a class="header" href="#creating-a-new-project">Creating a New Project</a></h2>
+<p>The easiest way to start is creating a new project:</p>
+<pre><code class="language-bash">porters create my-awesome-project
+</code></pre>
+<p>This launches an interactive wizard that asks:</p>
+<ol>
+<li><strong>Project Type</strong>: Application or Library</li>
+<li><strong>Language</strong>: C, C++, or Both</li>
+<li><strong>Library Name</strong>: (If creating a library)</li>
+<li><strong>Author</strong>: Your name (optional)</li>
+<li><strong>Email</strong>: Your email (optional)</li>
+<li><strong>Repository URL</strong>: Git repository URL (optional)</li>
+<li><strong>License</strong>: Choose from Apache-2.0, MIT, GPL, etc.</li>
+<li><strong>Build System</strong>: CMake, XMake, Meson, Make, or Custom</li>
+</ol>
+<h3 id="quick-create-with-defaults"><a class="header" href="#quick-create-with-defaults">Quick Create with Defaults</a></h3>
+<p>Skip the questions and use defaults:</p>
+<pre><code class="language-bash">porters create my-project --yes
+</code></pre>
+<p>This creates a C/C++ application with:</p>
+<ul>
+<li>CMake as the build system</li>
+<li>Apache-2.0 license</li>
+<li>Basic project structure</li>
+</ul>
+<h2 id="initializing-existing-project"><a class="header" href="#initializing-existing-project">Initializing Existing Project</a></h2>
+<p>Already have a C/C++ project? Initialize it with Porters:</p>
+<pre><code class="language-bash">cd your-existing-project
+porters init
+</code></pre>
+<p>The init command will:</p>
+<ol>
+<li>Detect your existing source files</li>
+<li>Auto-detect your build system (if present)</li>
+<li>Ask for project metadata interactively:
+<ul>
+<li>Project name (defaults to folder name)</li>
+<li>Version (defaults to 0.1.0)</li>
+<li>Author</li>
+<li>Description</li>
+<li>License</li>
+</ul>
+</li>
+<li>Create a <code>porters.toml</code> configuration file</li>
+</ol>
+<h3 id="non-interactive-init"><a class="header" href="#non-interactive-init">Non-Interactive Init</a></h3>
+<p>Use the defaults without questions:</p>
+<pre><code class="language-bash">porters init --yes
+</code></pre>
+<h2 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h2>
+<p>A typical Porters project looks like:</p>
+<pre><code>my-project/
+├── porters.toml       # Project configuration
+├── porters.lock       # Dependency lock file (auto-generated)
+├── ports/             # Local dependencies (isolated)
+├── src/               # Source files
+│   └── main.cpp
+├── include/           # Header files
+├── CMakeLists.txt     # Build system files (e.g., CMake)
+└── README.md
+</code></pre>
+<h3 id="key-files"><a class="header" href="#key-files">Key Files</a></h3>
+<h4 id="porterstoml"><a class="header" href="#porterstoml"><code>porters.toml</code></a></h4>
+<p>The main configuration file for your project:</p>
+<pre><code class="language-toml">[project]
+name = "my-project"
+version = "0.1.0"
+description = "My awesome C++ project"
+license = "Apache-2.0"
+authors = ["Your Name &lt;you@example.com&gt;"]
+
+[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt" }
+
+[dev-dependencies]
+# Test frameworks, etc.
+
+[build]
+system = "cmake"
+</code></pre>
+<h4 id="porterslock"><a class="header" href="#porterslock"><code>porters.lock</code></a></h4>
+<p>Auto-generated lock file ensuring reproducible builds:</p>
+<pre><code class="language-toml">version = "1"
+updated_at = "2024-01-15T10:30:00Z"
+
+[dependencies.fmt]
+name = "fmt"
+version = "10.1.1"
+source = { Git = { url = "https://github.com/fmtlib/fmt", rev = "abc123" } }
+</code></pre>
+<h4 id="ports-directory"><a class="header" href="#ports-directory"><code>ports/</code> Directory</a></h4>
+<p>Contains project-specific dependencies, isolated from other projects:</p>
+<pre><code>ports/
+├── fmt/               # fmt library clone
+└── spdlog/           # spdlog library clone
+</code></pre>
+<h2 id="building-your-project"><a class="header" href="#building-your-project">Building Your Project</a></h2>
+<p>Once your project is set up:</p>
+<pre><code class="language-bash"># Build the project
+porters build
+
+# Build in release mode
+porters build --release
+</code></pre>
+<p>Porters will:</p>
+<ol>
+<li>Resolve dependencies from <code>porters.toml</code></li>
+<li>Clone missing dependencies to <code>ports/</code></li>
+<li>Update <code>porters.lock</code></li>
+<li>Run the configured build system</li>
+</ol>
+<h2 id="quick-single-file-execution-zero-configuration"><a class="header" href="#quick-single-file-execution-zero-configuration">Quick Single-File Execution (Zero Configuration!)</a></h2>
+<p><strong>No setup needed!</strong> Execute any C/C++ file instantly - even without a project or <code>porters.toml</code>:</p>
+<pre><code class="language-bash"># Execute any C/C++ file - works immediately!
+porters execute hello.c
+
+# All C/C++ extensions supported
+porters execute app.cpp     # C++
+porters execute main.cxx    # C++
+porters execute prog.cc     # C++
+porters execute code.c      # C
+
+# With arguments
+porters execute main.cpp arg1 arg2
+</code></pre>
+<p><strong>100% Automatic - No Configuration Required:</strong></p>
+<ul>
+<li>✅ <strong>Works Anywhere</strong> - No <code>porters.toml</code> needed</li>
+<li>✅ <strong>Auto Compiler Detection</strong> - Finds gcc/clang/g++/clang++ in PATH</li>
+<li>✅ <strong>All Extensions</strong> - <code>.c</code>, <code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code>, <code>.C</code>, <code>.CPP</code></li>
+<li>✅ <strong>Dependency Resolution</strong> - Reads <code>porters.toml</code> if present</li>
+<li>✅ <strong>Include/Lib Injection</strong> - Automatic dependency paths</li>
+<li>✅ <strong>One Command</strong> - Compiles and runs instantly</li>
+</ul>
+<p><strong>Example - No Project Needed:</strong></p>
+<pre><code class="language-c">// hello.c (anywhere on your system)
+#include &lt;stdio.h&gt;
+
+int main(int argc, char** argv) {
+    printf("Hello from Porters!\n");
+    if (argc &gt; 1) {
+        printf("Arguments: ");
+        for (int i = 1; i &lt; argc; i++) {
+            printf("%s ", argv[i]);
+        }
+        printf("\n");
+    }
+    return 0;
+}
+</code></pre>
+<pre><code class="language-bash"># Just execute - no setup!
+$ porters execute hello.c
+Compiling hello.c...
+Hello from Porters!
+
+$ porters execute hello.c foo bar baz
+Compiling hello.c...
+Hello from Porters!
+Arguments: foo bar baz
+</code></pre>
+<p><strong>With Dependencies (Automatic):</strong></p>
+<p>When <code>porters.toml</code> exists, dependencies are automatically resolved:</p>
+<pre><code class="language-toml"># porters.toml (optional)
+[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt" }
+</code></pre>
+<pre><code class="language-cpp">// main.cpp
+#include &lt;fmt/core.h&gt;
+
+int main() {
+    fmt::print("Formatted output: {}\n", 42);
+    return 0;
+}
+</code></pre>
+<pre><code class="language-bash">$ porters sync      # Download dependencies once
+$ porters execute main.cpp
+# Automatically includes fmt - no configuration needed!
+Formatted output: 42
+</code></pre>
+<p><strong>No [run] Section Needed:</strong></p>
+<p>The <code>[run]</code> section in <code>porters.toml</code> is <strong>completely optional</strong>. Only add it if you need custom compiler flags or non-standard include paths. 99% of the time, it's not needed!</p>
+<p>See <a href="./commands.html#porters-execute"><code>porters execute</code> documentation</a> for more details.</p>
+<h2 id="whats-next"><a class="header" href="#whats-next">What's Next?</a></h2>
+<ul>
+<li>Learn about <a href="./dependencies.html">Dependency Management</a></li>
+<li>Explore <a href="./building.html">Build Configuration</a></li>
+<li>Read the <a href="./commands.html">Command Reference</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="creating-a-new-project-1"><a class="header" href="#creating-a-new-project-1">Creating a New Project</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="initializing-existing-project-1"><a class="header" href="#initializing-existing-project-1">Initializing Existing Project</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="project-structure-1"><a class="header" href="#project-structure-1">Project Structure</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="dependency-management"><a class="header" href="#dependency-management">Dependency Management</a></h1>
+<p>Porters provides flexible dependency management for C/C++ projects with support for multiple sources and isolation strategies.</p>
+<h2 id="adding-dependencies"><a class="header" href="#adding-dependencies">Adding Dependencies</a></h2>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
+<p>Add a dependency from a Git repository:</p>
+<pre><code class="language-bash">porters add fmt --git https://github.com/fmtlib/fmt
+</code></pre>
+<p>This adds <code>fmt</code> to your <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt" }
+</code></pre>
+<h3 id="adding-dev-dependencies"><a class="header" href="#adding-dev-dependencies">Adding Dev Dependencies</a></h3>
+<p>Development-only dependencies (tests, benchmarks):</p>
+<pre><code class="language-bash">porters add catch2 --git https://github.com/catchorg/Catch2 --dev
+</code></pre>
+<h3 id="adding-optional-dependencies"><a class="header" href="#adding-optional-dependencies">Adding Optional Dependencies</a></h3>
+<p>Optional features:</p>
+<pre><code class="language-bash">porters add zlib --git https://github.com/madler/zlib --optional
+</code></pre>
+<h2 id="global-vs-local-dependencies"><a class="header" href="#global-vs-local-dependencies">Global vs Local Dependencies</a></h2>
+<p>Porters supports two dependency scopes:</p>
+<h3 id="local-dependencies-default"><a class="header" href="#local-dependencies-default">Local Dependencies (Default)</a></h3>
+<p>Dependencies added with <code>porters add</code> are installed to the project's <code>ports/</code> folder:</p>
+<pre><code class="language-bash">porters add fmt --git https://github.com/fmtlib/fmt
+</code></pre>
+<p><strong>Location</strong>: <code>./ports/fmt/</code></p>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>Isolated per-project</li>
+<li>Version-locked via <code>porters.lock</code></li>
+<li>Perfect for project-specific needs</li>
+</ul>
+<h3 id="global-dependencies"><a class="header" href="#global-dependencies">Global Dependencies</a></h3>
+<p>Install packages globally to <code>~/.porters/packages/</code>:</p>
+<pre><code class="language-bash">porters install fmt --git https://github.com/fmtlib/fmt
+</code></pre>
+<p><strong>Location (Linux/macOS)</strong>: <code>~/.porters/packages/fmt/</code><br />
+<strong>Location (Windows)</strong>: <code>C:\Users\&lt;username&gt;\.porters\packages\fmt\</code></p>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>Shared across all projects</li>
+<li>Faster setup for frequently-used libraries</li>
+<li>Centralized cache</li>
+</ul>
+<h2 id="git-dependencies"><a class="header" href="#git-dependencies">Git Dependencies</a></h2>
+<p>Porters supports both HTTPS and SSH Git URLs:</p>
+<h3 id="https-urls"><a class="header" href="#https-urls">HTTPS URLs</a></h3>
+<pre><code class="language-bash">porters add fmt --git https://github.com/fmtlib/fmt
+</code></pre>
+<h3 id="ssh-urls"><a class="header" href="#ssh-urls">SSH URLs</a></h3>
+<pre><code class="language-bash">porters add fmt --git git@github.com:fmtlib/fmt.git
+</code></pre>
+<h3 id="specific-branch"><a class="header" href="#specific-branch">Specific Branch</a></h3>
+<pre><code class="language-bash">porters add fmt --git https://github.com/fmtlib/fmt --branch stable
+</code></pre>
+<h3 id="specific-tag"><a class="header" href="#specific-tag">Specific Tag</a></h3>
+<pre><code class="language-bash">porters add fmt --git https://github.com/fmtlib/fmt --tag 10.1.1
+</code></pre>
+<p>In <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt", tag = "10.1.1" }
+</code></pre>
+<h2 id="syncing-dependencies"><a class="header" href="#syncing-dependencies">Syncing Dependencies</a></h2>
+<p>The <code>sync</code> command ensures all dependencies from <code>porters.toml</code> are installed:</p>
+<pre><code class="language-bash">porters sync
+</code></pre>
+<p>This will:</p>
+<ol>
+<li>Read dependencies from <code>porters.toml</code></li>
+<li>Download missing packages to <code>ports/</code></li>
+<li>Resolve version constraints</li>
+<li>Update <code>porters.lock</code></li>
+</ol>
+<h3 id="include-dev-dependencies"><a class="header" href="#include-dev-dependencies">Include Dev Dependencies</a></h3>
+<pre><code class="language-bash">porters sync --dev
+</code></pre>
+<p>Syncs both regular and dev dependencies.</p>
+<h3 id="include-optional-dependencies"><a class="header" href="#include-optional-dependencies">Include Optional Dependencies</a></h3>
+<pre><code class="language-bash">porters sync --optional
+</code></pre>
+<p>Syncs both regular and optional dependencies.</p>
+<h3 id="include-everything"><a class="header" href="#include-everything">Include Everything</a></h3>
+<pre><code class="language-bash">porters sync --dev --optional
+</code></pre>
+<h2 id="lock-file"><a class="header" href="#lock-file">Lock File</a></h2>
+<p>The <code>porters.lock</code> file tracks resolved dependency versions.</p>
+<h3 id="generatingupdating-lock-file"><a class="header" href="#generatingupdating-lock-file">Generating/Updating Lock File</a></h3>
+<pre><code class="language-bash">porters lock
+</code></pre>
+<p>This updates <code>porters.lock</code> with current installed dependencies.</p>
+<h3 id="lock-file-format"><a class="header" href="#lock-file-format">Lock File Format</a></h3>
+<pre><code class="language-toml">version = "1"
+updated_at = "2024-01-15T10:30:00Z"
+
+[dependencies.fmt]
+name = "fmt"
+version = "10.1.1"
+source = { Git = { url = "https://github.com/fmtlib/fmt", rev = "a1b2c3d" } }
+checksum = "sha256:..."
+dependencies = []
+</code></pre>
+<h3 id="why-use-lock-files"><a class="header" href="#why-use-lock-files">Why Use Lock Files?</a></h3>
+<ul>
+<li><strong>Reproducibility</strong>: Same versions across all environments</li>
+<li><strong>Team Collaboration</strong>: Everyone gets identical dependencies</li>
+<li><strong>CI/CD</strong>: Reliable builds in pipelines</li>
+</ul>
+<h2 id="dependency-sources"><a class="header" href="#dependency-sources">Dependency Sources</a></h2>
+<p>Porters supports multiple dependency sources:</p>
+<h3 id="git-repository"><a class="header" href="#git-repository">Git Repository</a></h3>
+<pre><code class="language-toml">[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt" }
+spdlog = { git = "git@github.com:gabime/spdlog.git", branch = "v1.x" }
+</code></pre>
+<h3 id="local-path"><a class="header" href="#local-path">Local Path</a></h3>
+<pre><code class="language-toml">[dependencies]
+mylib = { path = "../mylib" }
+</code></pre>
+<h3 id="registry-future"><a class="header" href="#registry-future">Registry (Future)</a></h3>
+<p>Support for package registries is planned:</p>
+<pre><code class="language-toml">[dependencies]
+boost = { registry = "conan", version = "1.80" }
+</code></pre>
+<h2 id="dependency-resolution"><a class="header" href="#dependency-resolution">Dependency Resolution</a></h2>
+<p>Porters resolves dependencies in this order:</p>
+<ol>
+<li>Check <code>porters.lock</code> for existing resolution</li>
+<li>Fetch from Git/path source</li>
+<li>Verify constraints (version, branch, tag)</li>
+<li>Clone to <code>ports/</code> directory</li>
+<li>Update <code>porters.lock</code></li>
+</ol>
+<h3 id="constraint-validation"><a class="header" href="#constraint-validation">Constraint Validation</a></h3>
+<p>Porters validates:</p>
+<ul>
+<li>Version requirements</li>
+<li>Branch/tag specifications</li>
+<li>Dependency conflicts</li>
+</ul>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="version-pinning"><a class="header" href="#version-pinning">Version Pinning</a></h3>
+<p>Always specify versions or tags for production:</p>
+<pre><code class="language-toml">[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt", tag = "10.1.1" }
+</code></pre>
+<h3 id="lock-file-in-version-control"><a class="header" href="#lock-file-in-version-control">Lock File in Version Control</a></h3>
+<p>Commit <code>porters.lock</code> to ensure reproducible builds:</p>
+<pre><code class="language-bash">git add porters.lock
+git commit -m "Update dependencies"
+</code></pre>
+<h3 id="separate-dev-dependencies"><a class="header" href="#separate-dev-dependencies">Separate Dev Dependencies</a></h3>
+<p>Keep development tools separate:</p>
+<pre><code class="language-toml">[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt" }
+
+[dev-dependencies]
+catch2 = { git = "https://github.com/catchorg/Catch2" }
+benchmark = { git = "https://github.com/google/benchmark" }
+</code></pre>
+<h3 id="use-global-install-for-common-libraries"><a class="header" href="#use-global-install-for-common-libraries">Use Global Install for Common Libraries</a></h3>
+<p>Install frequently-used libraries globally:</p>
+<pre><code class="language-bash">porters install boost --git https://github.com/boostorg/boost
+porters install gtest --git https://github.com/google/googletest
+</code></pre>
+<p>Then reference them in projects without re-downloading.</p>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="dependency-not-found"><a class="header" href="#dependency-not-found">Dependency Not Found</a></h3>
+<p>Ensure the Git URL is correct and accessible:</p>
+<pre><code class="language-bash">git clone https://github.com/fmtlib/fmt  # Test manually
+</code></pre>
+<h3 id="version-conflicts"><a class="header" href="#version-conflicts">Version Conflicts</a></h3>
+<p>Check <code>porters.lock</code> and resolve conflicts:</p>
+<pre><code class="language-bash">porters lock  # Regenerate lock file
+</code></pre>
+<h3 id="sync-failures"><a class="header" href="#sync-failures">Sync Failures</a></h3>
+<p>Clear the cache and retry:</p>
+<pre><code class="language-bash">rm -rf ports/
+porters sync
+</code></pre>
+<h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next Steps</a></h2>
+<ul>
+<li>Explore <a href="./building.html">Build Configuration</a></li>
+<li>Review <a href="./commands.html">Command Reference</a></li>
+<li>Check <a href="./troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="adding-dependencies-1"><a class="header" href="#adding-dependencies-1">Adding Dependencies</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="global-vs-local-dependencies-1"><a class="header" href="#global-vs-local-dependencies-1">Global vs Local Dependencies</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="git-dependencies-1"><a class="header" href="#git-dependencies-1">Git Dependencies</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="syncing-dependencies-1"><a class="header" href="#syncing-dependencies-1">Syncing Dependencies</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="lock-file-1"><a class="header" href="#lock-file-1">Lock File</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="building-projects"><a class="header" href="#building-projects">Building Projects</a></h1>
+<p>Learn how to build C/C++ projects with Porters.</p>
+<h2 id="build-systems"><a class="header" href="#build-systems">Build Systems</a></h2>
+<p>Porters natively supports 14 build systems with full build execution and automatically detects which one your project uses.</p>
+<h3 id="automatic-detection"><a class="header" href="#automatic-detection">Automatic Detection</a></h3>
+<p>Porters automatically detects build systems by looking for specific files:</p>
+<div class="table-wrapper"><table><thead><tr><th>Build System</th><th>Detection Files</th><th>Status</th></tr></thead><tbody>
+<tr><td><strong>CMake</strong></td><td><code>CMakeLists.txt</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>XMake</strong></td><td><code>xmake.lua</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Meson</strong></td><td><code>meson.build</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Make</strong></td><td><code>Makefile</code>, <code>makefile</code>, <code>GNUmakefile</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Ninja</strong></td><td><code>build.ninja</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Autotools</strong></td><td><code>configure</code>, <code>configure.ac</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>SCons</strong></td><td><code>SConstruct</code>, <code>SConscript</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Conan</strong></td><td><code>conanfile.txt</code>, <code>conanfile.py</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>vcpkg</strong></td><td><code>vcpkg.json</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Bazel</strong></td><td><code>BUILD</code>, <code>BUILD.bazel</code>, <code>WORKSPACE</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Buck2</strong></td><td><code>BUCK</code>, <code>.buckconfig</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Premake</strong></td><td><code>premake5.lua</code>, <code>premake4.lua</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>QMake</strong></td><td><code>*.pro</code></td><td>✅ Full Support</td></tr>
+<tr><td><strong>Custom</strong></td><td><code>porters.toml</code> with <code>[build.custom]</code></td><td>✅ Full Support</td></tr>
+</tbody></table>
+</div>
+<h3 id="manual-configuration"><a class="header" href="#manual-configuration">Manual Configuration</a></h3>
+<p>You can explicitly specify the build system in <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[build]
+system = "cmake"  # or "xmake", "meson", "make", "ninja", etc.
+</code></pre>
+<h3 id="supported-build-systems"><a class="header" href="#supported-build-systems">Supported Build Systems</a></h3>
+<h4 id="traditional-build-systems"><a class="header" href="#traditional-build-systems">Traditional Build Systems</a></h4>
+<h5 id="make"><a class="header" href="#make">Make</a></h5>
+<pre><code class="language-toml">[build]
+system = "make"
+</code></pre>
+<p>Runs: <code>make</code> (respects existing Makefile)</p>
+<h5 id="ninja"><a class="header" href="#ninja">Ninja</a></h5>
+<pre><code class="language-toml">[build]
+system = "ninja"
+</code></pre>
+<p>Runs: <code>ninja</code> (fast parallel builds)</p>
+<h5 id="autotools"><a class="header" href="#autotools">Autotools</a></h5>
+<pre><code class="language-toml">[build]
+system = "autotools"
+</code></pre>
+<p>Runs:</p>
+<pre><code class="language-bash">./configure
+make
+make install
+</code></pre>
+<h4 id="modern-build-systems"><a class="header" href="#modern-build-systems">Modern Build Systems</a></h4>
+<h5 id="cmake-recommended"><a class="header" href="#cmake-recommended">CMake (Recommended)</a></h5>
+<pre><code class="language-toml">[build]
+system = "cmake"
+</code></pre>
+<p>Porters runs:</p>
+<pre><code class="language-bash">cmake -B build
+cmake --build build
+</code></pre>
+<h5 id="xmake"><a class="header" href="#xmake">XMake</a></h5>
+<pre><code class="language-toml">[build]
+system = "xmake"
+</code></pre>
+<p>Runs:</p>
+<pre><code class="language-bash">xmake config
+xmake build
+</code></pre>
+<h5 id="meson"><a class="header" href="#meson">Meson</a></h5>
+<pre><code class="language-toml">[build]
+system = "meson"
+</code></pre>
+<p>Runs:</p>
+<pre><code class="language-bash">meson setup build
+meson compile -C build
+</code></pre>
+<h5 id="scons"><a class="header" href="#scons">SCons</a></h5>
+<pre><code class="language-toml">[build]
+system = "scons"
+</code></pre>
+<p>Runs: <code>scons</code></p>
+<h5 id="bazel"><a class="header" href="#bazel">Bazel</a></h5>
+<pre><code class="language-toml">[build]
+system = "bazel"
+</code></pre>
+<p>Runs: <code>bazel build //...</code></p>
+<h5 id="buck2"><a class="header" href="#buck2">Buck2</a></h5>
+<pre><code class="language-toml">[build]
+system = "buck2"
+</code></pre>
+<p>Runs: <code>buck2 build //...</code></p>
+<h4 id="package-managers"><a class="header" href="#package-managers">Package Managers</a></h4>
+<h5 id="conan"><a class="header" href="#conan">Conan</a></h5>
+<pre><code class="language-toml">[build]
+system = "conan"
+</code></pre>
+<p>Integrates with Conan package manager:</p>
+<pre><code class="language-bash">conan install .
+cmake --preset conan-default
+cmake --build build
+</code></pre>
+<h5 id="vcpkg"><a class="header" href="#vcpkg">vcpkg</a></h5>
+<pre><code class="language-toml">[build]
+system = "vcpkg"
+</code></pre>
+<p>Integrates with vcpkg:</p>
+<pre><code class="language-bash">vcpkg install
+cmake -DCMAKE_TOOLCHAIN_FILE=...
+cmake --build build
+</code></pre>
+<h4 id="other-build-systems"><a class="header" href="#other-build-systems">Other Build Systems</a></h4>
+<h5 id="premake"><a class="header" href="#premake">Premake</a></h5>
+<pre><code class="language-toml">[build]
+system = "premake"
+</code></pre>
+<h5 id="qmake"><a class="header" href="#qmake">QMake</a></h5>
+<pre><code class="language-toml">[build]
+system = "qmake"
+</code></pre>
+<h5 id="gradle-c"><a class="header" href="#gradle-c">Gradle (C++)</a></h5>
+<pre><code class="language-toml">[build]
+system = "gradle-cpp"
+</code></pre>
+<h3 id="custom-build"><a class="header" href="#custom-build">Custom Build</a></h3>
+<p>For projects with unique build requirements:</p>
+<pre><code class="language-toml">[build]
+system = "custom"
+
+[build.custom]
+configure = "./configure.sh"
+build = "./build.sh"
+install = "./install.sh"
+test = "./test.sh"
+clean = "./clean.sh"
+</code></pre>
+<h2 id="compiler-detection"><a class="header" href="#compiler-detection">Compiler Detection</a></h2>
+<p>Porters automatically detects available compilers:</p>
+<ul>
+<li><strong>GCC</strong> (<code>gcc</code>, <code>g++</code>)</li>
+<li><strong>Clang</strong> (<code>clang</code>, <code>clang++</code>)</li>
+<li><strong>MSVC</strong> (<code>cl</code>)</li>
+<li><strong>LLVM</strong> (<code>llvm</code>)</li>
+<li><strong>MinGW</strong> (Windows)</li>
+<li><strong>Emscripten</strong> (<code>emcc</code>, <code>em++</code>)</li>
+<li><strong>Intel C++ Compiler</strong> (<code>icc</code>, <code>icpc</code>)</li>
+</ul>
+<p>Set preferred compiler:</p>
+<pre><code class="language-toml">[build.env]
+CC = "clang"
+CXX = "clang++"
+</code></pre>
+<h2 id="build-configuration"><a class="header" href="#build-configuration">Build Configuration</a></h2>
+<h3 id="enhanced-build-settings"><a class="header" href="#enhanced-build-settings">Enhanced Build Settings</a></h3>
+<p>Configure build flags, include paths, and linking options:</p>
+<pre><code class="language-toml">[build]
+system = "cmake"
+
+[build.flags]
+cflags = ["-Wall", "-Wextra", "-O2"]
+cxxflags = ["-std=c++17", "-Wall", "-Wextra"]
+ldflags = ["-pthread"]
+defines = ["DEBUG", "USE_FEATURE_X"]
+
+[build.include]
+include = [
+    "include/",
+    "src/",
+    "/usr/local/include",
+]
+
+[build.linking]
+libraries = ["pthread", "m", "dl"]
+library_paths = ["/usr/local/lib"]
+frameworks = ["CoreFoundation"]  # macOS only
+</code></pre>
+<h3 id="build-scripts"><a class="header" href="#build-scripts">Build Scripts</a></h3>
+<p>Run custom scripts before/after building:</p>
+<pre><code class="language-toml">[build.scripts]
+pre-build = "scripts/pre_build.sh"
+post-build = "scripts/post_build.sh"
+pre-install = "scripts/pre_install.sh"
+post-install = "scripts/post_install.sh"
+</code></pre>
+<p>Example pre-build script:</p>
+<pre><code class="language-bash">#!/bin/sh
+echo "🔧 Running pre-build tasks..."
+
+# Generate version header
+echo "#define VERSION \"$(git describe --tags)\"" &gt; src/version.h
+
+# Check dependencies
+command -v cmake &gt;/dev/null || {
+    echo "❌ CMake not found"
+    exit 1
+}
+
+echo "✅ Pre-build complete"
+</code></pre>
+<h3 id="debug-vs-release"><a class="header" href="#debug-vs-release">Debug vs Release</a></h3>
+<pre><code class="language-bash"># Debug build (default)
+porters build
+
+# Release build (optimized)
+porters build --release
+</code></pre>
+<p>Override in porters.toml:</p>
+<pre><code class="language-toml">[build.flags]
+cflags = ["-g", "-O0"]          # Debug
+# cflags = ["-O3", "-DNDEBUG"]  # Release
+</code></pre>
+<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h2>
+<p>Porters resolves environment variables in build configuration:</p>
+<pre><code class="language-toml">[build.env]
+CC = "clang"
+CXX = "clang++"
+CMAKE_PREFIX_PATH = "/usr/local"
+PKG_CONFIG_PATH = "/usr/local/lib/pkgconfig"
+CFLAGS = "-march=native"
+CXXFLAGS = "-std=c++20"
+</code></pre>
+<p>Platform-specific:</p>
+<pre><code class="language-toml">[build.env.linux]
+CC = "gcc-11"
+CXX = "g++-11"
+
+[build.env.macos]
+CC = "clang"
+CXX = "clang++"
+
+[build.env.windows]
+CC = "cl"
+CXX = "cl"
+</code></pre>
+<h2 id="auto-source-discovery"><a class="header" href="#auto-source-discovery">Auto Source Discovery</a></h2>
+<p>Porters automatically discovers source files:</p>
+<pre><code class="language-toml">[build]
+auto_discover = true  # Default
+</code></pre>
+<p>Detected file types:</p>
+<ul>
+<li><code>.c</code>, <code>.cpp</code>, <code>.cc</code>, <code>.cxx</code> - Source files</li>
+<li><code>.h</code>, <code>.hpp</code>, <code>.hh</code>, <code>.hxx</code> - Header files</li>
+</ul>
+<p>Exclude patterns:</p>
+<pre><code class="language-toml">[build]
+exclude = [
+    "tests/",
+    "examples/",
+    "vendor/",
+    "**/*.test.cpp",
+]
+</code></pre>
+<h2 id="build-targets"><a class="header" href="#build-targets">Build Targets</a></h2>
+<p>Specify what to build:</p>
+<pre><code class="language-toml">[build]
+targets = ["all"]  # Default
+
+# Or specific targets
+targets = ["main", "library"]
+</code></pre>
+<p>For CMake:</p>
+<pre><code class="language-toml">[build]
+system = "cmake"
+targets = ["MyApp", "MyLib"]
+</code></pre>
+<h2 id="parallel-builds"><a class="header" href="#parallel-builds">Parallel Builds</a></h2>
+<p>Control build parallelism:</p>
+<pre><code class="language-toml">[build]
+jobs = 4  # Number of parallel jobs
+
+# Or auto-detect CPU cores
+jobs = "auto"
+</code></pre>
+<p>Command line:</p>
+<pre><code class="language-bash">porters build --jobs 8
+porters build -j 8
+</code></pre>
+<h2 id="cross-compilation"><a class="header" href="#cross-compilation">Cross-Compilation</a></h2>
+<p>Configure for cross-compilation:</p>
+<pre><code class="language-toml">[build]
+system = "cmake"
+toolchain = "cmake/arm-toolchain.cmake"
+
+[build.env]
+CMAKE_TOOLCHAIN_FILE = "cmake/arm-toolchain.cmake"
+TARGET_ARCH = "arm64"
+</code></pre>
+<h2 id="build-artifacts"><a class="header" href="#build-artifacts">Build Artifacts</a></h2>
+<p>Specify output locations:</p>
+<pre><code class="language-toml">[build]
+output_dir = "dist/"
+binary_name = "my-app"
+</code></pre>
+<p>Install artifacts:</p>
+<pre><code class="language-bash">porters build --install
+</code></pre>
+<p>With custom prefix:</p>
+<pre><code class="language-bash">porters build --install --prefix /usr/local
+</code></pre>
+<h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next Steps</a></h2>
+<ul>
+<li><a href="./publishing.html">Publishing</a></li>
+<li><a href="./configuration.html">Configuration</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="build-systems-1"><a class="header" href="#build-systems-1">Build Systems</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="build-configuration-1"><a class="header" href="#build-configuration-1">Build Configuration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="environment-variables-1"><a class="header" href="#environment-variables-1">Environment Variables</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-execute-guide"><a class="header" href="#porters-execute-guide">Porters Execute Guide</a></h1>
+<p><strong>100% Automatic Single-File C/C++ Execution - Zero Configuration Required</strong></p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p><code>porters execute</code> lets you compile and run any C/C++ file instantly - no project setup, no configuration files, no build systems. Just point it at your code and go!</p>
+<h3 id="key-features-1"><a class="header" href="#key-features-1">Key Features</a></h3>
+<ul>
+<li>✅ <strong>Works Anywhere</strong> - No <code>porters.toml</code> required</li>
+<li>✅ <strong>Auto Compiler Detection</strong> - Finds gcc, clang, g++, clang++ automatically</li>
+<li>✅ <strong>All File Extensions</strong> - Supports <code>.c</code>, <code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code>, <code>.C</code>, <code>.CPP</code></li>
+<li>✅ <strong>Dependency Resolution</strong> - Reads <code>porters.toml</code> if present, optional otherwise</li>
+<li>✅ <strong>Automatic Include/Lib Paths</strong> - Zero configuration dependency integration</li>
+<li>✅ <strong>One Command Execution</strong> - Compiles and runs in a single step</li>
+</ul>
+<h2 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h2>
+<h3 id="simple-execution"><a class="header" href="#simple-execution">Simple Execution</a></h3>
+<pre><code class="language-bash"># Execute any C file
+porters execute hello.c
+
+# Execute any C++ file
+porters execute main.cpp
+porters execute app.cxx
+porters execute code.cc
+porters execute prog.c++
+
+# With command-line arguments
+porters execute myprogram.c arg1 arg2 arg3
+</code></pre>
+<h3 id="supported-file-extensions"><a class="header" href="#supported-file-extensions">Supported File Extensions</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Extension</th><th>Language</th><th>Compiler Used</th></tr></thead><tbody>
+<tr><td><code>.c</code>, <code>.C</code></td><td>C</td><td>gcc → clang → cc</td></tr>
+<tr><td><code>.cpp</code>, <code>.CPP</code></td><td>C++</td><td>g++ → clang++ → c++</td></tr>
+<tr><td><code>.cxx</code></td><td>C++</td><td>g++ → clang++ → c++</td></tr>
+<tr><td><code>.cc</code></td><td>C++</td><td>g++ → clang++ → c++</td></tr>
+<tr><td><code>.c++</code></td><td>C++</td><td>g++ → clang++ → c++</td></tr>
+<tr><td><code>.cp</code></td><td>C++</td><td>g++ → clang++ → c++</td></tr>
+</tbody></table>
+</div>
+<p><strong>Note</strong>: Header files (<code>.h</code>, <code>.hpp</code>, <code>.hxx</code>) cannot be executed directly - they must be included in a <code>.c</code> or <code>.cpp</code> file.</p>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<h3 id="automatic-compiler-detection"><a class="header" href="#automatic-compiler-detection">Automatic Compiler Detection</a></h3>
+<p>Porters automatically finds your C/C++ compiler:</p>
+<p><strong>For C files</strong> (<code>.c</code>, <code>.C</code>):</p>
+<ol>
+<li>Tries <code>gcc</code> first (most common)</li>
+<li>Falls back to <code>clang</code></li>
+<li>Falls back to generic <code>cc</code></li>
+</ol>
+<p><strong>For C++ files</strong> (<code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code>, <code>.CPP</code>):</p>
+<ol>
+<li>Tries <code>g++</code> first (most common)</li>
+<li>Falls back to <code>clang++</code></li>
+<li>Falls back to generic <code>c++</code></li>
+</ol>
+<p><strong>No configuration needed</strong> - just have a compiler in your PATH!</p>
+<h3 id="dependency-resolution-automatic"><a class="header" href="#dependency-resolution-automatic">Dependency Resolution (Automatic)</a></h3>
+<p>When you have a <code>porters.toml</code> in your directory, <code>porters execute</code> automatically:</p>
+<ul>
+<li>Reads all dependencies</li>
+<li>Finds their include directories</li>
+<li>Finds their library directories</li>
+<li>Adds all paths to the compiler command</li>
+<li>Links all required libraries</li>
+</ul>
+<p><strong>You don't need to configure anything!</strong></p>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<h3 id="example-1-hello-world-no-project"><a class="header" href="#example-1-hello-world-no-project">Example 1: Hello World (No Project)</a></h3>
+<p>Create a file anywhere on your system:</p>
+<pre><code class="language-c">// hello.c
+#include &lt;stdio.h&gt;
+
+int main() {
+    printf("Hello from Porters!\n");
+    return 0;
+}
+</code></pre>
+<p>Execute it:</p>
+<pre><code class="language-bash">$ porters execute hello.c
+Compiling hello.c...
+Hello from Porters!
+</code></pre>
+<p><strong>No <code>porters.toml</code> needed!</strong> Works instantly.</p>
+<h3 id="example-2-with-arguments"><a class="header" href="#example-2-with-arguments">Example 2: With Arguments</a></h3>
+<pre><code class="language-cpp">// args.cpp
+#include &lt;iostream&gt;
+
+int main(int argc, char** argv) {
+    std::cout &lt;&lt; "Arguments received: " &lt;&lt; argc - 1 &lt;&lt; "\n";
+    for (int i = 1; i &lt; argc; i++) {
+        std::cout &lt;&lt; "  [" &lt;&lt; i &lt;&lt; "] " &lt;&lt; argv[i] &lt;&lt; "\n";
+    }
+    return 0;
+}
+</code></pre>
+<p>Execute with arguments:</p>
+<pre><code class="language-bash">$ porters execute args.cpp foo bar baz
+Compiling args.cpp...
+Arguments received: 3
+  [1] foo
+  [2] bar
+  [3] baz
+</code></pre>
+<h3 id="example-3-with-dependencies-automatic"><a class="header" href="#example-3-with-dependencies-automatic">Example 3: With Dependencies (Automatic)</a></h3>
+<p>Create a project with dependencies:</p>
+<pre><code class="language-toml"># porters.toml
+[package]
+name = "my-app"
+version = "0.1.0"
+
+[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt" }
+</code></pre>
+<p>Sync dependencies once:</p>
+<pre><code class="language-bash">$ porters sync
+Syncing dependencies...
+✓ fmt downloaded
+</code></pre>
+<p>Create your code:</p>
+<pre><code class="language-cpp">// format_test.cpp
+#include &lt;fmt/core.h&gt;
+#include &lt;fmt/color.h&gt;
+
+int main() {
+    fmt::print("Plain text\n");
+    fmt::print(fg(fmt::color::green), "Green text\n");
+    fmt::print(fg(fmt::color::red) | fmt::emphasis::bold, "Bold red text\n");
+    return 0;
+}
+</code></pre>
+<p>Execute - dependencies are <strong>automatically included</strong>:</p>
+<pre><code class="language-bash">$ porters execute format_test.cpp
+Compiling format_test.cpp...
+Plain text
+Green text
+Bold red text
+</code></pre>
+<p><strong>No configuration needed!</strong> Porters found fmt automatically.</p>
+<h3 id="example-4-math-and-system-libraries"><a class="header" href="#example-4-math-and-system-libraries">Example 4: Math and System Libraries</a></h3>
+<pre><code class="language-c">// math_test.c
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+
+int main() {
+    double x = 16.0;
+    double result = sqrt(x);
+    printf("sqrt(%.0f) = %.2f\n", x, result);
+    printf("sin(PI/2) = %.2f\n", sin(M_PI / 2.0));
+    return 0;
+}
+</code></pre>
+<p>Execute (math library automatically linked on Linux):</p>
+<pre><code class="language-bash">$ porters execute math_test.c
+Compiling math_test.c...
+sqrt(16) = 4.00
+sin(PI/2) = 1.00
+</code></pre>
+<h3 id="example-5-multiple-source-files-pattern"><a class="header" href="#example-5-multiple-source-files-pattern">Example 5: Multiple Source Files Pattern</a></h3>
+<p>When you need multiple files, use includes:</p>
+<pre><code class="language-c">// utils.h
+#ifndef UTILS_H
+#define UTILS_H
+
+int add(int a, int b);
+int multiply(int a, int b);
+
+#endif
+</code></pre>
+<pre><code class="language-c">// utils.c
+#include "utils.h"
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int multiply(int a, int b) {
+    return a * b;
+}
+</code></pre>
+<pre><code class="language-c">// main.c
+#include &lt;stdio.h&gt;
+#include "utils.h"
+
+int main() {
+    printf("5 + 3 = %d\n", add(5, 3));
+    printf("5 * 3 = %d\n", multiply(5, 3));
+    return 0;
+}
+</code></pre>
+<p>For multiple <code>.c</code> files, compile them together:</p>
+<pre><code class="language-bash"># Compile utils.c into object file
+gcc -c utils.c -o utils.o
+
+# Execute main.c and link utils.o
+gcc main.c utils.o -o main &amp;&amp; ./main
+</code></pre>
+<p><strong>Or</strong> use <code>porters build</code> for multi-file projects:</p>
+<pre><code class="language-bash">$ porters init     # Create project
+$ porters build    # Build all sources
+$ porters run      # Execute compiled binary
+</code></pre>
+<p><strong>Note</strong>: <code>porters execute</code> is for <strong>single-file</strong> quick execution. For multi-file projects, use <code>porters build</code> + <code>porters run</code>.</p>
+<h2 id="optional-configuration"><a class="header" href="#optional-configuration">Optional Configuration</a></h2>
+<h3 id="when-is-configuration-needed"><a class="header" href="#when-is-configuration-needed">When is Configuration Needed?</a></h3>
+<p><strong>99% of the time: NEVER!</strong></p>
+<p><code>porters execute</code> works automatically. You only need the <code>[run]</code> section if:</p>
+<ul>
+<li>Using a non-standard compiler not in PATH</li>
+<li>Need custom compiler/linker flags</li>
+<li>Have include paths outside of dependency directories</li>
+<li>Want to exclude specific patterns from dependency resolution</li>
+</ul>
+<h3 id="optional-run-section"><a class="header" href="#optional-run-section">Optional [run] Section</a></h3>
+<pre><code class="language-toml"># porters.toml - ALL FIELDS ARE OPTIONAL!
+
+[run]
+# Custom C compiler (default: auto-detect gcc/clang/cc)
+c-compiler = "clang"
+
+# Custom C++ compiler (default: auto-detect g++/clang++/c++)
+cpp-compiler = "clang++"
+
+# Additional include directories (default: auto-detect from deps)
+include-dirs = ["./custom/include", "/usr/local/custom/include"]
+
+# Additional library directories (default: auto-detect from deps)
+library-dirs = ["./custom/lib"]
+
+# Patterns to exclude from automatic include/lib detection (default: empty)
+exclude-patterns = ["**/tests/**", "**/examples/**"]
+
+# Custom compiler flags (default: none)
+compiler-flags = ["-Wall", "-Wextra", "-O2", "-std=c++20"]
+
+# Custom linker flags (default: none)
+linker-flags = ["-lpthread", "-ldl"]
+</code></pre>
+<p><strong>Example - Custom Compiler:</strong></p>
+<pre><code class="language-toml">[run]
+cpp-compiler = "clang++"
+compiler-flags = ["-std=c++20", "-Wall"]
+</code></pre>
+<pre><code class="language-bash">$ porters execute modern.cpp
+# Uses clang++ with C++20 and warnings enabled
+</code></pre>
+<p><strong>Example - Custom Include Path:</strong></p>
+<pre><code class="language-toml">[run]
+include-dirs = ["/opt/mylib/include"]
+</code></pre>
+<pre><code class="language-bash">$ porters execute app.c
+# Automatically adds -I/opt/mylib/include
+</code></pre>
+<h2 id="differences-from-porters-run"><a class="header" href="#differences-from-porters-run">Differences from <code>porters run</code></a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Feature</th><th><code>porters execute</code></th><th><code>porters run</code></th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>Single-file quick execution</td><td>Run compiled project binary</td></tr>
+<tr><td><strong>Requires Project</strong></td><td>❌ No</td><td>✅ Yes (porters.toml)</td></tr>
+<tr><td><strong>Compilation</strong></td><td>✅ Compiles on-the-fly</td><td>❌ Uses pre-built binary</td></tr>
+<tr><td><strong>Build System</strong></td><td>❌ None (direct compiler)</td><td>✅ CMake/XMake/Meson/Make/etc.</td></tr>
+<tr><td><strong>Multi-file Support</strong></td><td>⚠️ Single file only</td><td>✅ Full project</td></tr>
+<tr><td><strong>Speed</strong></td><td>⚠️ Compiles each time</td><td>✅ Fast (already built)</td></tr>
+<tr><td><strong>Best For</strong></td><td>Prototyping, testing, scripts</td><td>Production applications</td></tr>
+</tbody></table>
+</div>
+<p><strong>When to use <code>porters execute</code>:</strong></p>
+<ul>
+<li>Quick testing/prototyping</li>
+<li>Single-file programs</li>
+<li>Code demonstrations</li>
+<li>Scripting with C/C++</li>
+<li>Learning/teaching</li>
+</ul>
+<p><strong>When to use <code>porters build</code> + <code>porters run</code>:</strong></p>
+<ul>
+<li>Multi-file projects</li>
+<li>Production applications</li>
+<li>Complex build configurations</li>
+<li>Performance-critical builds</li>
+<li>Cross-compilation</li>
+</ul>
+<h2 id="command-reference"><a class="header" href="#command-reference">Command Reference</a></h2>
+<h3 id="syntax"><a class="header" href="#syntax">Syntax</a></h3>
+<pre><code class="language-bash">porters execute &lt;file&gt; [args...]
+</code></pre>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
+<ul>
+<li><code>&lt;file&gt;</code> - Path to C/C++ source file (required)
+<ul>
+<li>Supported extensions: <code>.c</code>, <code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code>, <code>.C</code>, <code>.CPP</code></li>
+<li>Can be relative or absolute path</li>
+</ul>
+</li>
+<li><code>[args...]</code> - Arguments to pass to the compiled program (optional)</li>
+</ul>
+<h3 id="examples-1"><a class="header" href="#examples-1">Examples</a></h3>
+<pre><code class="language-bash"># Basic execution
+porters execute hello.c
+
+# With relative path
+porters execute ./src/main.cpp
+
+# With absolute path
+porters execute /home/user/code/test.c
+
+# With arguments
+porters execute myprogram.c input.txt --verbose --count=5
+
+# Different C++ extensions
+porters execute app.cpp
+porters execute app.cxx
+porters execute app.cc
+porters execute app.c++
+</code></pre>
+<h2 id="troubleshooting-1"><a class="header" href="#troubleshooting-1">Troubleshooting</a></h2>
+<h3 id="compiler-not-found"><a class="header" href="#compiler-not-found">"Compiler not found"</a></h3>
+<p><strong>Solution</strong>: Install gcc/g++ or clang/clang++</p>
+<pre><code class="language-bash"># Linux
+sudo apt install build-essential
+
+# macOS
+xcode-select --install
+
+# Windows
+# Install MinGW or Visual Studio with C++ tools
+</code></pre>
+<h3 id="unsupported-file-extension"><a class="header" href="#unsupported-file-extension">"Unsupported file extension"</a></h3>
+<p><strong>Solution</strong>: Use a supported extension</p>
+<pre><code class="language-bash"># Supported
+porters execute main.c      # ✅
+porters execute main.cpp    # ✅
+porters execute main.cxx    # ✅
+
+# Not supported
+porters execute main.h      # ❌ Header files
+porters execute main.txt    # ❌ Not C/C++
+</code></pre>
+<h3 id="compilation-failed"><a class="header" href="#compilation-failed">"Compilation failed"</a></h3>
+<p><strong>Solution</strong>: Check compiler error messages</p>
+<pre><code class="language-bash"># Add warnings for better diagnostics
+[run]
+compiler-flags = ["-Wall", "-Wextra"]
+</code></pre>
+<h3 id="missing-includes"><a class="header" href="#missing-includes">"Missing includes"</a></h3>
+<p><strong>Solution</strong>: Ensure dependencies are synced</p>
+<pre><code class="language-bash"># If using porters.toml with dependencies
+porters sync
+
+# Then execute
+porters execute main.cpp
+</code></pre>
+<h2 id="performance-tips"><a class="header" href="#performance-tips">Performance Tips</a></h2>
+<h3 id="cache-compilation-results"><a class="header" href="#cache-compilation-results">Cache Compilation Results</a></h3>
+<p>Porters caches compiled binaries in <code>~/.porters/cache/</code> (Linux/macOS) or <code>%USERPROFILE%\.porters\cache\</code> (Windows).</p>
+<p>The cache is automatically managed - binaries are recompiled when:</p>
+<ul>
+<li>Source file changes</li>
+<li>Dependencies change</li>
+<li>Compiler flags change</li>
+</ul>
+<h3 id="for-repeated-execution"><a class="header" href="#for-repeated-execution">For Repeated Execution</a></h3>
+<p>If you're running the same file many times:</p>
+<p><strong>Option 1: Keep using execute</strong> (cached after first run)</p>
+<pre><code class="language-bash">$ porters execute test.c  # Compiles
+$ porters execute test.c  # Uses cache (fast!)
+</code></pre>
+<p><strong>Option 2: Use a project</strong> (fastest for repeated use)</p>
+<pre><code class="language-bash">$ porters init
+$ porters build
+$ porters run    # Very fast!
+$ porters run    # Very fast!
+</code></pre>
+<h2 id="advanced-usage"><a class="header" href="#advanced-usage">Advanced Usage</a></h2>
+<h3 id="custom-compiler-flags"><a class="header" href="#custom-compiler-flags">Custom Compiler Flags</a></h3>
+<pre><code class="language-toml">[run]
+compiler-flags = [
+    "-std=c++20",      # Use C++20 standard
+    "-O3",             # Maximum optimization
+    "-march=native",   # CPU-specific optimizations
+    "-Wall",           # All warnings
+    "-Wextra",         # Extra warnings
+    "-Werror",         # Treat warnings as errors
+]
+</code></pre>
+<h3 id="cross-compilation-1"><a class="header" href="#cross-compilation-1">Cross-Compilation</a></h3>
+<p>For cross-compilation, use <code>porters build</code> instead:</p>
+<pre><code class="language-bash"># Build for different platforms
+porters build --linux
+porters build --windows
+porters build --macos
+porters build --all-platforms
+</code></pre>
+<p><code>porters execute</code> uses your local compiler for the current platform only.</p>
+<h3 id="integration-with-scripts"><a class="header" href="#integration-with-scripts">Integration with Scripts</a></h3>
+<p>Use <code>porters execute</code> in shell scripts:</p>
+<pre><code class="language-bash">#!/bin/bash
+# compile_and_test.sh
+
+# Execute C program
+if porters execute test.c --self-test; then
+    echo "✓ Tests passed"
+else
+    echo "✗ Tests failed"
+    exit 1
+fi
+</code></pre>
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p><strong><code>porters execute</code> is the fastest way to run C/C++ code:</strong></p>
+<ol>
+<li>✅ <strong>No configuration</strong> - Works immediately</li>
+<li>✅ <strong>No project setup</strong> - Execute files anywhere</li>
+<li>✅ <strong>Automatic dependencies</strong> - Reads <code>porters.toml</code> if present</li>
+<li>✅ <strong>All C/C++ extensions</strong> - <code>.c</code>, <code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code></li>
+<li>✅ <strong>Smart compiler detection</strong> - Finds gcc, g++, clang, clang++</li>
+<li>✅ <strong>One command</strong> - Compiles and runs instantly</li>
+</ol>
+<p><strong>Perfect for:</strong></p>
+<ul>
+<li>Quick prototyping</li>
+<li>Code testing</li>
+<li>Single-file programs</li>
+<li>Learning C/C++</li>
+<li>Code demonstrations</li>
+</ul>
+<p><strong>For larger projects, use:</strong></p>
+<ul>
+<li><code>porters build</code> - Compile entire project</li>
+<li><code>porters run</code> - Execute compiled binary</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="overview-1"><a class="header" href="#overview-1">Overview</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="basic-usage-2"><a class="header" href="#basic-usage-2">Basic Usage</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="supported-file-extensions-1"><a class="header" href="#supported-file-extensions-1">Supported File Extensions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="examples-2"><a class="header" href="#examples-2">Examples</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="optional-configuration-1"><a class="header" href="#optional-configuration-1">Optional Configuration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="publishing"><a class="header" href="#publishing">Publishing</a></h1>
+<p>Publish your C/C++ projects to GitHub releases.</p>
+<h2 id="prerequisites-2"><a class="header" href="#prerequisites-2">Prerequisites</a></h2>
+<ol>
+<li>GitHub repository configured in <code>porters.toml</code>:</li>
+</ol>
+<pre><code class="language-toml">[project]
+repository = "https://github.com/username/project"
+</code></pre>
+<ol start="2">
+<li>GitHub Personal Access Token:
+<ul>
+<li>Create at <a href="https://github.com/settings/tokens">github.com/settings/tokens</a></li>
+<li>Required scopes: <code>repo</code></li>
+</ul>
+</li>
+</ol>
+<h2 id="publishing-a-release"><a class="header" href="#publishing-a-release">Publishing a Release</a></h2>
+<pre><code class="language-bash">porters publish --version 1.0.0
+</code></pre>
+<p>With token:</p>
+<pre><code class="language-bash">porters publish --version 1.0.0 --token ghp_xxxxx
+</code></pre>
+<p>Or set environment variable:</p>
+<pre><code class="language-bash">export GITHUB_TOKEN=ghp_xxxxx
+porters publish --version 1.0.0
+</code></pre>
+<h2 id="what-gets-published"><a class="header" href="#what-gets-published">What Gets Published</a></h2>
+<ol>
+<li>Creates Git tag (e.g., <code>v1.0.0</code>)</li>
+<li>Builds release binaries</li>
+<li>Creates GitHub release</li>
+<li>Uploads artifacts:
+<ul>
+<li>Source tarball</li>
+<li>Platform-specific binaries</li>
+<li><code>porters.toml</code></li>
+</ul>
+</li>
+</ol>
+<h2 id="version-management"><a class="header" href="#version-management">Version Management</a></h2>
+<h3 id="semantic-versioning"><a class="header" href="#semantic-versioning">Semantic Versioning</a></h3>
+<p>Follow <a href="https://semver.org/">SemVer</a>:</p>
+<ul>
+<li><strong>Major</strong> (1.0.0): Breaking changes</li>
+<li><strong>Minor</strong> (0.1.0): New features, backward-compatible</li>
+<li><strong>Patch</strong> (0.0.1): Bug fixes</li>
+</ul>
+<h3 id="updating-version"><a class="header" href="#updating-version">Updating Version</a></h3>
+<p>Update in <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[project]
+version = "1.2.3"
+</code></pre>
+<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
+<ul>
+<li><a href="./configuration.html">Configuration</a></li>
+<li><a href="./commands.html">Command Reference</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="github-releases"><a class="header" href="#github-releases">GitHub Releases</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="version-management-1"><a class="header" href="#version-management-1">Version Management</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="extension-system"><a class="header" href="#extension-system">Extension System</a></h1>
+<p>Porters features a powerful extension system that allows you to create custom functionality and share it with others.</p>
+<h2 id="what-are-extensions"><a class="header" href="#what-are-extensions">What are Extensions?</a></h2>
+<p>Extensions are plugins that can:</p>
+<ul>
+<li>Hook into build lifecycle events (pre-build, post-build, pre-install, post-install)</li>
+<li>Add custom commands to Porters</li>
+<li>Extend functionality for specific build systems</li>
+<li>Automate project-specific tasks</li>
+</ul>
+<h2 id="installing-extensions"><a class="header" href="#installing-extensions">Installing Extensions</a></h2>
+<p><strong>Important</strong>: Extensions are <strong>user-installed</strong> and managed locally. Porters does not automatically download extensions from crates.io or any package registry. You install extensions manually and Porters loads them from your local installation.</p>
+<h3 id="manual-installation-recommended"><a class="header" href="#manual-installation-recommended">Manual Installation (Recommended)</a></h3>
+<p>Install extensions to <code>~/.porters/extensions/&lt;extension-name&gt;/</code>:</p>
+<pre><code class="language-bash"># 1. Create extensions directory if it doesn't exist
+mkdir -p ~/.porters/extensions
+
+# 2. Clone extension repository
+cd ~/.porters/extensions
+git clone https://github.com/user/porters-ext-myext my-extension
+
+# 3. Porters automatically loads all extensions from this directory
+</code></pre>
+<h3 id="from-git-via-porters"><a class="header" href="#from-git-via-porters">From Git (via Porters)</a></h3>
+<p>Porters can help you clone extensions:</p>
+<pre><code class="language-bash">porters extension install my-extension --git https://github.com/user/porters-ext-myext
+</code></pre>
+<p>This clones the repository to <code>~/.porters/extensions/my-extension/</code>.</p>
+<h3 id="from-local-path"><a class="header" href="#from-local-path">From Local Path</a></h3>
+<p>Link a local extension directory:</p>
+<pre><code class="language-bash">porters extension install my-extension --path ./path/to/extension
+</code></pre>
+<p>This creates a copy or symlink in <code>~/.porters/extensions/</code>.</p>
+<h3 id="auto-load-from-configuration"><a class="header" href="#auto-load-from-configuration">Auto-Load from Configuration</a></h3>
+<p>List extensions in <code>porters.toml</code> to ensure they're loaded when Porters runs:</p>
+<pre><code class="language-toml"># Extensions to auto-load (must be installed in ~/.porters/extensions/)
+extensions = [
+    "my-extension",
+    "another-extension",
+    "formatter"
+]
+</code></pre>
+<p><strong>Note</strong>: This does NOT install extensions. It only tells Porters which installed extensions to load. You must install extensions manually first.</p>
+<h2 id="extension-installation-workflow"><a class="header" href="#extension-installation-workflow">Extension Installation Workflow</a></h2>
+<p><strong>Typical workflow for using an extension:</strong></p>
+<ol>
+<li><strong>Find Extension</strong>: Browse GitHub, documentation, or community recommendations</li>
+<li><strong>Install Manually</strong>: Clone to <code>~/.porters/extensions/&lt;name&gt;/</code></li>
+<li><strong>Configure (Optional)</strong>: Add to <code>extensions</code> array in <code>porters.toml</code></li>
+<li><strong>Use</strong>: Extension hooks and commands are now available</li>
+</ol>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash"># 1. Install manually
+cd ~/.porters/extensions
+git clone https://github.com/user/porters-formatter formatter
+
+# 2. Add to porters.toml (optional)
+echo 'extensions = ["formatter"]' &gt;&gt; porters.toml
+
+# 3. Use extension commands
+porters format
+</code></pre>
+<h2 id="creating-extensions"><a class="header" href="#creating-extensions">Creating Extensions</a></h2>
+<h3 id="generate-extension-template"><a class="header" href="#generate-extension-template">Generate Extension Template</a></h3>
+<pre><code class="language-bash">porters extension create my-awesome-extension
+</code></pre>
+<p>This creates a new extension directory with the following structure:</p>
+<pre><code>my-awesome-extension/
+├── extension.toml      # Extension manifest
+├── README.md          # Documentation
+└── hooks/             # Hook scripts
+    └── example.sh
+</code></pre>
+<h3 id="extension-manifest-extensiontoml"><a class="header" href="#extension-manifest-extensiontoml">Extension Manifest (<code>extension.toml</code>)</a></h3>
+<pre><code class="language-toml">[package]
+name = "my-awesome-extension"
+version = "0.1.0"
+description = "My awesome Porters extension"
+authors = ["Your Name &lt;you@example.com&gt;"]
+license = "MIT"
+repository = "https://github.com/user/porters-ext-myext"
+homepage = "https://example.com"
+
+[hooks]
+pre-build = "hooks/pre_build.sh"
+post-build = "hooks/post_build.sh"
+pre-install = "hooks/pre_install.sh"
+post-install = "hooks/post_install.sh"
+
+[[commands]]
+name = "custom-command"
+description = "My custom command"
+script = "scripts/custom.sh"
+</code></pre>
+<h2 id="extension-hooks"><a class="header" href="#extension-hooks">Extension Hooks</a></h2>
+<p>Extensions can hook into various lifecycle events:</p>
+<h3 id="build-hooks"><a class="header" href="#build-hooks">Build Hooks</a></h3>
+<pre><code class="language-toml">[hooks]
+pre-build = "hooks/pre_build.sh"   # Run before building
+post-build = "hooks/post_build.sh" # Run after building
+</code></pre>
+<p>Example pre-build hook (<code>hooks/pre_build.sh</code>):</p>
+<pre><code class="language-bash">#!/bin/sh
+echo "🔧 Running pre-build checks..."
+
+# Check for required tools
+command -v cmake &gt;/dev/null 2&gt;&amp;1 || {
+    echo "❌ CMake is required but not installed"
+    exit 1
+}
+
+# Generate build files
+cmake -B build -S .
+
+echo "✅ Pre-build complete"
+</code></pre>
+<h3 id="install-hooks"><a class="header" href="#install-hooks">Install Hooks</a></h3>
+<pre><code class="language-toml">[hooks]
+pre-install = "hooks/pre_install.sh"   # Run before installing dependencies
+post-install = "hooks/post_install.sh" # Run after installing dependencies
+</code></pre>
+<p>Example post-install hook:</p>
+<pre><code class="language-bash">#!/bin/sh
+echo "📦 Post-install: Setting up environment..."
+
+# Copy configuration files
+cp config.template.toml config.toml
+
+# Set permissions
+chmod +x scripts/*.sh
+
+echo "✅ Post-install complete"
+</code></pre>
+<h2 id="custom-commands"><a class="header" href="#custom-commands">Custom Commands</a></h2>
+<p>Extensions can add new commands to Porters:</p>
+<pre><code class="language-toml">[[commands]]
+name = "lint"
+description = "Run code linting"
+script = "scripts/lint.sh"
+
+[[commands]]
+name = "format"
+description = "Format code"
+script = "scripts/format.sh"
+</code></pre>
+<p>Usage:</p>
+<pre><code class="language-bash">porters lint     # Runs the extension's lint command
+porters format   # Runs the extension's format command
+</code></pre>
+<h2 id="extension-examples"><a class="header" href="#extension-examples">Extension Examples</a></h2>
+<h3 id="example-1-code-formatter-extension"><a class="header" href="#example-1-code-formatter-extension">Example 1: Code Formatter Extension</a></h3>
+<pre><code class="language-toml"># extension.toml
+name = "porters-format"
+version = "0.1.0"
+description = "Code formatting extension for C/C++"
+
+[[commands]]
+name = "format"
+description = "Format C/C++ code with clang-format"
+script = "scripts/format.sh"
+</code></pre>
+<pre><code class="language-bash"># scripts/format.sh
+#!/bin/sh
+find src -name "*.c" -o -name "*.cpp" -o -name "*.h" | xargs clang-format -i
+echo "✅ Code formatted!"
+</code></pre>
+<h3 id="example-2-documentation-generator"><a class="header" href="#example-2-documentation-generator">Example 2: Documentation Generator</a></h3>
+<pre><code class="language-toml">name = "porters-docs"
+version = "0.1.0"
+description = "Generate documentation with Doxygen"
+
+[hooks]
+post-build = "hooks/generate_docs.sh"
+
+[[commands]]
+name = "docs"
+description = "Generate documentation"
+script = "scripts/docs.sh"
+</code></pre>
+<h3 id="example-3-testing-extension"><a class="header" href="#example-3-testing-extension">Example 3: Testing Extension</a></h3>
+<pre><code class="language-toml">name = "porters-test"
+version = "0.1.0"
+description = "Enhanced testing utilities"
+
+[[commands]]
+name = "test-all"
+description = "Run all tests with coverage"
+script = "scripts/test_coverage.sh"
+
+[[commands]]
+name = "test-watch"
+description = "Watch for changes and re-run tests"
+script = "scripts/test_watch.sh"
+</code></pre>
+<h2 id="publishing-extensions"><a class="header" href="#publishing-extensions">Publishing Extensions</a></h2>
+<h3 id="1-prepare-for-publishing"><a class="header" href="#1-prepare-for-publishing">1. Prepare for Publishing</a></h3>
+<p>Ensure your extension has:</p>
+<ul>
+<li>A complete <code>extension.toml</code> manifest</li>
+<li>A <code>README.md</code> with usage instructions</li>
+<li>Proper license file</li>
+<li>Working hooks/scripts</li>
+</ul>
+<h3 id="2-create-a-rust-crate"><a class="header" href="#2-create-a-rust-crate">2. Create a Rust Crate</a></h3>
+<p>Since extensions can be published to crates.io, create a minimal Rust wrapper:</p>
+<pre><code class="language-bash">cd my-extension
+cargo init --lib
+</code></pre>
+<p>Edit <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[package]
+name = "porters-ext-myext"
+version = "0.1.0"
+description = "My Porters extension"
+authors = ["Your Name &lt;you@example.com&gt;"]
+license = "MIT"
+repository = "https://github.com/user/porters-ext-myext"
+
+[package.metadata.porters]
+extension = true
+</code></pre>
+<p>Add extension files to the package:</p>
+<pre><code class="language-toml">[package]
+include = [
+    "extension.toml",
+    "hooks/**/*",
+    "scripts/**/*",
+    "README.md",
+]
+</code></pre>
+<h3 id="3-publish-to-cratesio"><a class="header" href="#3-publish-to-cratesio">3. Publish to crates.io</a></h3>
+<pre><code class="language-bash">cargo publish
+</code></pre>
+<h3 id="4-users-can-now-install"><a class="header" href="#4-users-can-now-install">4. Users Can Now Install</a></h3>
+<pre><code class="language-bash">porters extension install porters-ext-myext
+</code></pre>
+<h2 id="managing-extensions"><a class="header" href="#managing-extensions">Managing Extensions</a></h2>
+<h3 id="list-installed-extensions"><a class="header" href="#list-installed-extensions">List Installed Extensions</a></h3>
+<pre><code class="language-bash">porters extension list
+</code></pre>
+<p>Output:</p>
+<pre><code>📦 Installed Extensions:
+
+  porters-format v1.0.0
+    Code formatting extension for C/C++
+    Repository: https://github.com/user/porters-format
+
+  porters-docs v0.5.0
+    Generate documentation with Doxygen
+    Repository: https://github.com/user/porters-docs
+</code></pre>
+<h3 id="uninstall-extension"><a class="header" href="#uninstall-extension">Uninstall Extension</a></h3>
+<pre><code class="language-bash">porters extension uninstall my-extension
+</code></pre>
+<h2 id="extension-best-practices"><a class="header" href="#extension-best-practices">Extension Best Practices</a></h2>
+<h3 id="1-error-handling"><a class="header" href="#1-error-handling">1. Error Handling</a></h3>
+<p>Always provide clear error messages:</p>
+<pre><code class="language-bash">#!/bin/sh
+if ! command -v tool &gt;/dev/null 2&gt;&amp;1; then
+    echo "❌ ERROR: 'tool' is required but not installed"
+    echo "   Install with: apt install tool"
+    exit 1
+fi
+</code></pre>
+<h3 id="2-cross-platform-support"><a class="header" href="#2-cross-platform-support">2. Cross-Platform Support</a></h3>
+<p>Use POSIX-compliant shell scripts or provide platform-specific scripts:</p>
+<pre><code class="language-toml">[hooks.linux]
+pre-build = "hooks/linux/pre_build.sh"
+
+[hooks.windows]
+pre-build = "hooks/windows/pre_build.bat"
+
+[hooks.macos]
+pre-build = "hooks/macos/pre_build.sh"
+</code></pre>
+<h3 id="3-environment-variables"><a class="header" href="#3-environment-variables">3. Environment Variables</a></h3>
+<p>Extensions have access to project context:</p>
+<pre><code class="language-bash">#!/bin/sh
+# Available environment variables:
+# PORTERS_PROJECT_DIR - Project root directory
+# PORTERS_BUILD_DIR - Build directory
+# PORTERS_PROJECT_NAME - Project name from porters.toml
+
+echo "Building ${PORTERS_PROJECT_NAME}..."
+</code></pre>
+<h3 id="4-dependency-management"><a class="header" href="#4-dependency-management">4. Dependency Management</a></h3>
+<p>Document required tools in your README:</p>
+<pre><code class="language-markdown">## Requirements
+
+- clang-format &gt;= 10.0
+- cmake &gt;= 3.15
+- python3
+
+## Installation
+
+Ubuntu/Debian:
+apt install clang-format cmake python3
+
+macOS:
+brew install clang-format cmake python3
+</code></pre>
+<h3 id="5-versioning"><a class="header" href="#5-versioning">5. Versioning</a></h3>
+<p>Follow semantic versioning:</p>
+<ul>
+<li>MAJOR: Breaking changes</li>
+<li>MINOR: New features (backward compatible)</li>
+<li>PATCH: Bug fixes</li>
+</ul>
+<h2 id="advanced-features"><a class="header" href="#advanced-features">Advanced Features</a></h2>
+<h3 id="extension-configuration"><a class="header" href="#extension-configuration">Extension Configuration</a></h3>
+<p>Extensions can have their own configuration in <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[extensions.my-extension]
+enabled = true
+config-file = ".my-extension.yml"
+options = { verbose = true, strict = false }
+</code></pre>
+<p>Access in scripts:</p>
+<pre><code class="language-bash">#!/bin/sh
+# Check if extension is enabled
+if [ "${MY_EXT_ENABLED}" = "true" ]; then
+    # Run extension logic
+fi
+</code></pre>
+<h3 id="chaining-extensions"><a class="header" href="#chaining-extensions">Chaining Extensions</a></h3>
+<p>Multiple extensions can hook into the same lifecycle event. They execute in installation order.</p>
+<h3 id="extension-dependencies"><a class="header" href="#extension-dependencies">Extension Dependencies</a></h3>
+<p>Extensions can depend on other extensions:</p>
+<pre><code class="language-toml">[dependencies]
+porters-base-utils = "1.0"
+porters-cmake-helpers = "0.5"
+</code></pre>
+<h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
+<h3 id="extension-not-found"><a class="header" href="#extension-not-found">Extension Not Found</a></h3>
+<pre><code class="language-bash">❌ Extension 'my-ext' not found
+</code></pre>
+<p><strong>Solution</strong>: Check the extension name and ensure it's published to crates.io or use full git URL.</p>
+<h3 id="hook-script-not-executable"><a class="header" href="#hook-script-not-executable">Hook Script Not Executable</a></h3>
+<pre><code class="language-bash">❌ Permission denied: hooks/pre_build.sh
+</code></pre>
+<p><strong>Solution</strong>: Make scripts executable:</p>
+<pre><code class="language-bash">chmod +x hooks/*.sh
+</code></pre>
+<h3 id="extension-conflicts"><a class="header" href="#extension-conflicts">Extension Conflicts</a></h3>
+<pre><code class="language-bash">⚠️  Warning: Multiple extensions define command 'build'
+</code></pre>
+<p><strong>Solution</strong>: Uninstall conflicting extensions or rename commands.</p>
+<h2 id="community-extensions"><a class="header" href="#community-extensions">Community Extensions</a></h2>
+<p>Popular Porters extensions:</p>
+<ul>
+<li><strong>porters-format</strong>: Code formatting with clang-format</li>
+<li><strong>porters-lint</strong>: Static analysis with clang-tidy</li>
+<li><strong>porters-docs</strong>: Documentation generation</li>
+<li><strong>porters-test</strong>: Enhanced testing utilities</li>
+<li><strong>porters-cmake</strong>: CMake project helpers</li>
+<li><strong>porters-conan</strong>: Conan integration</li>
+<li><strong>porters-vcpkg</strong>: vcpkg integration</li>
+</ul>
+<h2 id="contributing"><a class="header" href="#contributing">Contributing</a></h2>
+<p>Create useful extensions and share them with the community! Submit your extension to <a href="https://github.com/muhammad-fiaz/awesome-porters">awesome-porters</a> to be featured.</p>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="./api-reference.html">Extension API Reference</a></li>
+<li><a href="https://github.com/muhammad-fiaz/porters-extensions">Extension Examples</a></li>
+<li><a href="./publishing.html">Publishing Guide</a></li>
+<li><a href="https://github.com/muhammad-fiaz/Porters/discussions">Community Forum</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="what-are-extensions-1"><a class="header" href="#what-are-extensions-1">What are Extensions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="installing-extensions-1"><a class="header" href="#installing-extensions-1">Installing Extensions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="creating-extensions-1"><a class="header" href="#creating-extensions-1">Creating Extensions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="publishing-extensions-1"><a class="header" href="#publishing-extensions-1">Publishing Extensions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
+<p>Complete reference for Porters configuration files.</p>
+<h2 id="porterstoml-1"><a class="header" href="#porterstoml-1">porters.toml</a></h2>
+<p>Main project configuration file.</p>
+<h3 id="complete-example"><a class="header" href="#complete-example">Complete Example</a></h3>
+<pre><code class="language-toml">[project]
+name = "my-project"
+version = "1.0.0"
+description = "My awesome C++ project"
+license = "Apache-2.0"
+authors = ["Your Name &lt;you@example.com&gt;"]
+repository = "https://github.com/username/my-project"
+project-type = "application"  # or "library"
+entry_point = "src/main"
+platforms = ["windows", "macos", "linux"]
+keywords = ["application", "c", "cpp"]
+readme = "README.md"
+
+# Tool version requirements (like Python's requirements.txt)
+[requires]
+cpp = "&gt;=17"           # C++ standard version
+cmake = "&gt;=3.20"       # CMake version
+gcc = "&gt;=9.0"          # GCC version
+clang = "&gt;=12.0"       # Clang version (alternative to gcc)
+ninja = "&gt;=1.10"       # Ninja build tool version
+make = "&gt;=4.0"         # Make version
+meson = "&gt;=0.60"       # Meson version
+bazel = "&gt;=5.0"        # Bazel version
+conan = "&gt;=1.50"       # Conan version
+vcpkg = "*"            # Any version of vcpkg
+
+# Extensions to auto-install from crates.io
+extensions = [
+    "porters-format",    # Code formatter extension
+    "porters-lint",      # Linting extension
+    "porters-doc"        # Documentation generator
+]
+
+[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt", tag = "10.1.1" }
+spdlog = { git = "https://github.com/gabime/spdlog", branch = "v1.x" }
+mylib = { path = "../mylib" }
+
+[dev-dependencies]
+catch2 = { git = "https://github.com/catchorg/Catch2" }
+benchmark = { git = "https://github.com/google/benchmark" }
+
+[optional-dependencies]
+zlib = { git = "https://github.com/madler/zlib" }
+
+[build]
+system = "cmake"
+options = ["-DBUILD_SHARED_LIBS=ON"]
+
+[build.env]
+CC = "clang"
+CXX = "clang++"
+
+# Build lifecycle scripts
+[build.scripts]
+pre-build = "echo Building..."
+post-build = "strip build/myapp"
+pre-install = "echo Installing..."
+post-install = "echo Done!"
+
+# Custom CLI commands
+[[commands]]
+name = "format"
+description = "Format source code"
+script = "clang-format -i src/**/*.cpp"
+
+[[commands]]
+name = "docs"
+description = "Generate documentation"
+script = "doxygen Doxyfile"
+[commands.env]
+DOXYGEN_OUTPUT = "docs/html"
+
+# Named script shortcuts
+[scripts]
+test-all = "cargo build &amp;&amp; cargo test"
+deploy = "./deploy.sh production"
+</code></pre>
+<h3 id="project-section"><a class="header" href="#project-section">Project Section</a></h3>
+<p>Required fields:</p>
+<ul>
+<li><code>name</code> - Project name</li>
+<li><code>version</code> - Semantic version (e.g., "1.0.0")</li>
+</ul>
+<p>Optional fields:</p>
+<ul>
+<li><code>description</code> - Project description</li>
+<li><code>license</code> - SPDX license identifier</li>
+<li><code>authors</code> - List of authors</li>
+<li><code>repository</code> - Git repository URL</li>
+<li><code>project-type</code> - "application" or "library"</li>
+<li><code>entry_point</code> - Main entry point</li>
+<li><code>platforms</code> - Target platforms</li>
+<li><code>keywords</code> - Search keywords</li>
+<li><code>readme</code> - README file path</li>
+</ul>
+<h3 id="dependencies-section"><a class="header" href="#dependencies-section">Dependencies Section</a></h3>
+<p>Dependency sources:</p>
+<p><strong>Git (HTTPS):</strong></p>
+<pre><code class="language-toml">fmt = { git = "https://github.com/fmtlib/fmt" }
+</code></pre>
+<p><strong>Git (SSH):</strong></p>
+<pre><code class="language-toml">spdlog = { git = "git@github.com:gabime/spdlog.git" }
+</code></pre>
+<p><strong>With version constraints:</strong></p>
+<pre><code class="language-toml">fmt = { git = "https://github.com/fmtlib/fmt", tag = "10.1.1" }
+boost = { git = "https://github.com/boostorg/boost", branch = "boost-1.80.0" }
+</code></pre>
+<p><strong>Local path:</strong></p>
+<pre><code class="language-toml">mylib = { path = "../mylib" }
+</code></pre>
+<h3 id="build-section"><a class="header" href="#build-section">Build Section</a></h3>
+<pre><code class="language-toml">[build]
+system = "cmake"  # cmake, xmake, meson, make, custom
+options = ["-DCMAKE_BUILD_TYPE=Release"]
+
+[build.env]
+CMAKE_PREFIX_PATH = "/usr/local"
+</code></pre>
+<h3 id="run-section---direct-file-execution-completely-optional"><a class="header" href="#run-section---direct-file-execution-completely-optional">Run Section - Direct File Execution (COMPLETELY OPTIONAL)</a></h3>
+<p><strong>⚠️ YOU DON'T NEED THIS SECTION!</strong></p>
+<p>The <code>porters execute</code> command works <strong>100% automatically</strong> without any configuration. This section only exists for advanced manual overrides.</p>
+<p><strong>What Works Automatically (No [run] Section Needed):</strong></p>
+<ul>
+<li>✅ <strong>Compiler Detection</strong> - Finds gcc/clang/g++/clang++ in your PATH</li>
+<li>✅ <strong>Dependency Resolution</strong> - Reads dependencies from <code>[dependencies]</code></li>
+<li>✅ <strong>Include Paths</strong> - Automatically adds <code>-I</code> for all dependency includes</li>
+<li>✅ <strong>Library Paths</strong> - Automatically adds <code>-L</code> for all dependency libraries</li>
+<li>✅ <strong>File Type Detection</strong> - <code>.c</code> → C compiler, <code>.cpp</code> → C++ compiler</li>
+<li>✅ <strong>Supported Extensions</strong> - <code>.c</code>, <code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code>, <code>.C</code>, <code>.CPP</code></li>
+</ul>
+<p><strong>Zero Configuration Example:</strong></p>
+<pre><code class="language-bash"># No porters.toml needed at all!
+porters execute hello.c
+
+# With dependencies - automatically resolved
+porters execute my_app.cpp
+</code></pre>
+<p><strong>Optional Manual Overrides (Only If You Need Custom Behavior):</strong></p>
+<pre><code class="language-toml">[run]
+# Extra include directories (beyond automatic dependency includes)
+include-dirs = ["./include", "./extra/include"]
+
+# Exclude patterns (rarely needed)
+exclude-patterns = ["test_*", "*_backup.c"]
+
+# Compiler flags (only if you want warnings, optimizations, etc.)
+compiler-flags = ["-Wall", "-O2", "-std=c17"]
+
+# Linker flags (only if you need extra libraries)
+linker-flags = ["-lm", "-lpthread"]
+
+# Override compiler (only if you need a specific one)
+c-compiler = "clang"    # Default: auto-detect
+cpp-compiler = "clang++"  # Default: auto-detect
+</code></pre>
+<p><strong>When You Might Use [run]:</strong></p>
+<ul>
+<li>Adding project-specific include paths not in dependencies</li>
+<li>Setting custom compiler warnings or optimizations</li>
+<li>Linking additional system libraries</li>
+<li>Using a specific compiler version</li>
+</ul>
+<h3 id="tool-version-requirements"><a class="header" href="#tool-version-requirements">Tool Version Requirements</a></h3>
+<p>Specify minimum versions for build tools and compilers. Porters will validate these before building.</p>
+<p><strong>Supported version operators:</strong></p>
+<ul>
+<li><code>*</code> - Any version</li>
+<li><code>&gt;=1.2.3</code> - Greater than or equal</li>
+<li><code>&lt;=1.2.3</code> - Less than or equal</li>
+<li><code>&gt;1.2.3</code> - Greater than</li>
+<li><code>&lt;1.2.3</code> - Less than</li>
+<li><code>^1.2.3</code> - Compatible (allows patch and minor updates, ~= caret in Cargo)</li>
+<li><code>~1.2.3</code> - Tilde (allows patch updates only)</li>
+<li><code>1.2.3</code> or <code>==1.2.3</code> - Exact version</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-toml">[requires]
+c = "&gt;=11"              # C11 or later
+cpp = "&gt;=17"            # C++17 or later
+cmake = "&gt;=3.20"        # CMake 3.20+
+gcc = "&gt;=9.0"           # GCC 9.0+
+clang = "^12.0"         # Clang 12.x (allows 12.1, 12.2, but not 13.0)
+ninja = "~1.10.0"       # Ninja 1.10.x (allows 1.10.1, but not 1.11)
+make = "*"              # Any Make version
+meson = "&gt;=0.60"        # Meson 0.60+
+bazel = "&gt;=5.0"         # Bazel 5.0+
+conan = "&gt;=1.50"        # Conan 1.50+
+vcpkg = "*"             # Any vcpkg version
+xmake = "&gt;=2.7"         # XMake 2.7+
+msvc = "&gt;=19.30"        # MSVC 19.30+ (Visual Studio 2022)
+</code></pre>
+<p><strong>Version check output:</strong></p>
+<pre><code class="language-bash">$ porters build
+✓ Checking tool version requirements...
+  ✓ C++ Compiler: requires &gt;=17, found 20
+  ✓ CMake: requires &gt;=3.20, found 3.25.1
+  ✓ GCC: requires &gt;=9.0, found 11.3.0
+✓ All tool requirements satisfied ✓
+</code></pre>
+<p><strong>If requirements not met:</strong></p>
+<pre><code class="language-bash">$ porters build
+✓ Checking tool version requirements...
+
+🤔 Oops! Unsatisfied version requirements:
+  ❌ C++: requires &gt;=17, found 14
+  ❌ CMake: requires &gt;=3.20, found 3.15.0
+  ❌ GCC: requires &gt;=9.0, but tool not found in PATH
+
+Please install or upgrade the required tools to continue.
+See: https://github.com/muhammad-fiaz/porters#requirements
+</code></pre>
+<h3 id="extension-auto-install"><a class="header" href="#extension-auto-install">Extension Auto-Install</a></h3>
+<p>Automatically install extensions from crates.io when running <code>porters sync</code>.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-toml">extensions = [
+    "porters-format",      # Code formatter
+    "porters-lint",        # Linter
+    "porters-doc",         # Documentation generator
+    "porters-test-runner"  # Test runner
+]
+</code></pre>
+<p>Extensions are always installed in the <code>dev</code> category and can be published to crates.io by anyone.</p>
+<p><strong>During sync:</strong></p>
+<pre><code class="language-bash">$ porters sync
+✓ Syncing dependencies from porters.toml
+ℹ Auto-installing 3 extensions from config...
+📦 Installing extension 'porters-format'...
+✓ Extension 'porters-format' installed successfully! 🔌
+📦 Extension 'porters-lint' already installed, skipping
+📦 Installing extension 'porters-doc'...
+✓ Extension 'porters-doc' installed successfully! 🔌
+</code></pre>
+<h3 id="custom-commands-1"><a class="header" href="#custom-commands-1">Custom Commands</a></h3>
+<p>Define custom CLI commands in your porters.toml for project-specific tasks.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-toml">[[commands]]
+name = "format"
+description = "Format all C++ source files"
+script = "clang-format -i src/**/*.cpp include/**/*.hpp"
+
+[[commands]]
+name = "lint"
+description = "Run clang-tidy linter"
+script = "clang-tidy src/*.cpp -- -Iinclude"
+
+[[commands]]
+name = "docs"
+description = "Generate Doxygen documentation"
+script = "doxygen Doxyfile"
+
+[commands.env]
+DOXYGEN_OUTPUT = "docs/html"
+OUTPUT_DIR = "build/docs"
+</code></pre>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">$ porters format       # Runs clang-format
+$ porters lint         # Runs clang-tidy
+$ porters docs         # Generates documentation
+</code></pre>
+<h3 id="named-scripts"><a class="header" href="#named-scripts">Named Scripts</a></h3>
+<p>Quick script shortcuts for common tasks.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-toml">[scripts]
+test-all = "cargo build &amp;&amp; cargo test --all"
+deploy-prod = "./scripts/deploy.sh production"
+clean-all = "rm -rf build ports .porters-cache"
+bench = "cargo build --release &amp;&amp; ./build/benchmark"
+</code></pre>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">$ porters run-script test-all
+$ porters run-script deploy-prod
+$ porters run-script bench
+</code></pre>
+<h3 id="dependency-checksums"><a class="header" href="#dependency-checksums">Dependency Checksums</a></h3>
+<p>Verify dependency integrity with SHA-256 checksums (automatically managed by lockfile).</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-toml">[dependencies]
+fmt = { 
+    git = "https://github.com/fmtlib/fmt", 
+    tag = "10.1.1",
+    checksum = "sha256:a1b2c3d4e5f6..."  # Optional, auto-calculated if omitted
+}
+</code></pre>
+<p>Porters automatically:</p>
+<ol>
+<li>Calculates checksums on first download</li>
+<li>Stores checksums in <code>porters.lock</code></li>
+<li>Verifies checksums on subsequent builds</li>
+</ol>
+<p><strong>Checksum mismatch:</strong></p>
+<pre><code class="language-bash">⚠️ Dependency hash mismatch for 'fmt':
+   Expected: abc123...
+   Found:    def456...
+
+This may indicate tampering or corruption. Please verify the source.
+</code></pre>
+<h2 id="global-configuration-1"><a class="header" href="#global-configuration-1">Global Configuration</a></h2>
+<p>Location:</p>
+<ul>
+<li><strong>Linux/macOS</strong>: <code>~/.porters/config.toml</code></li>
+<li><strong>Windows</strong>: <code>C:\Users\&lt;username&gt;\.porters\config.toml</code></li>
+</ul>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<pre><code class="language-toml">[settings]
+parallel_jobs = 8
+cache_enabled = true
+
+[packages.fmt]
+name = "fmt"
+version = "10.1.1"
+source = "https://github.com/fmtlib/fmt"
+install_path = "/home/user/.porters/packages/fmt"
+installed_at = "2024-01-15T10:30:00Z"
+</code></pre>
+<h2 id="lock-file-porterslock"><a class="header" href="#lock-file-porterslock">Lock File (porters.lock)</a></h2>
+<p>Auto-generated file ensuring reproducible builds.</p>
+<h3 id="format"><a class="header" href="#format">Format</a></h3>
+<pre><code class="language-toml">version = "1"
+updated_at = "2024-01-15T10:30:00Z"
+
+[dependencies.fmt]
+name = "fmt"
+version = "10.1.1"
+source = { Git = { url = "https://github.com/fmtlib/fmt", rev = "a1b2c3d" } }
+checksum = "sha256:..."
+dependencies = []
+
+[dependencies.spdlog]
+name = "spdlog"
+version = "1.12.0"
+source = { Git = { url = "https://github.com/gabime/spdlog", rev = "e4f5678" } }
+dependencies = ["fmt"]
+</code></pre>
+<p><strong>Do not edit manually.</strong> Use <code>porters lock</code> to regenerate.</p>
+<hr />
+<h2 id="transitive-dependencies"><a class="header" href="#transitive-dependencies">Transitive Dependencies</a></h2>
+<p>Porters automatically resolves dependencies-of-dependencies recursively.</p>
+<p><strong>How it works:</strong></p>
+<ol>
+<li>When you add a dependency, Porters checks if it has its own <code>porters.toml</code></li>
+<li>If found, Porters reads the dependency's dependencies</li>
+<li>This process repeats recursively to build a full dependency graph</li>
+<li>Circular dependencies are detected and reported as errors</li>
+<li>Version conflicts are detected and must be manually resolved</li>
+</ol>
+<p><strong>Example:</strong></p>
+<p>Your project's <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+mylib = { path = "../mylib" }
+</code></pre>
+<p><code>mylib</code>'s <code>porters.toml</code> (transitive dependencies):</p>
+<pre><code class="language-toml">[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt", tag = "10.1.1" }
+spdlog = { git = "https://github.com/gabime/spdlog" }
+</code></pre>
+<p>When you run <code>porters sync</code>, Porters will:</p>
+<ul>
+<li>Install <code>mylib</code> (your direct dependency)</li>
+<li>Detect <code>mylib</code> has dependencies on <code>fmt</code> and <code>spdlog</code></li>
+<li>Automatically install <code>fmt</code> and <code>spdlog</code> (transitive dependencies)</li>
+<li>Build them in the correct order: <code>fmt</code> → <code>spdlog</code> → <code>mylib</code> → <code>your-project</code></li>
+</ul>
+<p><strong>Dependency graph visualization:</strong></p>
+<pre><code class="language-bash">porters graph
+# Output:
+📦 Resolved dependency build order: fmt → spdlog → mylib
+</code></pre>
+<p><strong>Circular dependency detection:</strong></p>
+<pre><code class="language-bash">❌ Circular dependency detected involving: mylib
+
+This means there's a circular dependency chain. Check your dependency tree.
+</code></pre>
+<p><strong>Version conflict detection:</strong></p>
+<pre><code class="language-bash">❌ Dependency conflicts detected:
+  fmt requires versions: 10.1.1, 9.0.0
+
+Two dependencies require different versions of 'fmt'. You must manually resolve this conflict.
+</code></pre>
+<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
+<ul>
+<li><a href="./commands.html">Command Reference</a></li>
+<li><a href="./dependencies.html">Dependencies</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porterstoml-2"><a class="header" href="#porterstoml-2">porters.toml</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="global-configuration-2"><a class="header" href="#global-configuration-2">Global Configuration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="build-configuration-2"><a class="header" href="#build-configuration-2">Build Configuration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="command-reference-1"><a class="header" href="#command-reference-1">Command Reference</a></h1>
+<p>Complete reference for all Porters commands.</p>
+<h2 id="porters-init"><a class="header" href="#porters-init"><code>porters init</code></a></h2>
+<p>Initialize a Porters project in the current directory.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters init [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--yes, -y</code> - Use default values without prompting</li>
+</ul>
+<p><strong>Interactive Prompts:</strong></p>
+<ul>
+<li>Project name (defaults to folder name)</li>
+<li>Version (default: 0.1.0)</li>
+<li>Author name</li>
+<li>Description</li>
+<li>License (Apache-2.0, MIT, GPL, etc.)</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Detects existing C/C++ source files</li>
+<li>Auto-detects build system (CMake, XMake, Meson, Make)</li>
+<li>Creates <code>porters.toml</code> configuration</li>
+<li>Initializes cache directories</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">cd my-existing-project
+porters init
+</code></pre>
+<hr />
+<h2 id="porters-create"><a class="header" href="#porters-create"><code>porters create</code></a></h2>
+<p>Create a new Porters project.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters create &lt;NAME&gt; [OPTIONS]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;NAME&gt;</code> - Project name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--yes, -y</code> - Use default values without prompting</li>
+</ul>
+<p><strong>Interactive Prompts:</strong></p>
+<ul>
+<li>Project type (Application or Library)</li>
+<li>Language (C, C++, or Both)</li>
+<li>Library name (for libraries)</li>
+<li>Author name</li>
+<li>Email</li>
+<li>Repository URL</li>
+<li>License</li>
+<li>Build system</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Creates project directory</li>
+<li>Generates source structure (<code>src/</code>, <code>include/</code>)</li>
+<li>Creates build system files</li>
+<li>Initializes Git repository</li>
+<li>Creates <code>porters.toml</code> and README</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">porters create my-app
+porters create my-lib --yes  # Use defaults
+</code></pre>
+<hr />
+<h2 id="porters-add"><a class="header" href="#porters-add"><code>porters add</code></a></h2>
+<p>Add a dependency to the current project.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters add &lt;PACKAGE&gt; [OPTIONS]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;PACKAGE&gt;</code> - Package name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--git &lt;URL&gt;</code> - Git repository URL (HTTPS or SSH)</li>
+<li><code>--branch &lt;BRANCH&gt;</code> - Specific Git branch</li>
+<li><code>--tag &lt;TAG&gt;</code> - Specific Git tag</li>
+<li><code>--dev</code> - Add as development dependency</li>
+<li><code>--optional</code> - Add as optional dependency</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Adds dependency to <code>porters.toml</code></li>
+<li>Clones package to <code>ports/&lt;package&gt;/</code></li>
+<li>Updates <code>porters.lock</code></li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Add from Git (HTTPS)
+porters add fmt --git https://github.com/fmtlib/fmt
+
+# Add from Git (SSH)
+porters add spdlog --git git@github.com:gabime/spdlog.git
+
+# Add specific tag
+porters add fmt --git https://github.com/fmtlib/fmt --tag 10.1.1
+
+# Add as dev dependency
+porters add catch2 --git https://github.com/catchorg/Catch2 --dev
+
+# Add optional dependency
+porters add zlib --git https://github.com/madler/zlib --optional
+</code></pre>
+<hr />
+<h2 id="porters-install"><a class="header" href="#porters-install"><code>porters install</code></a></h2>
+<p>Install a package globally to <code>~/.porters/packages/</code>.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters install &lt;PACKAGE&gt; [OPTIONS]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;PACKAGE&gt;</code> - Package name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--git &lt;URL&gt;</code> - Git repository URL</li>
+<li><code>--branch &lt;BRANCH&gt;</code> - Specific Git branch</li>
+<li><code>--tag &lt;TAG&gt;</code> - Specific Git tag</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Creates <code>~/.porters/</code> directory structure</li>
+<li>Clones package to <code>~/.porters/packages/&lt;package&gt;/</code></li>
+<li>Updates global config (<code>~/.porters/config.toml</code>)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash">porters install fmt --git https://github.com/fmtlib/fmt
+porters install boost --git https://github.com/boostorg/boost --tag boost-1.80.0
+</code></pre>
+<hr />
+<h2 id="porters-sync"><a class="header" href="#porters-sync"><code>porters sync</code></a></h2>
+<p>Synchronize dependencies from <code>porters.toml</code>.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters sync [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--dev</code> - Include development dependencies</li>
+<li><code>--optional</code> - Include optional dependencies</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Reads <code>porters.toml</code></li>
+<li>Downloads missing dependencies to <code>ports/</code></li>
+<li>Resolves version constraints</li>
+<li>Updates <code>porters.lock</code></li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Sync regular dependencies
+porters sync
+
+# Sync with dev dependencies
+porters sync --dev
+
+# Sync everything
+porters sync --dev --optional
+</code></pre>
+<hr />
+<h2 id="porters-lock"><a class="header" href="#porters-lock"><code>porters lock</code></a></h2>
+<p>Update the lock file with installed dependencies.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters lock
+</code></pre>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Scans <code>ports/</code> directory</li>
+<li>Resolves current dependency versions</li>
+<li>Updates <code>porters.lock</code> with checksums and metadata</li>
+<li>Records timestamp</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">porters lock
+</code></pre>
+<hr />
+<h2 id="porters-run"><a class="header" href="#porters-run"><code>porters run</code></a></h2>
+<p>Run the compiled project executable.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters run [ARGS...]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>[ARGS...]</code> - Arguments to pass to the executable</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Locates the compiled executable from build directory</li>
+<li>Executes the program with provided arguments</li>
+<li>Displays program output</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Run without arguments
+porters run
+
+# Run with arguments
+porters run --verbose input.txt
+
+# After building
+porters build
+porters run
+</code></pre>
+<hr />
+<h2 id="porters-execute"><a class="header" href="#porters-execute"><code>porters execute</code></a></h2>
+<p>Execute a single C/C++ source file directly with <strong>zero configuration required</strong>.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters execute &lt;FILE&gt; [ARGS...]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;FILE&gt;</code> - C/C++ source file to compile and run</li>
+<li><code>[ARGS...]</code> - Arguments to pass to the compiled program</li>
+</ul>
+<p><strong>Supported File Extensions:</strong></p>
+<ul>
+<li><strong>C</strong>: <code>.c</code></li>
+<li><strong>C++</strong>: <code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code>, <code>.C</code>, <code>.CPP</code></li>
+</ul>
+<p><strong>Note</strong>: Header files (<code>.h</code>, <code>.hpp</code>, <code>.hxx</code>) cannot be compiled directly.</p>
+<p><strong>100% Automatic - No Configuration Needed:</strong></p>
+<ul>
+<li>✅ <strong>Compiler Auto-Detection</strong> - Finds gcc/clang (C) or g++/clang++ (C++)</li>
+<li>✅ <strong>Dependency Resolution</strong> - Reads <code>porters.toml</code> and adds include/lib paths automatically</li>
+<li>✅ <strong>File Type Detection</strong> - Determines C vs C++ from file extension</li>
+<li>✅ <strong>Smart Compilation</strong> - Compiles to temporary executable and runs immediately</li>
+<li>✅ <strong>Works Without porters.toml</strong> - Can execute any C/C++ file even outside a project</li>
+</ul>
+<p><strong>[run] Section - Optional Manual Overrides:</strong></p>
+<p><strong>You don't need this section!</strong> Everything works automatically. Only add if you need custom configuration.</p>
+<pre><code class="language-toml">[run]
+# Additional include directories (dependencies auto-included)
+include-dirs = ["./include", "./extra/include"]
+
+# Exclude patterns for automatic includes
+exclude-patterns = ["test_*", "*_backup.c"]
+
+# Compiler flags (optional - compiles without these)
+compiler-flags = ["-Wall", "-O2", "-std=c17"]
+
+# Linker flags (optional)
+linker-flags = ["-lm", "-lpthread"]
+
+# Override default compilers (auto-detected by default)
+c-compiler = "gcc"      # or "clang", "cc"
+cpp-compiler = "g++"    # or "clang++", "c++"
+</code></pre>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Execute C file - works immediately, no setup!
+porters execute hello.c
+
+# Execute C++ file with arguments
+porters execute main.cpp arg1 arg2
+
+# With dependencies (automatic)
+# Porters reads porters.toml and adds all dependency includes/libs
+porters execute my_program.c
+
+# Debug build (with compiler flags in porters.toml)
+porters execute --release my_app.cpp
+</code></pre>
+<p><strong>How It Works:</strong></p>
+<ol>
+<li><strong>Detect File Type</strong>: <code>.c</code> → C compiler, <code>.cpp/.cxx/.cc</code> → C++ compiler</li>
+<li><strong>Find Compiler</strong>: Searches for gcc/clang/g++/clang++ in PATH</li>
+<li><strong>Resolve Dependencies</strong>: Reads <code>porters.toml</code> [dependencies] section</li>
+<li><strong>Add Include Paths</strong>: Automatically adds <code>-I</code> flags for all dependencies</li>
+<li><strong>Add Library Paths</strong>: Automatically adds <code>-L</code> flags for dependency libs</li>
+<li><strong>Compile</strong>: Compiles to temporary executable in <code>.porters/cache/</code></li>
+<li><strong>Execute</strong>: Runs compiled program with provided arguments</li>
+</ol>
+<p><strong>Error Handling:</strong></p>
+<p>If compilation fails, Porters displays the compiler output with errors highlighted. Common issues:</p>
+<ul>
+<li>Missing compiler: Install gcc/g++ or clang/clang++</li>
+<li>Dependency not found: Run <code>porters sync</code> to download dependencies</li>
+<li>Compilation errors: Check source code and compiler output</li>
+</ul>
+<hr />
+<h2 id="porters-build"><a class="header" href="#porters-build"><code>porters build</code></a></h2>
+<p>Build the current project.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters build [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--release, -r</code> - Build in release mode (optimized)</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Detects build system from <code>porters.toml</code> or auto-detects</li>
+<li>Resolves dependencies</li>
+<li>Runs build commands (e.g., <code>cmake</code>, <code>xmake</code>, <code>meson</code>)</li>
+<li>Compiles source files</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Debug build
+porters build
+
+# Release build
+porters build --release
+</code></pre>
+<hr />
+<h2 id="porters-publish"><a class="header" href="#porters-publish"><code>porters publish</code></a></h2>
+<p>Publish project to GitHub releases.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters publish [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--version, -v &lt;VERSION&gt;</code> - Version to publish (e.g., 1.0.0)</li>
+<li><code>--token &lt;TOKEN&gt;</code> - GitHub personal access token</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Reads GitHub repository from <code>porters.toml</code></li>
+<li>Creates Git tag</li>
+<li>Builds release binaries</li>
+<li>Creates GitHub release</li>
+<li>Uploads artifacts</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">porters publish --version 1.0.0
+</code></pre>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>GitHub repository configured in <code>porters.toml</code></li>
+<li>GitHub token (via <code>--token</code> or <code>GITHUB_TOKEN</code> env variable)</li>
+</ul>
+<hr />
+<h2 id="porters-self-update"><a class="header" href="#porters-self-update"><code>porters self-update</code></a></h2>
+<p>Update Porters to the latest version.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters self-update
+</code></pre>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Fetches latest release from GitHub</li>
+<li>Downloads platform-specific binary</li>
+<li>Replaces current executable</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">porters self-update
+</code></pre>
+<hr />
+<h2 id="porters-run-script"><a class="header" href="#porters-run-script"><code>porters run-script</code></a></h2>
+<p>Run a named script defined in <code>porters.toml</code>.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters run-script &lt;NAME&gt;
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;NAME&gt;</code> - Script name defined in <code>[scripts]</code> section</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Looks up script in <code>porters.toml</code> <code>[scripts]</code> section</li>
+<li>Executes the script command in a shell</li>
+<li>Shows available scripts if name not found</li>
+<li>Cross-platform: Uses <code>cmd.exe</code> on Windows, <code>sh</code> on Unix</li>
+</ul>
+<p><strong>Configuration:</strong>
+Define scripts in <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[scripts]
+format = "clang-format -i src/**/*.{c,cpp,h,hpp}"
+lint = "cppcheck --enable=all src/"
+generate = "python scripts/codegen.py"
+</code></pre>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Run the 'format' script
+porters run-script format
+
+# Run the 'lint' script
+porters run-script lint
+
+# If script doesn't exist, shows available scripts
+porters run-script unknown
+</code></pre>
+<hr />
+<h2 id="custom-commands-2"><a class="header" href="#custom-commands-2">Custom Commands</a></h2>
+<p>Execute custom commands defined in <code>porters.toml</code>.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters &lt;command&gt; [args...]
+</code></pre>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Searches for custom commands in <code>[[commands]]</code> array</li>
+<li>Executes the matching command's script</li>
+<li>Sets environment variables from command config</li>
+<li>Falls back to showing available commands if not found</li>
+</ul>
+<p><strong>Configuration:</strong>
+Define custom commands in <code>porters.toml</code>:</p>
+<pre><code class="language-toml">[[commands]]
+name = "docs"
+script = "doxygen Doxyfile"
+
+[commands.env]
+DOXYGEN_OUTPUT = "docs/html"
+
+[[commands]]
+name = "benchmark"
+script = "cmake --build build --target benchmark &amp;&amp; ./build/benchmark"
+
+[commands.env]
+BENCHMARK_ITERATIONS = "1000"
+</code></pre>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Run custom 'docs' command
+porters docs
+
+# Run custom 'benchmark' command  
+porters benchmark
+
+# Custom commands are part of the main CLI
+porters --help  # Shows all commands including custom ones
+</code></pre>
+<hr />
+<h2 id="porters-extension"><a class="header" href="#porters-extension"><code>porters extension</code></a></h2>
+<p>Manage Porters extensions.</p>
+<h3 id="porters-extension-install"><a class="header" href="#porters-extension-install"><code>porters extension install</code></a></h3>
+<p>Install an extension.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters extension install &lt;NAME&gt; [OPTIONS]
+</code></pre>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;NAME&gt;</code> - Extension name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--git &lt;URL&gt;</code> - Install from git repository</li>
+<li><code>--path &lt;PATH&gt;</code> - Install from local path</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Install from crates.io
+porters extension install porters-format
+
+# Install from GitHub
+porters extension install my-ext --git https://github.com/user/porters-ext-myext
+
+# Install from local directory
+porters extension install my-ext --path ./my-extension
+</code></pre>
+<h3 id="porters-extension-uninstall"><a class="header" href="#porters-extension-uninstall"><code>porters extension uninstall</code></a></h3>
+<p>Uninstall an extension.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters extension uninstall &lt;NAME&gt;
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">porters extension uninstall porters-format
+</code></pre>
+<h3 id="porters-extension-list"><a class="header" href="#porters-extension-list"><code>porters extension list</code></a></h3>
+<p>List installed extensions.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters extension list
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code class="language-text">📦 Installed Extensions:
+
+  porters-format v1.0.0
+    Code formatting extension for C/C++
+    Repository: https://github.com/user/porters-format
+
+  porters-docs v0.5.0
+    Generate documentation with Doxygen
+</code></pre>
+<h3 id="porters-extension-create"><a class="header" href="#porters-extension-create"><code>porters extension create</code></a></h3>
+<p>Create a new extension template.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">porters extension create &lt;NAME&gt;
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">porters extension create my-awesome-extension
+</code></pre>
+<p>Creates:</p>
+<pre><code class="language-text">my-awesome-extension/
+├── extension.toml
+├── README.md
+└── hooks/
+    └── example.sh
+</code></pre>
+<hr />
+<h2 id="global-options"><a class="header" href="#global-options">Global Options</a></h2>
+<p>Available for all commands:</p>
+<ul>
+<li><code>--help, -h</code> - Show help message</li>
+<li><code>--version, -V</code> - Show version information</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash">porters --version
+porters build --help
+</code></pre>
+<hr />
+<h2 id="environment-variables-2"><a class="header" href="#environment-variables-2">Environment Variables</a></h2>
+<p>Porters respects these environment variables:</p>
+<ul>
+<li><code>GITHUB_TOKEN</code> - GitHub personal access token for publishing</li>
+<li><code>PORTERS_CONFIG</code> - Path to global config (default: <code>~/.porters/config.toml</code>)</li>
+<li><code>PORTERS_CACHE</code> - Path to global cache (default: <code>~/.porters/cache/</code>)</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">export GITHUB_TOKEN=ghp_xxxxxxxxxxxxx
+porters publish --version 1.0.0
+</code></pre>
+<hr />
+<h2 id="exit-codes"><a class="header" href="#exit-codes">Exit Codes</a></h2>
+<ul>
+<li><code>0</code> - Success</li>
+<li><code>1</code> - Error (build failed, dependency not found, etc.)</li>
+<li><code>2</code> - Invalid arguments</li>
+</ul>
+<hr />
+<h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next Steps</a></h2>
+<ul>
+<li>Review <a href="./configuration.html">Configuration</a></li>
+<li>Read <a href="./troubleshooting.html">Troubleshooting</a></li>
+<li>Explore <a href="./getting-started.html">Getting Started</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-init-1"><a class="header" href="#porters-init-1">porters init</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-create-1"><a class="header" href="#porters-create-1">porters create</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-add-1"><a class="header" href="#porters-add-1">porters add</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-install-1"><a class="header" href="#porters-install-1">porters install</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-sync-1"><a class="header" href="#porters-sync-1">porters sync</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-lock-1"><a class="header" href="#porters-lock-1">porters lock</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-build-1"><a class="header" href="#porters-build-1">porters build</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-run-1"><a class="header" href="#porters-run-1">porters run</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-execute-1"><a class="header" href="#porters-execute-1">porters execute</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-publish-1"><a class="header" href="#porters-publish-1">porters publish</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="porters-self-update-1"><a class="header" href="#porters-self-update-1">porters self-update</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h1>
+<p>Solutions to common issues when using Porters.</p>
+<h2 id="porters-execute---single-file-execution-issues"><a class="header" href="#porters-execute---single-file-execution-issues">porters execute - Single File Execution Issues</a></h2>
+<h3 id="execute-compiler-not-found"><a class="header" href="#execute-compiler-not-found">"Execute: Compiler not found"</a></h3>
+<p><strong>Cause</strong>: No C/C++ compiler installed or not in PATH</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Install GCC (Linux)
+sudo apt install build-essential
+
+# Install Xcode Command Line Tools (macOS)
+xcode-select --install
+
+# Install MinGW (Windows)
+# Download from mingw-w64.org
+# Or install Visual Studio with C++ tools
+
+# Verify installation
+gcc --version        # For C
+g++ --version        # For C++
+clang --version      # Alternative compiler
+clang++ --version    # Alternative C++ compiler
+</code></pre>
+<p><strong>Note</strong>: <code>porters execute</code> automatically detects compilers in this order:</p>
+<ul>
+<li><strong>C files</strong> (.c): gcc → clang → cc</li>
+<li><strong>C++ files</strong> (.cpp, .cxx, .cc, .c++, .cp, .CPP): g++ → clang++ → c++</li>
+</ul>
+<h3 id="execute-compilation-failed"><a class="header" href="#execute-compilation-failed">"Execute: Compilation failed"</a></h3>
+<p><strong>Cause</strong>: Syntax errors or missing dependencies</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># 1. Check compiler output for specific errors
+porters execute myfile.c
+
+# 2. Verify dependencies are installed (if using porters.toml)
+porters list
+
+# 3. Sync dependencies if missing
+porters sync
+
+# 4. Add custom flags ONLY if needed (rarely required)
+[run]  # This section is OPTIONAL!
+compiler-flags = ["-Wall", "-Wextra"]  # See detailed warnings
+
+# 5. Test compilation directly
+gcc -I./include myfile.c -o test
+./test
+</code></pre>
+<h3 id="execute-unsupported-file-extension"><a class="header" href="#execute-unsupported-file-extension">"Execute: Unsupported file extension"</a></h3>
+<p><strong>Cause</strong>: File extension not recognized as C/C++</p>
+<p><strong>Solution</strong>:</p>
+<p><strong>Supported Extensions:</strong></p>
+<ul>
+<li><strong>C files</strong>: <code>.c</code>, <code>.C</code></li>
+<li><strong>C++ files</strong>: <code>.cpp</code>, <code>.cxx</code>, <code>.cc</code>, <code>.c++</code>, <code>.cp</code>, <code>.CPP</code></li>
+</ul>
+<p><strong>Note</strong>: Header files (<code>.h</code>, <code>.hpp</code>, <code>.hxx</code>) cannot be executed directly - they must be included in a <code>.c</code>/<code>.cpp</code> file.</p>
+<pre><code class="language-bash"># Correct usage
+porters execute main.c      # ✅ C file
+porters execute app.cpp     # ✅ C++ file
+porters execute code.cxx    # ✅ C++ file
+porters execute prog.c++    # ✅ C++ file
+
+# Incorrect - headers cannot be compiled
+porters execute header.h    # ❌ Not supported
+porters execute header.hpp  # ❌ Not supported
+</code></pre>
+<h3 id="execute-dependency-includes-not-found"><a class="header" href="#execute-dependency-includes-not-found">"Execute: Dependency includes not found"</a></h3>
+<p><strong>Cause</strong>: Dependencies not resolved or incorrect paths</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># 1. Ensure dependencies are in porters.toml
+[dependencies]
+fmt = { git = "https://github.com/fmtlib/fmt" }
+
+# 2. Sync dependencies
+porters sync
+
+# 3. Verify dependency structure
+ls ports/fmt/include  # Should contain header files
+
+# 4. Execute - includes are AUTOMATIC
+porters execute main.cpp  # Dependencies auto-included!
+
+# 5. ONLY add manual paths if automatic detection fails (rare)
+[run]  # OPTIONAL section
+include-dirs = ["./custom/path"]
+</code></pre>
+<p><strong>Note</strong>: <code>porters execute</code> automatically finds and includes all dependency paths from <code>porters.toml</code>. Manual configuration is rarely needed.</p>
+<h3 id="execute-file-not-found"><a class="header" href="#execute-file-not-found">"Execute: File not found"</a></h3>
+<p><strong>Cause</strong>: Invalid file path or file doesn't exist</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Use relative or absolute paths
+porters execute ./src/main.c      # Relative
+porters execute /full/path/file.c # Absolute
+
+# Check file exists
+ls ./src/main.c
+
+# Ensure correct file extension
+porters execute hello.c   # C file (uses gcc/clang)
+porters execute hello.cpp # C++ file (uses g++/clang++)
+</code></pre>
+<h3 id="execute-permission-denied"><a class="header" href="#execute-permission-denied">"Execute: Permission denied"</a></h3>
+<p><strong>Cause</strong>: Compiled executable lacks execute permissions</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Linux/macOS: Porters handles this automatically
+# If issues persist, check cache directory permissions
+chmod -R u+rwx ~/.porters/cache
+
+# Windows: Run as administrator if needed
+</code></pre>
+<h3 id="execute-custom-compiler-not-used"><a class="header" href="#execute-custom-compiler-not-used">"Execute: Custom compiler not used"</a></h3>
+<p><strong>Cause</strong>: Compiler override in porters.toml not working</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-toml"># Ensure [run] section is correct (OPTIONAL - only if needed)
+[run]
+c-compiler = "clang"      # Must be in PATH
+cpp-compiler = "clang++"
+
+# Verify compiler is in PATH
+which clang    # Linux/macOS
+where clang    # Windows
+
+# Test compiler directly
+clang --version
+</code></pre>
+<p><strong>Note</strong>: This is rarely needed! <code>porters execute</code> automatically finds compilers. Only use <code>[run]</code> section for custom compiler configurations.</p>
+<h2 id="porters-run---project-execution-issues"><a class="header" href="#porters-run---project-execution-issues">porters run - Project Execution Issues</a></h2>
+<h3 id="run-build-required-before-running"><a class="header" href="#run-build-required-before-running">"Run: Build required before running"</a></h3>
+<p><strong>Cause</strong>: Project not built or binary not found</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Build project first
+porters build
+
+# Then run the compiled executable
+porters run
+
+# Or build and run in one go
+porters build &amp;&amp; porters run
+</code></pre>
+<h3 id="run-executable-not-found"><a class="header" href="#run-executable-not-found">"Run: Executable not found"</a></h3>
+<p><strong>Cause</strong>: Build didn't produce expected binary</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># 1. Check build output directory
+ls build/      # CMake default
+ls .build/     # XMake default
+ls builddir/   # Meson default
+
+# 2. Verify build succeeded
+porters build
+
+# 3. Check porters.toml for correct output path
+[build]
+output-dir = "build"  # Should match your build system
+
+# 4. Manually locate binary
+find . -name "myproject" -type f
+</code></pre>
+<h3 id="run-arguments-not-passed-to-program"><a class="header" href="#run-arguments-not-passed-to-program">"Run: Arguments not passed to program"</a></h3>
+<p><strong>Cause</strong>: Incorrect argument syntax</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Correct usage
+porters run -- arg1 arg2 arg3
+
+# Everything after -- is passed to the program
+porters run -- --flag=value input.txt
+
+# Without -- for simple args (may work)
+porters run arg1 arg2
+</code></pre>
+<p><strong>Note</strong>: Use <code>--</code> to separate porters args from program args if your program uses flags that might conflict with porters options.</p>
+<h2 id="common-issues"><a class="header" href="#common-issues">Common Issues</a></h2>
+<h3 id="porters-command-not-found"><a class="header" href="#porters-command-not-found">"porters: command not found"</a></h3>
+<p><strong>Cause</strong>: Porters not in PATH</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Check if installed
+cargo install --list | grep porters
+
+# Add cargo bin to PATH (Linux/macOS)
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' &gt;&gt; ~/.bashrc
+source ~/.bashrc
+
+# Windows: Add to PATH manually
+# C:\Users\&lt;username&gt;\.cargo\bin
+</code></pre>
+<h3 id="porterstoml-not-found"><a class="header" href="#porterstoml-not-found">"porters.toml not found"</a></h3>
+<p><strong>Cause</strong>: Running porters command outside project directory OR executing single file without project</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># For project commands (build, run, sync, etc.)
+porters init  # Initialize project first
+# OR
+cd /path/to/your/project
+
+# For single file execution - NO porters.toml needed!
+porters execute hello.c  # Works anywhere!
+</code></pre>
+<p><strong>Note</strong>: <code>porters execute</code> works without <code>porters.toml</code>. Other commands (build, run, sync) require a project.
+which clang    # Linux/macOS
+where clang    # Windows</p>
+<h1 id="test-compiler-directly"><a class="header" href="#test-compiler-directly">Test compiler directly</a></h1>
+<p>clang --version</p>
+<pre><code>
+## Common Issues
+
+### "porters: command not found"
+
+**Cause**: Porters not in PATH
+
+**Solution**:
+```bash,no_run
+# Check if installed
+cargo install --list | grep porters
+
+# Add cargo bin to PATH (Linux/macOS)
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' &gt;&gt; ~/.bashrc
+source ~/.bashrc
+
+# Windows: Add to PATH manually
+# C:\Users\&lt;username&gt;\.cargo\bin
+</code></pre>
+<h3 id="porterstoml-not-found-1"><a class="header" href="#porterstoml-not-found-1">"porters.toml not found"</a></h3>
+<p><strong>Cause</strong>: Running porters command outside project directory</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Initialize project first
+porters init
+
+# Or navigate to project directory
+cd /path/to/your/project
+</code></pre>
+<h2 id="build-errors"><a class="header" href="#build-errors">Build Errors</a></h2>
+<h3 id="build-system-not-found"><a class="header" href="#build-system-not-found">"Build system not found"</a></h3>
+<p><strong>Cause</strong>: Required build tool not installed</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Install CMake
+# macOS: brew install cmake
+# Ubuntu: sudo apt install cmake
+# Windows: Download from cmake.org
+
+# Install XMake
+# curl -fsSL https://xmake.io/shget.text | bash
+
+# Install Meson
+# pip install meson ninja
+</code></pre>
+<h3 id="compiler-not-found-1"><a class="header" href="#compiler-not-found-1">"Compiler not found"</a></h3>
+<p><strong>Cause</strong>: No C/C++ compiler installed</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Install GCC (Linux)
+sudo apt install build-essential
+
+# Install Clang (macOS)
+xcode-select --install
+
+# Install MSVC (Windows)
+# Download Visual Studio with C++ tools
+</code></pre>
+<h3 id="build-failed-with-unknown-error"><a class="header" href="#build-failed-with-unknown-error">"Build failed with unknown error"</a></h3>
+<p><strong>Cause</strong>: Various build issues</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Clean build
+rm -rf build/
+
+# Rebuild
+porters build
+
+# Check build system files
+# Ensure CMakeLists.txt, xmake.lua, etc. are valid
+</code></pre>
+<h2 id="dependency-resolution-1"><a class="header" href="#dependency-resolution-1">Dependency Resolution</a></h2>
+<h3 id="failed-to-clone-repository"><a class="header" href="#failed-to-clone-repository">"Failed to clone repository"</a></h3>
+<p><strong>Cause</strong>: Git URL incorrect or authentication required</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Test Git clone manually
+git clone https://github.com/fmtlib/fmt
+
+# For SSH URLs, ensure SSH keys are configured
+ssh -T git@github.com
+
+# Use HTTPS if SSH fails
+porters add fmt --git https://github.com/fmtlib/fmt
+</code></pre>
+<h3 id="dependency-version-conflict"><a class="header" href="#dependency-version-conflict">"Dependency version conflict"</a></h3>
+<p><strong>Cause</strong>: Multiple incompatible versions required</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Check porters.lock
+cat porters.lock
+
+# Regenerate lock file
+porters lock
+
+# Manually resolve in porters.toml
+# Specify compatible versions
+</code></pre>
+<h3 id="dependency-not-found-in-ports"><a class="header" href="#dependency-not-found-in-ports">"Dependency not found in ports/"</a></h3>
+<p><strong>Cause</strong>: Dependencies not synchronized</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Sync all dependencies
+porters sync
+
+# Force re-download
+rm -rf ports/
+porters sync
+</code></pre>
+<h2 id="platform-specific-issues"><a class="header" href="#platform-specific-issues">Platform-Specific Issues</a></h2>
+<h3 id="windows"><a class="header" href="#windows">Windows</a></h3>
+<p><strong>Issue</strong>: "Permission denied" when running porters</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-powershell"># Run as Administrator
+# Or add exception to antivirus
+</code></pre>
+<p><strong>Issue</strong>: Long path errors</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-powershell"># Enable long paths
+reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1
+</code></pre>
+<h3 id="macos"><a class="header" href="#macos">macOS</a></h3>
+<p><strong>Issue</strong>: "xcrun: error: invalid active developer path"</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash">xcode-select --install
+</code></pre>
+<p><strong>Issue</strong>: Library not found errors</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Set library paths
+export DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH
+</code></pre>
+<h3 id="linux"><a class="header" href="#linux">Linux</a></h3>
+<p><strong>Issue</strong>: Missing system libraries</p>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Install development tools
+sudo apt install build-essential cmake git
+
+# For specific libraries
+sudo apt install libssl-dev libcurl4-openssl-dev
+</code></pre>
+<h2 id="performance-issues"><a class="header" href="#performance-issues">Performance Issues</a></h2>
+<h3 id="slow-dependency-downloads"><a class="header" href="#slow-dependency-downloads">Slow dependency downloads</a></h3>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-bash"># Use global install for common libraries
+porters install fmt --git https://github.com/fmtlib/fmt
+porters install spdlog --git https://github.com/gabime/spdlog
+
+# Enable caching (should be default)
+# Check ~/.porters/config.toml
+</code></pre>
+<h3 id="slow-builds"><a class="header" href="#slow-builds">Slow builds</a></h3>
+<p><strong>Solution</strong>:</p>
+<pre><code class="language-toml"># Increase parallel jobs in ~/.porters/config.toml
+[settings]
+parallel_jobs = 16  # Adjust based on CPU cores
+</code></pre>
+<h2 id="getting-help-1"><a class="header" href="#getting-help-1">Getting Help</a></h2>
+<p>If you encounter issues not covered here:</p>
+<ol>
+<li><strong>Check GitHub Issues</strong>: <a href="https://github.com/muhammad-fiaz/Porters/issues">github.com/muhammad-fiaz/Porters/issues</a></li>
+<li><strong>Open New Issue</strong>: Provide:
+<ul>
+<li>Porters version (<code>porters --version</code>)</li>
+<li>Operating system</li>
+<li>Error message</li>
+<li>Steps to reproduce</li>
+</ul>
+</li>
+<li><strong>Consult Documentation</strong>: Review relevant sections</li>
+</ol>
+<h2 id="debug-mode"><a class="header" href="#debug-mode">Debug Mode</a></h2>
+<p>Enable verbose logging:</p>
+<pre><code class="language-bash"># Set environment variable
+export RUST_LOG=debug
+porters build
+</code></pre>
+<p>This provides detailed output for debugging.</p>
+<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
+<ul>
+<li><a href="./commands.html">Command Reference</a></li>
+<li><a href="./configuration.html">Configuration</a></li>
+<li><a href="./contributing.html">Contributing</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="common-issues-1"><a class="header" href="#common-issues-1">Common Issues</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="build-errors-1"><a class="header" href="#build-errors-1">Build Errors</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="dependency-resolution-2"><a class="header" href="#dependency-resolution-2">Dependency Resolution</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="platform-specific-issues-1"><a class="header" href="#platform-specific-issues-1">Platform-Specific Issues</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contributing-1"><a class="header" href="#contributing-1">Contributing</a></h1>
+<p>Thank you for your interest in contributing to Porters!</p>
+<h2 id="ways-to-contribute"><a class="header" href="#ways-to-contribute">Ways to Contribute</a></h2>
+<ul>
+<li>🐛 Report bugs</li>
+<li>💡 Suggest features</li>
+<li>📝 Improve documentation</li>
+<li>🔧 Submit code fixes</li>
+<li>✨ Add new features</li>
+</ul>
+<h2 id="getting-started-1"><a class="header" href="#getting-started-1">Getting Started</a></h2>
+<h3 id="1-fork-and-clone"><a class="header" href="#1-fork-and-clone">1. Fork and Clone</a></h3>
+<pre><code class="language-bash">git clone https://github.com/YOUR_USERNAME/Porters.git
+cd Porters
+</code></pre>
+<h3 id="2-create-a-branch"><a class="header" href="#2-create-a-branch">2. Create a Branch</a></h3>
+<pre><code class="language-bash">git checkout -b feature/my-awesome-feature
+</code></pre>
+<h3 id="3-build-and-test"><a class="header" href="#3-build-and-test">3. Build and Test</a></h3>
+<pre><code class="language-bash">cargo build
+cargo test
+cargo run -- --version
+</code></pre>
+<h2 id="development-guidelines"><a class="header" href="#development-guidelines">Development Guidelines</a></h2>
+<h3 id="code-style"><a class="header" href="#code-style">Code Style</a></h3>
+<p>Follow Rust conventions:</p>
+<pre><code class="language-bash">cargo fmt
+cargo clippy
+</code></pre>
+<h3 id="commit-messages"><a class="header" href="#commit-messages">Commit Messages</a></h3>
+<p>Use conventional commits:</p>
+<pre><code class="language-text">feat: add support for Conan packages
+fix: resolve dependency version conflicts
+docs: update installation guide
+test: add tests for lock file generation
+</code></pre>
+<h3 id="pull-requests"><a class="header" href="#pull-requests">Pull Requests</a></h3>
+<ol>
+<li>Ensure all tests pass</li>
+<li>Update documentation if needed</li>
+<li>Add tests for new features</li>
+<li>Follow existing code style</li>
+</ol>
+<h2 id="project-structure-2"><a class="header" href="#project-structure-2">Project Structure</a></h2>
+<pre><code class="language-text">Porters/
+├── src/
+│   ├── main.rs          # CLI entry point
+│   ├── config.rs        # Configuration handling
+│   ├── scan.rs          # Project scanning
+│   ├── build/           # Build system integration
+│   ├── deps/            # Dependency management
+│   ├── global.rs        # Global configuration
+│   ├── lockfile.rs      # Lock file management
+│   └── util.rs          # Utilities
+├── docs/                # Documentation (mdBook)
+├── Cargo.toml           # Rust manifest
+└── README.md
+</code></pre>
+<h2 id="testing"><a class="header" href="#testing">Testing</a></h2>
+<pre><code class="language-bash"># Run all tests
+cargo test
+
+# Run specific test
+cargo test test_name
+
+# Integration tests
+cargo test --test integration_tests
+</code></pre>
+<h2 id="documentation"><a class="header" href="#documentation">Documentation</a></h2>
+<p>Documentation uses mdBook:</p>
+<pre><code class="language-bash"># Install mdBook
+cargo install mdbook
+
+# Serve locally
+cd docs
+mdbook serve
+
+# Build
+mdbook build
+</code></pre>
+<h2 id="need-help"><a class="header" href="#need-help">Need Help?</a></h2>
+<ul>
+<li>Open an issue for questions</li>
+<li>Join discussions on GitHub</li>
+<li>Check existing issues before reporting</li>
+</ul>
+<h2 id="license-1"><a class="header" href="#license-1">License</a></h2>
+<p>By contributing, you agree that your contributions will be licensed under the Apache License 2.0.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+<p>Technical overview of Porters' architecture and design.</p>
+<h2 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h2>
+<p>Porters follows a modular architecture with clear separation of concerns:</p>
+<pre><code class="language-text">┌─────────────────────────────────────────┐
+│          CLI Interface (main.rs)        │
+│         Command Parsing (clap)          │
+└─────────────┬───────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────────┐
+│        Core Modules                     │
+├─────────────────────────────────────────┤
+│  • Config (config.rs)                   │
+│  • Scanner (scan.rs)                    │
+│  • Dependencies (deps/)                 │
+│  • Build Systems (build/)               │
+│  • Global Config (global.rs)            │
+│  • Lock File (lockfile.rs)              │
+└─────────────┬───────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────────┐
+│       External Tools                    │
+├─────────────────────────────────────────┤
+│  • Git (git2)                           │
+│  • Build Tools (cmake, xmake, etc.)     │
+│  • GitHub API (octocrab)                │
+└─────────────────────────────────────────┘
+</code></pre>
+<h2 id="module-breakdown"><a class="header" href="#module-breakdown">Module Breakdown</a></h2>
+<h3 id="cli-layer-mainrs"><a class="header" href="#cli-layer-mainrs">CLI Layer (<code>main.rs</code>)</a></h3>
+<p>Handles command-line interface using <code>clap</code>:</p>
+<ul>
+<li>Command parsing</li>
+<li>Argument validation</li>
+<li>User interaction (via <code>dialoguer</code>)</li>
+<li>Output formatting</li>
+</ul>
+<h3 id="configuration-configrs"><a class="header" href="#configuration-configrs">Configuration (<code>config.rs</code>)</a></h3>
+<p>Manages project configuration:</p>
+<ul>
+<li>TOML parsing/writing (<code>serde</code>, <code>toml</code>)</li>
+<li>Configuration validation</li>
+<li>Schema enforcement</li>
+</ul>
+<h3 id="scanner-scanrs"><a class="header" href="#scanner-scanrs">Scanner (<code>scan.rs</code>)</a></h3>
+<p>Project structure detection:</p>
+<ul>
+<li>C/C++ file discovery</li>
+<li>Build system detection</li>
+<li>Directory traversal</li>
+</ul>
+<h3 id="dependency-management-deps"><a class="header" href="#dependency-management-deps">Dependency Management (<code>deps/</code>)</a></h3>
+<p>Core dependency resolution:</p>
+<ul>
+<li>Git repository cloning (<code>git2</code>)</li>
+<li>Version constraint validation</li>
+<li>Dependency graph resolution</li>
+<li>Lock file management</li>
+</ul>
+<h3 id="build-systems-build"><a class="header" href="#build-systems-build">Build Systems (<code>build/</code>)</a></h3>
+<p>Integration with build tools:</p>
+<ul>
+<li>CMake support</li>
+<li>XMake support</li>
+<li>Meson support</li>
+<li>Make support</li>
+<li>Custom commands</li>
+</ul>
+<h3 id="global-configuration-globalrs"><a class="header" href="#global-configuration-globalrs">Global Configuration (<code>global.rs</code>)</a></h3>
+<p>Manages global state:</p>
+<ul>
+<li><code>~/.porters/</code> directory structure</li>
+<li>Global package registry</li>
+<li>Settings persistence</li>
+<li>Parallel job configuration</li>
+</ul>
+<h3 id="lock-file-lockfilers"><a class="header" href="#lock-file-lockfilers">Lock File (<code>lockfile.rs</code>)</a></h3>
+<p>Ensures reproducible builds:</p>
+<ul>
+<li>Dependency version pinning</li>
+<li>Checksum generation</li>
+<li>Transitive dependency tracking</li>
+<li>Timestamp management</li>
+</ul>
+<h2 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h2>
+<h3 id="adding-a-dependency"><a class="header" href="#adding-a-dependency">Adding a Dependency</a></h3>
+<pre><code class="language-text">User: porters add fmt --git https://...
+  │
+  ├─&gt; Parse arguments (main.rs)
+  │
+  ├─&gt; Validate Git URL (deps/mod.rs)
+  │
+  ├─&gt; Clone repository (git2)
+  │      └─&gt; Download to ports/fmt/
+  │
+  ├─&gt; Update porters.toml (config.rs)
+  │
+  └─&gt; Update porters.lock (lockfile.rs)
+</code></pre>
+<h3 id="building-a-project"><a class="header" href="#building-a-project">Building a Project</a></h3>
+<pre><code class="language-text">User: porters build
+  │
+  ├─&gt; Read porters.toml (config.rs)
+  │
+  ├─&gt; Resolve dependencies (deps/)
+  │      ├─&gt; Check porters.lock
+  │      ├─&gt; Sync missing deps
+  │      └─&gt; Validate constraints
+  │
+  ├─&gt; Detect build system (scan.rs, build/)
+  │
+  └─&gt; Execute build commands
+         └─&gt; cmake/xmake/meson/make
+</code></pre>
+<h2 id="directory-structure"><a class="header" href="#directory-structure">Directory Structure</a></h2>
+<h3 id="global-directory-porters"><a class="header" href="#global-directory-porters">Global Directory (<code>~/.porters/</code>)</a></h3>
+<pre><code class="language-text">.porters/
+├── config.toml           # Global settings
+├── packages/             # Globally installed packages
+│   ├── fmt/
+│   ├── spdlog/
+│   └── ...
+└── cache/                # Download cache
+</code></pre>
+<h3 id="project-directory"><a class="header" href="#project-directory">Project Directory</a></h3>
+<pre><code class="language-text">my-project/
+├── porters.toml          # Project config
+├── porters.lock          # Lock file
+├── ports/                # Local dependencies
+│   ├── fmt/
+│   └── spdlog/
+├── src/                  # Source files
+├── include/              # Headers
+└── build/                # Build output
+</code></pre>
+<h2 id="key-design-decisions"><a class="header" href="#key-design-decisions">Key Design Decisions</a></h2>
+<h3 id="1-dual-layer-dependencies"><a class="header" href="#1-dual-layer-dependencies">1. Dual-Layer Dependencies</a></h3>
+<p><strong>Global</strong> (<code>~/.porters/packages/</code>):</p>
+<ul>
+<li>Shared across projects</li>
+<li>Faster setup for common libraries</li>
+<li>Centralized cache</li>
+</ul>
+<p><strong>Local</strong> (<code>ports/</code>):</p>
+<ul>
+<li>Project-specific isolation</li>
+<li>Version pinning per project</li>
+<li>Reproducible builds</li>
+</ul>
+<p><strong>Rationale</strong>: Balance between performance and isolation.</p>
+<h3 id="2-lock-file-format"><a class="header" href="#2-lock-file-format">2. Lock File Format</a></h3>
+<p>Uses TOML for human readability and compatibility with <code>porters.toml</code>.</p>
+<p><strong>Alternative considered</strong>: Binary format (rejected for poor diff-ability in Git)</p>
+<h3 id="3-build-system-agnostic"><a class="header" href="#3-build-system-agnostic">3. Build System Agnostic</a></h3>
+<p>Supports multiple build systems instead of enforcing one.</p>
+<p><strong>Rationale</strong>: Respects existing project structures and developer preferences.</p>
+<h3 id="4-git-first-dependency-model"><a class="header" href="#4-git-first-dependency-model">4. Git-First Dependency Model</a></h3>
+<p>Prioritizes Git repositories over package registries.</p>
+<p><strong>Rationale</strong>:</p>
+<ul>
+<li>C/C++ ecosystem heavily Git-based</li>
+<li>Simpler initial implementation</li>
+<li>Future registry support planned</li>
+</ul>
+<h2 id="technology-stack"><a class="header" href="#technology-stack">Technology Stack</a></h2>
+<h3 id="core-dependencies"><a class="header" href="#core-dependencies">Core Dependencies</a></h3>
+<ul>
+<li><strong>clap</strong> (4.5): CLI framework</li>
+<li><strong>serde</strong> (1.0): Serialization</li>
+<li><strong>toml</strong> (0.8): TOML parsing</li>
+<li><strong>tokio</strong> (1.41): Async runtime</li>
+<li><strong>git2</strong> (0.19): Git operations</li>
+<li><strong>dialoguer</strong> (0.11): User prompts</li>
+<li><strong>reqwest</strong> (0.12): HTTP client</li>
+<li><strong>self_update</strong> (0.41): Self-update mechanism</li>
+</ul>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance Characteristics</a></h3>
+<ul>
+<li>Async I/O for concurrent downloads</li>
+<li>Parallel builds (configurable via <code>parallel_jobs</code>)</li>
+<li>Caching to minimize redundant downloads</li>
+</ul>
+<h2 id="extensibility"><a class="header" href="#extensibility">Extensibility</a></h2>
+<h3 id="adding-a-new-build-system"><a class="header" href="#adding-a-new-build-system">Adding a New Build System</a></h3>
+<ol>
+<li>Create module in <code>src/build/</code></li>
+<li>Implement build detection logic</li>
+<li>Add build command execution</li>
+<li>Update <code>detect_existing_build_system()</code></li>
+<li>Add tests</li>
+</ol>
+<h3 id="adding-a-new-dependency-source"><a class="header" href="#adding-a-new-dependency-source">Adding a New Dependency Source</a></h3>
+<ol>
+<li>Extend <code>DependencySource</code> enum (deps/mod.rs)</li>
+<li>Implement cloning logic</li>
+<li>Add constraint validation</li>
+<li>Update lock file format</li>
+<li>Add tests</li>
+</ol>
+<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
+<ul>
+<li><a href="./development.html">Development Guide</a></li>
+<li><a href="./contributing.html">Contributing</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="development-guide"><a class="header" href="#development-guide">Development Guide</a></h1>
+<p>Guide for developers working on Porters.</p>
+<h2 id="development-setup"><a class="header" href="#development-setup">Development Setup</a></h2>
+<h3 id="prerequisites-3"><a class="header" href="#prerequisites-3">Prerequisites</a></h3>
+<ul>
+<li>Rust 1.70+ (install via <a href="https://rustup.rs/">rustup</a>)</li>
+<li>Git</li>
+<li>At least one build system (CMake, XMake, Meson, or Make)</li>
+<li>C/C++ compiler (for testing)</li>
+</ul>
+<h3 id="clone-and-build"><a class="header" href="#clone-and-build">Clone and Build</a></h3>
+<pre><code class="language-bash">git clone https://github.com/muhammad-fiaz/Porters.git
+cd Porters
+
+# Build
+cargo build
+
+# Run tests
+cargo test
+
+# Run development version
+cargo run -- --version
+</code></pre>
+<h2 id="project-structure-3"><a class="header" href="#project-structure-3">Project Structure</a></h2>
+<pre><code class="language-text">Porters/
+├── src/
+│   ├── main.rs           # CLI entry point
+│   ├── config.rs         # Configuration handling
+│   ├── scan.rs           # Project scanning
+│   ├── util.rs           # Utilities
+│   ├── global.rs         # Global config management
+│   ├── lockfile.rs       # Lock file management
+│   ├── build/            # Build system modules
+│   │   ├── mod.rs
+│   │   ├── cmake.rs
+│   │   ├── xmake.rs
+│   │   └── ...
+│   └── deps/             # Dependency management
+│       ├── mod.rs
+│       └── resolve.rs
+├── tests/                # Integration tests
+├── docs/                 # Documentation (mdBook)
+├── Cargo.toml            # Rust manifest
+└── README.md
+</code></pre>
+<h2 id="development-workflow"><a class="header" href="#development-workflow">Development Workflow</a></h2>
+<h3 id="1-create-feature-branch"><a class="header" href="#1-create-feature-branch">1. Create Feature Branch</a></h3>
+<pre><code class="language-bash">git checkout -b feature/my-feature
+</code></pre>
+<h3 id="2-make-changes"><a class="header" href="#2-make-changes">2. Make Changes</a></h3>
+<p>Follow Rust best practices:</p>
+<pre><code class="language-bash"># Format code
+cargo fmt
+
+# Check for errors
+cargo check
+
+# Run clippy
+cargo clippy
+</code></pre>
+<h3 id="3-add-tests"><a class="header" href="#3-add-tests">3. Add Tests</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_my_feature() {
+        // Test code
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="4-run-tests"><a class="header" href="#4-run-tests">4. Run Tests</a></h3>
+<pre><code class="language-bash"># All tests
+cargo test
+
+# Specific test
+cargo test test_my_feature
+
+# With output
+cargo test -- --nocapture
+</code></pre>
+<h3 id="5-commit-and-push"><a class="header" href="#5-commit-and-push">5. Commit and Push</a></h3>
+<pre><code class="language-bash">git add .
+git commit -m "feat: add my feature"
+git push origin feature/my-feature
+</code></pre>
+<h3 id="6-open-pull-request"><a class="header" href="#6-open-pull-request">6. Open Pull Request</a></h3>
+<p>Create PR on GitHub with:</p>
+<ul>
+<li>Clear description</li>
+<li>Test results</li>
+<li>Documentation updates</li>
+</ul>
+<h2 id="testing-1"><a class="header" href="#testing-1">Testing</a></h2>
+<h3 id="unit-tests"><a class="header" href="#unit-tests">Unit Tests</a></h3>
+<p>Located in each module:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/config.rs
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_parse_config() {
+        // ...
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Run:</p>
+<pre><code class="language-bash">cargo test --lib
+</code></pre>
+<h3 id="integration-tests"><a class="header" href="#integration-tests">Integration Tests</a></h3>
+<p>Located in <code>tests/</code> directory:</p>
+<pre><pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// tests/integration_test.rs
+#[tokio::test]
+async fn test_project_creation() {
+    // ...
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Run:</p>
+<pre><code class="language-bash">cargo test --test integration_test
+</code></pre>
+<h3 id="test-coverage"><a class="header" href="#test-coverage">Test Coverage</a></h3>
+<pre><code class="language-bash"># Install tarpaulin
+cargo install cargo-tarpaulin
+
+# Generate coverage
+cargo tarpaulin --out Html
+</code></pre>
+<h2 id="debugging"><a class="header" href="#debugging">Debugging</a></h2>
+<h3 id="enable-logging"><a class="header" href="#enable-logging">Enable Logging</a></h3>
+<pre><code class="language-bash">export RUST_LOG=debug
+cargo run -- build
+</code></pre>
+<h3 id="vs-code-debugging"><a class="header" href="#vs-code-debugging">VS Code Debugging</a></h3>
+<p><code>.vscode/launch.json</code>:</p>
+<pre><code class="language-json">{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Porters",
+      "cargo": {
+        "args": ["build", "--bin=porters"]
+      },
+      "args": ["build"],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
+</code></pre>
+<h2 id="documentation-1"><a class="header" href="#documentation-1">Documentation</a></h2>
+<h3 id="code-documentation"><a class="header" href="#code-documentation">Code Documentation</a></h3>
+<pre><pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Adds a dependency to the project
+///
+/// # Arguments
+///
+/// * `name` - Dependency name
+/// * `git` - Git repository URL
+///
+/// # Examples
+///
+/// ```no_run
+/// add_dependency("fmt", Some("https://github.com/fmtlib/fmt")).await?;
+/// ```
+pub async fn add_dependency(name: &amp;str, git: Option&lt;String&gt;) -&gt; Result&lt;()&gt; {
+    // ...
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Generate docs:</p>
+<pre><code class="language-bash">cargo doc --open
+</code></pre>
+<h3 id="user-documentation"><a class="header" href="#user-documentation">User Documentation</a></h3>
+<p>Uses mdBook:</p>
+<pre><code class="language-bash">cd docs
+mdbook serve --open
+</code></pre>
+<h2 id="release-process"><a class="header" href="#release-process">Release Process</a></h2>
+<h3 id="1-update-version"><a class="header" href="#1-update-version">1. Update Version</a></h3>
+<p><code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[package]
+version = "0.2.0"
+</code></pre>
+<h3 id="2-update-changelog"><a class="header" href="#2-update-changelog">2. Update CHANGELOG</a></h3>
+<pre><code class="language-markdown">## [0.2.0] - 2024-01-15
+
+### Added
+- Feature X
+- Feature Y
+
+### Fixed
+- Bug Z
+</code></pre>
+<h3 id="3-create-git-tag"><a class="header" href="#3-create-git-tag">3. Create Git Tag</a></h3>
+<pre><code class="language-bash">git tag -a v0.2.0 -m "Release v0.2.0"
+git push origin v0.2.0
+</code></pre>
+<h3 id="4-publish-to-cratesio"><a class="header" href="#4-publish-to-cratesio">4. Publish to crates.io</a></h3>
+<pre><code class="language-bash">cargo publish
+</code></pre>
+<h3 id="5-github-release"><a class="header" href="#5-github-release">5. GitHub Release</a></h3>
+<p>Create release on GitHub with:</p>
+<ul>
+<li>Tag: v0.2.0</li>
+<li>Title: "Porters v0.2.0"</li>
+<li>Description: Copy from CHANGELOG</li>
+<li>Attach binaries</li>
+</ul>
+<h2 id="performance-profiling"><a class="header" href="#performance-profiling">Performance Profiling</a></h2>
+<h3 id="cpu-profiling"><a class="header" href="#cpu-profiling">CPU Profiling</a></h3>
+<pre><code class="language-bash"># Install flamegraph
+cargo install flamegraph
+
+# Profile
+cargo flamegraph --bin porters -- build
+</code></pre>
+<h3 id="memory-profiling"><a class="header" href="#memory-profiling">Memory Profiling</a></h3>
+<pre><code class="language-bash"># Install valgrind (Linux)
+sudo apt install valgrind
+
+# Profile
+valgrind --leak-check=full cargo run -- build
+</code></pre>
+<h2 id="benchmarking"><a class="header" href="#benchmarking">Benchmarking</a></h2>
+<pre><code class="language-rust ignore">#[bench]
+fn bench_dependency_resolution(b: &amp;mut Bencher) {
+    b.iter(|| {
+        // Code to benchmark
+    });
+}</code></pre>
+<p>Run:</p>
+<pre><code class="language-bash">cargo bench
+</code></pre>
+<h2 id="continuous-integration"><a class="header" href="#continuous-integration">Continuous Integration</a></h2>
+<p>GitHub Actions workflow (<code>.github/workflows/ci.yml</code>):</p>
+<pre><code class="language-yaml">name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo test
+      - run: cargo clippy
+      - run: cargo fmt --check
+</code></pre>
+<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
+<ul>
+<li><a href="./contributing.html">Contributing</a></li>
+<li><a href="./architecture.html">Architecture</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            MathJax.Hub.Register.StartupHook('End', function() {
+                window.setTimeout(window.print, 100);
+            });
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>

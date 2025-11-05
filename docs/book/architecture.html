@@ -1,0 +1,444 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Architecture - Porters Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Porters Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/muhammad-fiaz/Porters" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/muhammad-fiaz/Porters/edit/main/docs/src/architecture.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+<p>Technical overview of Porters' architecture and design.</p>
+<h2 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h2>
+<p>Porters follows a modular architecture with clear separation of concerns:</p>
+<pre><code class="language-text">┌─────────────────────────────────────────┐
+│          CLI Interface (main.rs)        │
+│         Command Parsing (clap)          │
+└─────────────┬───────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────────┐
+│        Core Modules                     │
+├─────────────────────────────────────────┤
+│  • Config (config.rs)                   │
+│  • Scanner (scan.rs)                    │
+│  • Dependencies (deps/)                 │
+│  • Build Systems (build/)               │
+│  • Global Config (global.rs)            │
+│  • Lock File (lockfile.rs)              │
+└─────────────┬───────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────────┐
+│       External Tools                    │
+├─────────────────────────────────────────┤
+│  • Git (git2)                           │
+│  • Build Tools (cmake, xmake, etc.)     │
+│  • GitHub API (octocrab)                │
+└─────────────────────────────────────────┘
+</code></pre>
+<h2 id="module-breakdown"><a class="header" href="#module-breakdown">Module Breakdown</a></h2>
+<h3 id="cli-layer-mainrs"><a class="header" href="#cli-layer-mainrs">CLI Layer (<code>main.rs</code>)</a></h3>
+<p>Handles command-line interface using <code>clap</code>:</p>
+<ul>
+<li>Command parsing</li>
+<li>Argument validation</li>
+<li>User interaction (via <code>dialoguer</code>)</li>
+<li>Output formatting</li>
+</ul>
+<h3 id="configuration-configrs"><a class="header" href="#configuration-configrs">Configuration (<code>config.rs</code>)</a></h3>
+<p>Manages project configuration:</p>
+<ul>
+<li>TOML parsing/writing (<code>serde</code>, <code>toml</code>)</li>
+<li>Configuration validation</li>
+<li>Schema enforcement</li>
+</ul>
+<h3 id="scanner-scanrs"><a class="header" href="#scanner-scanrs">Scanner (<code>scan.rs</code>)</a></h3>
+<p>Project structure detection:</p>
+<ul>
+<li>C/C++ file discovery</li>
+<li>Build system detection</li>
+<li>Directory traversal</li>
+</ul>
+<h3 id="dependency-management-deps"><a class="header" href="#dependency-management-deps">Dependency Management (<code>deps/</code>)</a></h3>
+<p>Core dependency resolution:</p>
+<ul>
+<li>Git repository cloning (<code>git2</code>)</li>
+<li>Version constraint validation</li>
+<li>Dependency graph resolution</li>
+<li>Lock file management</li>
+</ul>
+<h3 id="build-systems-build"><a class="header" href="#build-systems-build">Build Systems (<code>build/</code>)</a></h3>
+<p>Integration with build tools:</p>
+<ul>
+<li>CMake support</li>
+<li>XMake support</li>
+<li>Meson support</li>
+<li>Make support</li>
+<li>Custom commands</li>
+</ul>
+<h3 id="global-configuration-globalrs"><a class="header" href="#global-configuration-globalrs">Global Configuration (<code>global.rs</code>)</a></h3>
+<p>Manages global state:</p>
+<ul>
+<li><code>~/.porters/</code> directory structure</li>
+<li>Global package registry</li>
+<li>Settings persistence</li>
+<li>Parallel job configuration</li>
+</ul>
+<h3 id="lock-file-lockfilers"><a class="header" href="#lock-file-lockfilers">Lock File (<code>lockfile.rs</code>)</a></h3>
+<p>Ensures reproducible builds:</p>
+<ul>
+<li>Dependency version pinning</li>
+<li>Checksum generation</li>
+<li>Transitive dependency tracking</li>
+<li>Timestamp management</li>
+</ul>
+<h2 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h2>
+<h3 id="adding-a-dependency"><a class="header" href="#adding-a-dependency">Adding a Dependency</a></h3>
+<pre><code class="language-text">User: porters add fmt --git https://...
+  │
+  ├─&gt; Parse arguments (main.rs)
+  │
+  ├─&gt; Validate Git URL (deps/mod.rs)
+  │
+  ├─&gt; Clone repository (git2)
+  │      └─&gt; Download to ports/fmt/
+  │
+  ├─&gt; Update porters.toml (config.rs)
+  │
+  └─&gt; Update porters.lock (lockfile.rs)
+</code></pre>
+<h3 id="building-a-project"><a class="header" href="#building-a-project">Building a Project</a></h3>
+<pre><code class="language-text">User: porters build
+  │
+  ├─&gt; Read porters.toml (config.rs)
+  │
+  ├─&gt; Resolve dependencies (deps/)
+  │      ├─&gt; Check porters.lock
+  │      ├─&gt; Sync missing deps
+  │      └─&gt; Validate constraints
+  │
+  ├─&gt; Detect build system (scan.rs, build/)
+  │
+  └─&gt; Execute build commands
+         └─&gt; cmake/xmake/meson/make
+</code></pre>
+<h2 id="directory-structure"><a class="header" href="#directory-structure">Directory Structure</a></h2>
+<h3 id="global-directory-porters"><a class="header" href="#global-directory-porters">Global Directory (<code>~/.porters/</code>)</a></h3>
+<pre><code class="language-text">.porters/
+├── config.toml           # Global settings
+├── packages/             # Globally installed packages
+│   ├── fmt/
+│   ├── spdlog/
+│   └── ...
+└── cache/                # Download cache
+</code></pre>
+<h3 id="project-directory"><a class="header" href="#project-directory">Project Directory</a></h3>
+<pre><code class="language-text">my-project/
+├── porters.toml          # Project config
+├── porters.lock          # Lock file
+├── ports/                # Local dependencies
+│   ├── fmt/
+│   └── spdlog/
+├── src/                  # Source files
+├── include/              # Headers
+└── build/                # Build output
+</code></pre>
+<h2 id="key-design-decisions"><a class="header" href="#key-design-decisions">Key Design Decisions</a></h2>
+<h3 id="1-dual-layer-dependencies"><a class="header" href="#1-dual-layer-dependencies">1. Dual-Layer Dependencies</a></h3>
+<p><strong>Global</strong> (<code>~/.porters/packages/</code>):</p>
+<ul>
+<li>Shared across projects</li>
+<li>Faster setup for common libraries</li>
+<li>Centralized cache</li>
+</ul>
+<p><strong>Local</strong> (<code>ports/</code>):</p>
+<ul>
+<li>Project-specific isolation</li>
+<li>Version pinning per project</li>
+<li>Reproducible builds</li>
+</ul>
+<p><strong>Rationale</strong>: Balance between performance and isolation.</p>
+<h3 id="2-lock-file-format"><a class="header" href="#2-lock-file-format">2. Lock File Format</a></h3>
+<p>Uses TOML for human readability and compatibility with <code>porters.toml</code>.</p>
+<p><strong>Alternative considered</strong>: Binary format (rejected for poor diff-ability in Git)</p>
+<h3 id="3-build-system-agnostic"><a class="header" href="#3-build-system-agnostic">3. Build System Agnostic</a></h3>
+<p>Supports multiple build systems instead of enforcing one.</p>
+<p><strong>Rationale</strong>: Respects existing project structures and developer preferences.</p>
+<h3 id="4-git-first-dependency-model"><a class="header" href="#4-git-first-dependency-model">4. Git-First Dependency Model</a></h3>
+<p>Prioritizes Git repositories over package registries.</p>
+<p><strong>Rationale</strong>:</p>
+<ul>
+<li>C/C++ ecosystem heavily Git-based</li>
+<li>Simpler initial implementation</li>
+<li>Future registry support planned</li>
+</ul>
+<h2 id="technology-stack"><a class="header" href="#technology-stack">Technology Stack</a></h2>
+<h3 id="core-dependencies"><a class="header" href="#core-dependencies">Core Dependencies</a></h3>
+<ul>
+<li><strong>clap</strong> (4.5): CLI framework</li>
+<li><strong>serde</strong> (1.0): Serialization</li>
+<li><strong>toml</strong> (0.8): TOML parsing</li>
+<li><strong>tokio</strong> (1.41): Async runtime</li>
+<li><strong>git2</strong> (0.19): Git operations</li>
+<li><strong>dialoguer</strong> (0.11): User prompts</li>
+<li><strong>reqwest</strong> (0.12): HTTP client</li>
+<li><strong>self_update</strong> (0.41): Self-update mechanism</li>
+</ul>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance Characteristics</a></h3>
+<ul>
+<li>Async I/O for concurrent downloads</li>
+<li>Parallel builds (configurable via <code>parallel_jobs</code>)</li>
+<li>Caching to minimize redundant downloads</li>
+</ul>
+<h2 id="extensibility"><a class="header" href="#extensibility">Extensibility</a></h2>
+<h3 id="adding-a-new-build-system"><a class="header" href="#adding-a-new-build-system">Adding a New Build System</a></h3>
+<ol>
+<li>Create module in <code>src/build/</code></li>
+<li>Implement build detection logic</li>
+<li>Add build command execution</li>
+<li>Update <code>detect_existing_build_system()</code></li>
+<li>Add tests</li>
+</ol>
+<h3 id="adding-a-new-dependency-source"><a class="header" href="#adding-a-new-dependency-source">Adding a New Dependency Source</a></h3>
+<ol>
+<li>Extend <code>DependencySource</code> enum (deps/mod.rs)</li>
+<li>Implement cloning logic</li>
+<li>Add constraint validation</li>
+<li>Update lock file format</li>
+<li>Add tests</li>
+</ol>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li><a href="./development.html">Development Guide</a></li>
+<li><a href="./contributing.html">Contributing</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="contributing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="development.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="contributing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="development.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
