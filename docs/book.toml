@@ -8,6 +8,7 @@ src = "src"
 [build]
 build-dir = "book"
 create-missing = true
+extra-watch-dirs = []
 
 [output.html]
 mathjax-support = true
@@ -18,3 +19,9 @@ site-url = "https://muhammad-fiaz.github.io/porters/"
 [output.html.fold]
 enable = true
 level = 0
+
+[output.html.playground]
+editable = false
+
+[preprocessor.index]
+

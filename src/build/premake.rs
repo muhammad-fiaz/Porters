@@ -77,9 +77,9 @@ impl BuildSystem for PremakeBuildSystem {
         args: &[String],
     ) -> Result<()> {
         // Generate project files first if not already done
-        if cfg!(windows) && !Path::new(&self.root).join("*.sln").exists() {
-            self.configure(sources, deps)?;
-        } else if !cfg!(windows) && !Path::new(&self.root).join("Makefile").exists() {
+        if (cfg!(windows) && !Path::new(&self.root).join("*.sln").exists())
+            || (!cfg!(windows) && !Path::new(&self.root).join("Makefile").exists())
+        {
             self.configure(sources, deps)?;
         }
 

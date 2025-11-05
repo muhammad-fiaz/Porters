@@ -46,7 +46,7 @@ cargo clippy
 ### Commit Messages
 
 Use conventional commits:
-```
+```text
 feat: add support for Conan packages
 fix: resolve dependency version conflicts
 docs: update installation guide
@@ -62,7 +62,7 @@ test: add tests for lock file generation
 
 ## Project Structure
 
-```
+```text
 Porters/
 ├── src/
 │   ├── main.rs          # CLI entry point

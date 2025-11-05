@@ -176,10 +176,10 @@ impl BuildSystem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
 pub enum Compiler {
-    GCC,
+    Gcc,
     Clang,
-    MSVC,
-    LLVM,
+    Msvc,
+    Llvm,
     MinGW,
     Emscripten,
     Intel,
@@ -190,10 +190,10 @@ pub enum Compiler {
 impl Compiler {
     pub fn as_str(&self) -> &str {
         match self {
-            Compiler::GCC => "gcc",
+            Compiler::Gcc => "gcc",
             Compiler::Clang => "clang",
-            Compiler::MSVC => "msvc",
-            Compiler::LLVM => "llvm",
+            Compiler::Msvc => "msvc",
+            Compiler::Llvm => "llvm",
             Compiler::MinGW => "mingw",
             Compiler::Emscripten => "emscripten",
             Compiler::Intel => "icc",
@@ -205,9 +205,9 @@ impl Compiler {
         if Command::new("clang").arg("--version").output().is_ok() {
             Compiler::Clang
         } else if Command::new("gcc").arg("--version").output().is_ok() {
-            Compiler::GCC
+            Compiler::Gcc
         } else if Command::new("cl").arg("/?").output().is_ok() {
-            Compiler::MSVC
+            Compiler::Msvc
         } else if Command::new("emcc").arg("--version").output().is_ok() {
             Compiler::Emscripten
         } else if Command::new("icc").arg("--version").output().is_ok() {
@@ -221,9 +221,9 @@ impl Compiler {
         if Command::new("clang++").arg("--version").output().is_ok() {
             Compiler::Clang
         } else if Command::new("g++").arg("--version").output().is_ok() {
-            Compiler::GCC
+            Compiler::Gcc
         } else if Command::new("cl").arg("/?").output().is_ok() {
-            Compiler::MSVC
+            Compiler::Msvc
         } else if Command::new("em++").arg("--version").output().is_ok() {
             Compiler::Emscripten
         } else if Command::new("icpc").arg("--version").output().is_ok() {
@@ -264,10 +264,10 @@ pub fn detect_build_system<P: AsRef<Path>>(path: P) -> Option<BuildSystem> {
                 let extension = file_pattern.trim_start_matches("*.");
                 if let Ok(entries) = std::fs::read_dir(path) {
                     for entry in entries.flatten() {
-                        if let Some(fname) = entry.file_name().to_str() {
-                            if fname.ends_with(extension) {
-                                return Some(system.clone());
-                            }
+                        if let Some(fname) = entry.file_name().to_str()
+                            && fname.ends_with(extension)
+                        {
+                            return Some(system.clone());
                         }
                     }
                 }

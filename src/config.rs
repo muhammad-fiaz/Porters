@@ -130,7 +130,7 @@ pub enum Dependency {
         constraints: Option<String>,
 
         #[serde(skip_serializing_if = "Option::is_none")]
-        checksum: Option<String>,
+        checksum: Box<Option<String>>,
     },
 }
 
@@ -310,7 +310,7 @@ impl PortersConfig {
                 features: vec![],
                 platforms: None,
                 constraints: None,
-                checksum: None,
+                checksum: Box::new(None::<String>),
             }
         } else if Path::new(package).exists() {
             // Path dependency
@@ -325,7 +325,7 @@ impl PortersConfig {
                 features: vec![],
                 platforms: None,
                 constraints: None,
-                checksum: None,
+                checksum: Box::new(None::<String>),
             }
         } else {
             // Simple package name (for future registry support)
@@ -340,7 +340,7 @@ impl PortersConfig {
                 features: vec![],
                 platforms: None,
                 constraints: None,
-                checksum: None,
+                checksum: Box::new(None::<String>),
             }
         };
 
@@ -354,7 +354,7 @@ impl PortersConfig {
         let pkg_name = if package.contains("://") {
             package
                 .split('/')
-                .last()
+                .next_back()
                 .unwrap_or(package)
                 .trim_end_matches(".git")
         } else {

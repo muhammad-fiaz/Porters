@@ -546,7 +546,7 @@ porters extension list
 ```
 
 **Output:**
-```
+```text
 📦 Installed Extensions:
 
   porters-format v1.0.0
@@ -572,7 +572,7 @@ porters extension create my-awesome-extension
 ```
 
 Creates:
-```
+```text
 my-awesome-extension/
 ├── extension.toml
 ├── README.md

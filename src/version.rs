@@ -230,19 +230,18 @@ impl ToolVersionChecker {
         ];
 
         for pattern in patterns {
-            if let Ok(re) = regex::Regex::new(pattern) {
-                if let Some(caps) = re.captures(output) {
-                    if caps.len() >= 4 {
-                        let major = caps[1].parse::<u32>()?;
-                        let minor = caps[2].parse::<u32>()?;
-                        let patch = caps[3].parse::<u32>()?;
-                        return Ok(Version {
-                            major,
-                            minor,
-                            patch,
-                        });
-                    }
-                }
+            if let Ok(re) = regex::Regex::new(pattern)
+                && let Some(caps) = re.captures(output)
+                && caps.len() >= 4
+            {
+                let major = caps[1].parse::<u32>()?;
+                let minor = caps[2].parse::<u32>()?;
+                let patch = caps[3].parse::<u32>()?;
+                return Ok(Version {
+                    major,
+                    minor,
+                    patch,
+                });
             }
         }
 

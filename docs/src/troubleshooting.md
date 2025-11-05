@@ -264,7 +264,7 @@ clang --version
 **Cause**: Porters not in PATH
 
 **Solution**:
-```bash
+```bash,no_run
 # Check if installed
 cargo install --list | grep porters
 

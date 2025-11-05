@@ -38,10 +38,10 @@ impl BuildSystem for QMakeBuildSystem {
         // Look for .pro files (Qt project files)
         if let Ok(entries) = std::fs::read_dir(root) {
             for entry in entries.flatten() {
-                if let Some(ext) = entry.path().extension() {
-                    if ext == "pro" {
-                        return true;
-                    }
+                if let Some(ext) = entry.path().extension()
+                    && ext == "pro"
+                {
+                    return true;
                 }
             }
         }

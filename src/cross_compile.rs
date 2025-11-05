@@ -296,13 +296,13 @@ impl CrossCompiler {
         cmd.arg("..");
 
         // Set toolchain file if provided
-        if let Some(cfg) = config {
-            if let Some(toolchain_file) = &cfg.cmake_toolchain_file {
-                cmd.arg(format!(
-                    "-DCMAKE_TOOLCHAIN_FILE={}",
-                    toolchain_file.display()
-                ));
-            }
+        if let Some(cfg) = config
+            && let Some(toolchain_file) = &cfg.cmake_toolchain_file
+        {
+            cmd.arg(format!(
+                "-DCMAKE_TOOLCHAIN_FILE={}",
+                toolchain_file.display()
+            ));
         }
 
         // Set target triple

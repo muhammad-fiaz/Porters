@@ -6,7 +6,7 @@ Technical overview of Porters' architecture and design.
 
 Porters follows a modular architecture with clear separation of concerns:
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │          CLI Interface (main.rs)        │
 │         Command Parsing (clap)          │
@@ -102,7 +102,7 @@ Ensures reproducible builds:
 
 ### Adding a Dependency
 
-```
+```text
 User: porters add fmt --git https://...
   │
   ├─> Parse arguments (main.rs)
@@ -119,7 +119,7 @@ User: porters add fmt --git https://...
 
 ### Building a Project
 
-```
+```text
 User: porters build
   │
   ├─> Read porters.toml (config.rs)
@@ -139,7 +139,7 @@ User: porters build
 
 ### Global Directory (`~/.porters/`)
 
-```
+```text
 .porters/
 ├── config.toml           # Global settings
 ├── packages/             # Globally installed packages
@@ -151,7 +151,7 @@ User: porters build
 
 ### Project Directory
 
-```
+```text
 my-project/
 ├── porters.toml          # Project config
 ├── porters.lock          # Lock file

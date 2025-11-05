@@ -81,10 +81,10 @@ impl BuildSystem for MakeBuildSystem {
             .current_dir(&self.root)
             .output();
 
-        if let Ok(output) = output {
-            if output.status.success() {
-                return Ok(());
-            }
+        if let Ok(output) = output
+            && output.status.success()
+        {
+            return Ok(());
         }
 
         // If no 'run' target, try to find executable

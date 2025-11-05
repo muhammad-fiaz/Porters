@@ -117,12 +117,11 @@ pub fn find_sources<P: AsRef<Path>>(root: P, pattern: &str) -> Result<Vec<PathBu
         let entry = entry?;
         let path = entry.path();
 
-        if path.is_file() {
-            if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-                if regex.is_match(file_name) {
-                    matches.push(path.to_path_buf());
-                }
-            }
+        if path.is_file()
+            && let Some(file_name) = path.file_name().and_then(|n| n.to_str())
+            && regex.is_match(file_name)
+        {
+            matches.push(path.to_path_buf());
         }
     }
 
@@ -159,12 +158,11 @@ pub fn scan_test_files<P: AsRef<Path>>(root: P) -> Result<Vec<PathBuf>> {
             .map(|n| n.contains("test"))
             .unwrap_or(false);
 
-        if is_test {
-            if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if SOURCE_EXTENSIONS.contains(&ext) {
-                    test_files.push(path.to_path_buf());
-                }
-            }
+        if is_test
+            && let Some(ext) = path.extension().and_then(|e| e.to_str())
+            && SOURCE_EXTENSIONS.contains(&ext)
+        {
+            test_files.push(path.to_path_buf());
         }
     }
 

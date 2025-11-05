@@ -190,24 +190,27 @@ impl DependencyCache {
 
     /// Copy directory recursively
     fn copy_dir_all(&self, src: &Path, dst: &Path) -> Result<()> {
-        fs::create_dir_all(dst)?;
-        for entry in fs::read_dir(src)? {
-            let entry = entry?;
-            let ty = entry.file_type()?;
-            let src_path = entry.path();
-            let dst_path = dst.join(entry.file_name());
+        fn copy_recursive(src: &Path, dst: &Path) -> Result<()> {
+            fs::create_dir_all(dst)?;
+            for entry in fs::read_dir(src)? {
+                let entry = entry?;
+                let ty = entry.file_type()?;
+                let src_path = entry.path();
+                let dst_path = dst.join(entry.file_name());
 
-            if ty.is_dir() {
-                // Skip .git directories
-                if entry.file_name() == ".git" {
-                    continue;
+                if ty.is_dir() {
+                    // Skip .git directories
+                    if entry.file_name() == ".git" {
+                        continue;
+                    }
+                    copy_recursive(&src_path, &dst_path)?;
+                } else {
+                    fs::copy(&src_path, &dst_path)?;
                 }
-                self.copy_dir_all(&src_path, &dst_path)?;
-            } else {
-                fs::copy(&src_path, &dst_path)?;
             }
+            Ok(())
         }
-        Ok(())
+        copy_recursive(src, dst)
     }
 }
 

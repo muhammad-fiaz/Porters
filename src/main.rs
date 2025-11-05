@@ -576,16 +576,16 @@ async fn create_project(name: &str, use_defaults: bool) -> Result<()> {
     create_project_structure(&language)?;
 
     // Create porters.toml with all metadata
-    create_porters_config_enhanced(
+    create_porters_config_enhanced(ProjectConfig {
         name,
-        &author,
-        &email,
-        &repo,
-        &build_system,
-        &project_type,
-        &entry_point,
-        &license,
-    )?;
+        author: &author,
+        email: &email,
+        repo: &repo,
+        build_system: &build_system,
+        project_type: &project_type,
+        entry_point: &entry_point,
+        license: &license,
+    })?;
 
     // Create cache directories
     ensure_cache_dirs()?;
@@ -599,7 +599,7 @@ async fn create_project(name: &str, use_defaults: bool) -> Result<()> {
     Ok(())
 }
 
-fn get_project_details() -> Result<(
+type ProjectDetails = (
     String,
     Option<String>,
     Option<String>,
@@ -608,7 +608,9 @@ fn get_project_details() -> Result<(
     String,
     Option<String>,
     Option<String>,
-)> {
+);
+
+fn get_project_details() -> Result<ProjectDetails> {
     let theme = dialoguer::theme::ColorfulTheme::default();
 
     // Project type selection
@@ -858,94 +860,99 @@ porters run
     Ok(())
 }
 
-fn create_porters_config_enhanced(
-    name: &str,
-    author: &Option<String>,
-    email: &Option<String>,
-    repo: &Option<String>,
-    build_system: &str,
-    project_type: &str,
-    entry_point: &Option<String>,
-    license: &Option<String>,
-) -> Result<()> {
-    let mut config = String::new();
+struct ProjectConfig<'a> {
+    name: &'a str,
+    author: &'a Option<String>,
+    email: &'a Option<String>,
+    repo: &'a Option<String>,
+    build_system: &'a str,
+    project_type: &'a str,
+    entry_point: &'a Option<String>,
+    license: &'a Option<String>,
+}
+
+fn create_porters_config_enhanced(config: ProjectConfig) -> Result<()> {
+    let mut config_str = String::new();
 
     // Project section
-    config.push_str("[project]\n");
-    config.push_str(&format!("name = \"{}\"\n", name));
-    config.push_str("version = \"0.1.0\"\n");
+    config_str.push_str("[project]\n");
+    config_str.push_str(&format!("name = \"{}\"\n", config.name));
+    config_str.push_str("version = \"0.1.0\"\n");
 
     // Authors
-    if let Some(author_name) = author {
-        if let Some(email_addr) = email {
-            config.push_str(&format!(
+    if let Some(author_name) = config.author {
+        if let Some(email_addr) = config.email {
+            config_str.push_str(&format!(
                 "authors = [\"{} <{}> \"]\n",
                 author_name, email_addr
             ));
         } else {
-            config.push_str(&format!("authors = [\"{}\"]\n", author_name));
+            config_str.push_str(&format!("authors = [\"{}\"]\n", author_name));
         }
     } else {
-        config.push_str("authors = []\n");
+        config_str.push_str("authors = []\n");
     }
 
     // Description
-    config.push_str(&format!("description = \"A {} project\"\n", project_type));
+    config_str.push_str(&format!(
+        "description = \"A {} project\"\n",
+        config.project_type
+    ));
 
     // License
-    if let Some(lic) = license {
-        config.push_str(&format!("license = \"{}\"\n", lic));
+    if let Some(lic) = config.license {
+        config_str.push_str(&format!("license = \"{}\"\n", lic));
     }
 
     // Repository
-    if let Some(repo_url) = repo {
-        config.push_str(&format!("repository = \"{}\"\n", repo_url));
+    if let Some(repo_url) = config.repo {
+        config_str.push_str(&format!("repository = \"{}\"\n", repo_url));
     }
 
     // Project type
-    config.push_str(&format!("project-type = \"{}\"\n", project_type));
+    config_str.push_str(&format!("project-type = \"{}\"\n", config.project_type));
 
     // Entry point
-    if let Some(entry) = entry_point {
-        config.push_str(&format!("entry_point = \"{}\"\n", entry));
-    } else if project_type == "application" {
-        config.push_str("entry_point = \"src/main\"\n");
+    if let Some(entry) = config.entry_point {
+        config_str.push_str(&format!("entry_point = \"{}\"\n", entry));
+    } else if config.project_type == "application" {
+        config_str.push_str("entry_point = \"src/main\"\n");
     }
 
     // Platforms (default to all)
-    config.push_str("platforms = [\"windows\", \"macos\", \"linux\"]\n");
+    config_str.push_str("platforms = [\"windows\", \"macos\", \"linux\"]\n");
 
     // Keywords
-    config.push_str(&format!(
+    config_str.push_str(&format!(
         "keywords = [\"{}\", \"c\", \"cpp\"]\n",
-        project_type
+        config.project_type
     ));
 
     // README
-    config.push_str("readme = \"README.md\"\n");
+    config_str.push_str("readme = \"README.md\"\n");
 
-    config.push_str("\n[dependencies]\n");
-    config.push_str("# Add your dependencies here\n");
-    config.push_str("# Example: fmt = { git = \"https://github.com/fmtlib/fmt\" }\n");
+    config_str.push_str("\n[dependencies]\n");
+    config_str.push_str("# Add your dependencies here\n");
+    config_str.push_str("# Example: fmt = { git = \"https://github.com/fmtlib/fmt\" }\n");
 
-    config.push_str("\n[dev-dependencies]\n");
-    config.push_str("# Add your dev dependencies here\n");
+    config_str.push_str("\n[dev-dependencies]\n");
+    config_str.push_str("# Add your dev dependencies here\n");
 
-    config.push_str("\n[build]\n");
-    if build_system != "custom" {
-        config.push_str(&format!("system = \"{}\"\n", build_system));
+    config_str.push_str("\n[build]\n");
+    if config.build_system != "custom" {
+        config_str.push_str(&format!("system = \"{}\"\n", config.build_system));
     } else {
-        config.push_str("# Configure custom build commands\n");
-        config.push_str("# [build.custom]\n");
-        config.push_str("# configure = \"cmake -B build\"\n");
-        config.push_str("# build = \"cmake --build build\"\n");
+        config_str.push_str("# Configure custom build commands\n");
+        config_str.push_str("# [build.custom]\n");
+        config_str.push_str("# configure = \"cmake -B build\"\n");
+        config_str.push_str("# build = \"cmake --build build\"\n");
     }
 
-    std::fs::write("porters.toml", config)?;
+    std::fs::write("porters.toml", config_str)?;
 
     // Create CMakeLists.txt for cmake projects
-    if build_system == "cmake" {
-        create_cmake_file_enhanced(name, project_type)?;
+    if config.build_system == "cmake" {
+        create_cmake_file_enhanced(config.name, config.project_type)?;
     }
 
     Ok(())
@@ -960,16 +967,16 @@ fn create_porters_config(
     repo: &Option<String>,
     build_system: &str,
 ) -> Result<()> {
-    create_porters_config_enhanced(
+    create_porters_config_enhanced(ProjectConfig {
         name,
         author,
         email,
         repo,
         build_system,
-        "application",
-        &None,
-        &Some("Apache-2.0".to_string()),
-    )
+        project_type: "application",
+        entry_point: &None,
+        license: &Some("Apache-2.0".to_string()),
+    })
 }
 
 fn create_cmake_file_enhanced(project_name: &str, project_type: &str) -> Result<()> {
@@ -1085,7 +1092,7 @@ fn check_build_tools() {
         println!();
         print_warning("Some build tools are not installed:");
         for (name, url) in missing {
-            println!("  {} Install {} from: {}", "📥".to_string(), name, url);
+            println!("  {} Install {} from: {}", "📥", name, url);
         }
         println!();
         print_info("Install missing tools to use all Porters features");
@@ -1114,11 +1121,6 @@ async fn add_dependency(
     // Determine the actual source
     let source = if let Some(git_url) = git {
         git_url
-    } else if package.starts_with("http://")
-        || package.starts_with("https://")
-        || package.starts_with("git@")
-    {
-        package.to_string()
     } else {
         package.to_string()
     };
@@ -1658,11 +1660,11 @@ async fn install_package(
     let config = PortersConfig::load("porters.toml").ok();
 
     // Execute pre-install script if configured
-    if let Some(ref cfg) = config {
-        if let Some(pre_install_script) = &cfg.build.scripts.pre_install {
-            print_info("Executing pre-install script...");
-            execute_build_script(pre_install_script, "pre-install")?;
-        }
+    if let Some(ref cfg) = config
+        && let Some(pre_install_script) = &cfg.build.scripts.pre_install
+    {
+        print_info("Executing pre-install script...");
+        execute_build_script(pre_install_script, "pre-install")?;
     }
 
     // Load extensions and execute pre-install hooks
@@ -1694,7 +1696,7 @@ async fn install_package(
     let pkg_name = if source.contains("://") || source.contains("@") {
         source
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or(package)
             .trim_end_matches(".git")
     } else {
@@ -1737,11 +1739,11 @@ async fn install_package(
     ext_manager.execute_hook("post_install", &hook_context)?;
 
     // Execute post-install script if configured
-    if let Some(ref cfg) = config {
-        if let Some(post_install_script) = &cfg.build.scripts.post_install {
-            print_info("Executing post-install script...");
-            execute_build_script(post_install_script, "post-install")?;
-        }
+    if let Some(ref cfg) = config
+        && let Some(post_install_script) = &cfg.build.scripts.post_install
+    {
+        print_info("Executing post-install script...");
+        execute_build_script(post_install_script, "post-install")?;
     }
 
     Ok(())
@@ -1841,7 +1843,7 @@ async fn run_script(name: &str) -> Result<()> {
     } else {
         print_error(&format!("Script '{}' not found in porters.toml", name));
         print_info("Available scripts:");
-        for (script_name, _) in &config.scripts {
+        for script_name in config.scripts.keys() {
             println!("  - {}", script_name);
         }
         anyhow::bail!("Script not found");
@@ -2048,17 +2050,15 @@ async fn sync_dependencies(
                 let version = tag.as_deref().or(branch.as_deref()).unwrap_or("main");
                 if cache_enabled && dep_cache.is_cached(name, version, None)? {
                     dep_cache.retrieve(name, version, &dep_path)?;
+                } else if dep_path.exists() {
+                    print_warning(&format!("{} already exists, skipping", name));
                 } else {
-                    if dep_path.exists() {
-                        print_warning(&format!("{} already exists, skipping", name));
-                    } else {
-                        let _checksum = deps::clone_git_repo(url, &dep_path).await?;
-                        print_success(&format!("Installed {}", name));
+                    let _checksum = deps::clone_git_repo(url, &dep_path).await?;
+                    print_success(&format!("Installed {}", name));
 
-                        // Store in cache
-                        if cache_enabled {
-                            dep_cache.store(name, version, &dep_path)?;
-                        }
+                    // Store in cache
+                    if cache_enabled {
+                        dep_cache.store(name, version, &dep_path)?;
                     }
                 }
             }
@@ -2198,14 +2198,12 @@ async fn clean_cache(force: bool) -> Result<()> {
         ));
     }
 
-    if force {
-        if let Ok(stats) = bin_cache.stats() {
-            print_info(&format!(
-                "Binary cache: {} items, {}",
-                stats.count,
-                stats.human_size()
-            ));
-        }
+    if force && let Ok(stats) = bin_cache.stats() {
+        print_info(&format!(
+            "Binary cache: {} items, {}",
+            stats.count,
+            stats.human_size()
+        ));
     }
 
     // Clean dependency cache
@@ -2448,19 +2446,14 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
             cfg.run
                 .cpp_compiler
                 .clone()
-                .unwrap_or_else(|| detect_cpp_compiler())
+                .unwrap_or_else(detect_cpp_compiler)
         } else {
-            cfg.run
-                .c_compiler
-                .clone()
-                .unwrap_or_else(|| detect_c_compiler())
+            cfg.run.c_compiler.clone().unwrap_or_else(detect_c_compiler)
         }
+    } else if is_cpp {
+        detect_cpp_compiler()
     } else {
-        if is_cpp {
-            detect_cpp_compiler()
-        } else {
-            detect_c_compiler()
-        }
+        detect_c_compiler()
     };
 
     print_info(&format!("Using compiler: {}", compiler));
@@ -2481,7 +2474,7 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
             print_info("Resolving dependencies for include paths...");
 
             // Try to resolve dependencies
-            if let Ok(resolved) = deps::resolve_dependencies(&cfg).await {
+            if let Ok(resolved) = deps::resolve_dependencies(cfg).await {
                 for dep in &resolved {
                     for include_path in &dep.include_paths {
                         cmd.arg(format!("-I{}", include_path.display()));

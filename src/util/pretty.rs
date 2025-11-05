@@ -51,11 +51,6 @@ pub fn print_graph_node(name: &str, version: &str, depth: usize) {
             format!("{} ({})", name, version).bold()
         );
     } else {
-        println!(
-            "{}├─ {} {}",
-            indent,
-            "📦".bright_blue(),
-            format!("{} ({})", name, version)
-        );
+        println!("{}├─ {} {} ({})", indent, "📦".bright_blue(), name, version);
     }
 }

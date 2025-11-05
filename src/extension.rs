@@ -94,10 +94,10 @@ impl ExtensionManager {
             let entry = entry?;
             let path = entry.path();
 
-            if path.is_dir() {
-                if let Ok(extension) = self.load_extension(&path) {
-                    self.loaded_extensions.push(extension);
-                }
+            if path.is_dir()
+                && let Ok(extension) = self.load_extension(&path)
+            {
+                self.loaded_extensions.push(extension);
             }
         }
 

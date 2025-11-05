@@ -29,7 +29,7 @@ cargo run -- --version
 
 ## Project Structure
 
-```
+```text
 Porters/
 ├── src/
 │   ├── main.rs           # CLI entry point
@@ -143,7 +143,7 @@ cargo test --lib
 
 Located in `tests/` directory:
 
-```rust
+```rust,no_run
 // tests/integration_test.rs
 #[tokio::test]
 async fn test_project_creation() {
@@ -200,7 +200,7 @@ cargo run -- build
 
 ### Code Documentation
 
-```rust
+```rust,no_run
 /// Adds a dependency to the project
 ///
 /// # Arguments
@@ -210,7 +210,7 @@ cargo run -- build
 ///
 /// # Examples
 ///
-/// ```
+/// ```no_run
 /// add_dependency("fmt", Some("https://github.com/fmtlib/fmt")).await?;
 /// ```
 pub async fn add_dependency(name: &str, git: Option<String>) -> Result<()> {
@@ -300,7 +300,7 @@ valgrind --leak-check=full cargo run -- build
 
 ## Benchmarking
 
-```rust
+```rust,ignore
 #[bench]
 fn bench_dependency_resolution(b: &mut Bencher) {
     b.iter(|| {

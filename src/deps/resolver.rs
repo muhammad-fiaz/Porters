@@ -168,22 +168,22 @@ impl DependencyResolver {
                 ..
             } => {
                 // Check platform compatibility
-                if let Some(allowed_platforms) = platforms {
-                    if !allowed_platforms.contains(&platform.to_string()) {
-                        // Skip platform-specific dependency
-                        return Ok(());
-                    }
+                if let Some(allowed_platforms) = platforms
+                    && !allowed_platforms.contains(&platform.to_string())
+                {
+                    // Skip platform-specific dependency
+                    return Ok(());
                 }
 
                 // Check version constraints
-                if let Some(constraint) = constraints {
-                    if !self.check_constraint(constraint)? {
-                        return Err(anyhow!(
-                            "Constraint '{}' not satisfied for {}",
-                            constraint,
-                            name
-                        ));
-                    }
+                if let Some(constraint) = constraints
+                    && !self.check_constraint(constraint)?
+                {
+                    return Err(anyhow!(
+                        "Constraint '{}' not satisfied for {}",
+                        constraint,
+                        name
+                    ));
                 }
 
                 // Determine source and resolve transitively
@@ -324,13 +324,13 @@ impl DependencyResolver {
     ) -> Result<()> {
         if let Some(existing) = self.resolved.get(name) {
             // Check for version conflicts
-            if let (Some(existing_ver), Some(new_ver)) = (&existing.version, &version) {
-                if existing_ver != new_ver {
-                    self.conflicts.push(DependencyConflict {
-                        package: name.to_string(),
-                        requested_versions: vec![existing_ver.to_string(), new_ver.to_string()],
-                    });
-                }
+            if let (Some(existing_ver), Some(new_ver)) = (&existing.version, &version)
+                && existing_ver != new_ver
+            {
+                self.conflicts.push(DependencyConflict {
+                    package: name.to_string(),
+                    requested_versions: vec![existing_ver.to_string(), new_ver.to_string()],
+                });
             }
         } else {
             self.resolved.insert(

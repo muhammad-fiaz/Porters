@@ -196,37 +196,43 @@ impl BinaryCache {
 
     /// Calculate directory size
     fn dir_size(&self, path: &Path) -> Result<u64> {
-        let mut size = 0;
-        if path.is_dir() {
-            for entry in fs::read_dir(path)? {
-                let entry = entry?;
-                let metadata = entry.metadata()?;
-                if metadata.is_file() {
-                    size += metadata.len();
-                } else if metadata.is_dir() {
-                    size += self.dir_size(&entry.path())?;
+        fn calculate_size(path: &Path) -> Result<u64> {
+            let mut size = 0;
+            if path.is_dir() {
+                for entry in fs::read_dir(path)? {
+                    let entry = entry?;
+                    let metadata = entry.metadata()?;
+                    if metadata.is_file() {
+                        size += metadata.len();
+                    } else if metadata.is_dir() {
+                        size += calculate_size(&entry.path())?;
+                    }
                 }
             }
+            Ok(size)
         }
-        Ok(size)
+        calculate_size(path)
     }
 
     /// Copy directory recursively
     fn copy_dir_all(&self, src: &Path, dst: &Path) -> Result<()> {
-        fs::create_dir_all(dst)?;
-        for entry in fs::read_dir(src)? {
-            let entry = entry?;
-            let ty = entry.file_type()?;
-            let src_path = entry.path();
-            let dst_path = dst.join(entry.file_name());
+        fn copy_recursive(src: &Path, dst: &Path) -> Result<()> {
+            fs::create_dir_all(dst)?;
+            for entry in fs::read_dir(src)? {
+                let entry = entry?;
+                let ty = entry.file_type()?;
+                let src_path = entry.path();
+                let dst_path = dst.join(entry.file_name());
 
-            if ty.is_dir() {
-                self.copy_dir_all(&src_path, &dst_path)?;
-            } else {
-                fs::copy(&src_path, &dst_path)?;
+                if ty.is_dir() {
+                    copy_recursive(&src_path, &dst_path)?;
+                } else {
+                    fs::copy(&src_path, &dst_path)?;
+                }
             }
+            Ok(())
         }
-        Ok(())
+        copy_recursive(src, dst)
     }
 
     /// Copy files matching pattern
@@ -241,13 +247,12 @@ impl BinaryCache {
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            if entry.file_type().is_file() {
-                if let Some(name) = entry.file_name().to_str() {
-                    if name.ends_with(pattern) {
-                        let dest = dst.join(entry.file_name());
-                        fs::copy(entry.path(), dest)?;
-                    }
-                }
+            if entry.file_type().is_file()
+                && let Some(name) = entry.file_name().to_str()
+                && name.ends_with(pattern)
+            {
+                let dest = dst.join(entry.file_name());
+                fs::copy(entry.path(), dest)?;
             }
         }
 
