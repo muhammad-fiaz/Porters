@@ -1,1 +1,93 @@
+# Rust build artifacts
 /target
+/docs/book
+
+# Cargo.lock (uncomment if you want to commit it)
+# Cargo.lock
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+*.profraw
+coverage/
+
+# Benchmark results
+criterion/
+
+# Backup files
+*.orig
+*.rej
+
+# Rust documentation
+target/doc/
+
+# Cargo registry cache
+.cargo/registry/
+
+# Cargo git checkouts
+.cargo/git/
+
+# Cargo build artifacts
+target/
+
+# mdBook build output
+book/
+
+# CI/CD
+.github/workflows/*.yml.bak
+
+# Local development
+*.rs.bk
+debug/
+release/
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Windows executables
+*.exe
+*.pdb
+
+# macOS
+*.dSYM/
+
+# Linux
+*.so
+*.a
+
+# Cross-compilation artifacts
+target/*/
+
+# Temporary directories
+tmp/
+temp/
