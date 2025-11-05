@@ -4,14 +4,14 @@
 //! C/C++ projects for multiple target platforms and architectures.
 
 use anyhow::Result;
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use colored::Colorize;
 
 /// Cross-compilation target
-/// 
+///
 /// Represents a specific platform and architecture combination
 /// for cross-compilation.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -19,11 +19,11 @@ pub enum Target {
     /// Linux x86_64 (64-bit Intel/AMD)
     #[serde(rename = "linux-x86_64")]
     LinuxX8664,
-    
+
     /// Linux aarch64 (64-bit ARM)
     #[serde(rename = "linux-aarch64")]
     LinuxAarch64,
-    
+
     /// Linux armv7 (32-bit ARM)
     #[serde(rename = "linux-armv7")]
     LinuxArmv7,
@@ -128,7 +128,10 @@ impl Target {
             Target::MacosAarch64 => vec!["clang", "clang++"],
             Target::BaremetalArm => vec!["arm-none-eabi-gcc", "arm-none-eabi-g++"],
             Target::BaremetalRiscv => vec!["riscv32-unknown-elf-gcc", "riscv32-unknown-elf-g++"],
-            Target::AndroidAarch64 => vec!["aarch64-linux-android-clang", "aarch64-linux-android-clang++"],
+            Target::AndroidAarch64 => vec![
+                "aarch64-linux-android-clang",
+                "aarch64-linux-android-clang++",
+            ],
             Target::IosAarch64 => vec!["clang", "clang++"],
             Target::Wasm32 => vec!["emcc", "em++"],
         }
@@ -202,10 +205,16 @@ impl CrossCompiler {
             "make" => self.compile_make(target, target_config, &build_dir)?,
             "meson" => self.compile_meson(target, target_config, &build_dir)?,
             "xmake" => self.compile_xmake(target, target_config, &build_dir)?,
-            _ => anyhow::bail!("Cross-compilation not supported for build system: {}", build_system),
+            _ => anyhow::bail!(
+                "Cross-compilation not supported for build system: {}",
+                build_system
+            ),
         }
 
-        println!("✅ Cross-compilation successful for {}", target.display_name().green());
+        println!(
+            "✅ Cross-compilation successful for {}",
+            target.display_name().green()
+        );
         Ok(build_dir)
     }
 
@@ -217,7 +226,11 @@ impl CrossCompiler {
             match self.compile(target, build_system) {
                 Ok(dir) => build_dirs.push(dir),
                 Err(e) => {
-                    println!("❌ Failed to compile for {}: {}", target.display_name().red(), e);
+                    println!(
+                        "❌ Failed to compile for {}: {}",
+                        target.display_name().red(),
+                        e
+                    );
                 }
             }
         }
@@ -230,12 +243,13 @@ impl CrossCompiler {
         let toolchain = target.toolchain();
         let cc = toolchain[0];
 
-        let output = Command::new("which")
-            .arg(cc)
-            .output();
+        let output = Command::new("which").arg(cc).output();
 
         if output.is_err() || !output.unwrap().status.success() {
-            println!("⚠️  Toolchain {} not found. Install instructions:", cc.yellow());
+            println!(
+                "⚠️  Toolchain {} not found. Install instructions:",
+                cc.yellow()
+            );
             self.print_install_instructions(target);
             anyhow::bail!("Required toolchain not available");
         }
@@ -262,7 +276,10 @@ impl CrossCompiler {
                 println!("  Install Emscripten SDK: https://emscripten.org/");
             }
             _ => {
-                println!("  Check documentation for {} toolchain", target.display_name());
+                println!(
+                    "  Check documentation for {} toolchain",
+                    target.display_name()
+                );
             }
         }
     }
@@ -281,13 +298,22 @@ impl CrossCompiler {
         // Set toolchain file if provided
         if let Some(cfg) = config {
             if let Some(toolchain_file) = &cfg.cmake_toolchain_file {
-                cmd.arg(format!("-DCMAKE_TOOLCHAIN_FILE={}", toolchain_file.display()));
+                cmd.arg(format!(
+                    "-DCMAKE_TOOLCHAIN_FILE={}",
+                    toolchain_file.display()
+                ));
             }
         }
 
         // Set target triple
-        cmd.arg(format!("-DCMAKE_SYSTEM_NAME={}", self.get_cmake_system_name(target)));
-        cmd.arg(format!("-DCMAKE_SYSTEM_PROCESSOR={}", self.get_cmake_processor(target)));
+        cmd.arg(format!(
+            "-DCMAKE_SYSTEM_NAME={}",
+            self.get_cmake_system_name(target)
+        ));
+        cmd.arg(format!(
+            "-DCMAKE_SYSTEM_PROCESSOR={}",
+            self.get_cmake_processor(target)
+        ));
 
         // Set compilers
         let toolchain = target.toolchain();
@@ -304,13 +330,19 @@ impl CrossCompiler {
                 cmd.arg(format!("-DCMAKE_C_FLAGS={}", cfg.flags.cflags.join(" ")));
             }
             if !cfg.flags.cxxflags.is_empty() {
-                cmd.arg(format!("-DCMAKE_CXX_FLAGS={}", cfg.flags.cxxflags.join(" ")));
+                cmd.arg(format!(
+                    "-DCMAKE_CXX_FLAGS={}",
+                    cfg.flags.cxxflags.join(" ")
+                ));
             }
         }
 
         let output = cmd.output()?;
         if !output.status.success() {
-            anyhow::bail!("CMake configuration failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "CMake configuration failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
 
         // Build
@@ -321,7 +353,10 @@ impl CrossCompiler {
             .output()?;
 
         if !build_output.status.success() {
-            anyhow::bail!("Build failed: {}", String::from_utf8_lossy(&build_output.stderr));
+            anyhow::bail!(
+                "Build failed: {}",
+                String::from_utf8_lossy(&build_output.stderr)
+            );
         }
 
         Ok(())
@@ -375,15 +410,19 @@ impl CrossCompiler {
 
         let output = cmd.output()?;
         if !output.status.success() {
-            anyhow::bail!("Meson setup failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "Meson setup failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
 
-        let build_output = Command::new("ninja")
-            .current_dir(build_dir)
-            .output()?;
+        let build_output = Command::new("ninja").current_dir(build_dir).output()?;
 
         if !build_output.status.success() {
-            anyhow::bail!("Ninja build failed: {}", String::from_utf8_lossy(&build_output.stderr));
+            anyhow::bail!(
+                "Ninja build failed: {}",
+                String::from_utf8_lossy(&build_output.stderr)
+            );
         }
 
         Ok(())
@@ -406,7 +445,10 @@ impl CrossCompiler {
 
         let output = cmd.output()?;
         if !output.status.success() {
-            anyhow::bail!("XMake config failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "XMake config failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
 
         let build_output = Command::new("xmake")
@@ -414,7 +456,10 @@ impl CrossCompiler {
             .output()?;
 
         if !build_output.status.success() {
-            anyhow::bail!("XMake build failed: {}", String::from_utf8_lossy(&build_output.stderr));
+            anyhow::bail!(
+                "XMake build failed: {}",
+                String::from_utf8_lossy(&build_output.stderr)
+            );
         }
 
         Ok(())
@@ -426,7 +471,9 @@ impl CrossCompiler {
         target: &Target,
         _config: Option<&TargetConfig>,
     ) -> Result<PathBuf> {
-        let cross_file = self.project_root.join(format!("meson-cross-{}.ini", target.triple()));
+        let cross_file = self
+            .project_root
+            .join(format!("meson-cross-{}.ini", target.triple()));
         let toolchain = target.toolchain();
 
         let content = format!(
@@ -466,7 +513,10 @@ impl CrossCompiler {
     fn get_cmake_processor(&self, target: &Target) -> &'static str {
         match target {
             Target::LinuxX8664 | Target::WindowsX8664 | Target::MacosX8664 => "x86_64",
-            Target::LinuxAarch64 | Target::MacosAarch64 | Target::AndroidAarch64 | Target::IosAarch64 => "aarch64",
+            Target::LinuxAarch64
+            | Target::MacosAarch64
+            | Target::AndroidAarch64
+            | Target::IosAarch64 => "aarch64",
             Target::LinuxArmv7 => "armv7",
             Target::WindowsI686 => "i686",
             Target::BaremetalArm => "arm",
@@ -513,7 +563,10 @@ impl CrossCompiler {
     fn get_xmake_arch(&self, target: &Target) -> &'static str {
         match target {
             Target::LinuxX8664 | Target::WindowsX8664 | Target::MacosX8664 => "x86_64",
-            Target::LinuxAarch64 | Target::MacosAarch64 | Target::AndroidAarch64 | Target::IosAarch64 => "arm64",
+            Target::LinuxAarch64
+            | Target::MacosAarch64
+            | Target::AndroidAarch64
+            | Target::IosAarch64 => "arm64",
             Target::LinuxArmv7 => "armv7",
             Target::WindowsI686 => "i386",
             _ => "unknown",

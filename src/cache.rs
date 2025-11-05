@@ -3,31 +3,31 @@
 //! This module provides caching of downloaded dependencies to avoid
 //! redundant network operations and speed up dependency resolution.
 
+use crate::hash::calculate_directory_hash;
 use anyhow::{Context, Result};
+use colored::Colorize;
 use std::fs;
 use std::path::{Path, PathBuf};
-use colored::Colorize;
-use crate::hash::calculate_directory_hash;
 
 /// Dependency cache manager for downloaded packages
-/// 
+///
 /// Manages a cache directory (typically `.porters/cache/`) where downloaded
 /// dependencies are stored with hash verification.
 pub struct DependencyCache {
     /// Directory where cached dependencies are stored
     cache_dir: PathBuf,
-    
+
     /// Whether caching is enabled
     enabled: bool,
 }
 
 impl DependencyCache {
     /// Create a new dependency cache
-    /// 
+    ///
     /// # Arguments
     /// * `cache_dir` - Path to the cache directory
     /// * `enabled` - Whether caching should be active
-    /// 
+    ///
     /// # Returns
     /// A new `DependencyCache` instance
     pub fn new(cache_dir: PathBuf, enabled: bool) -> Self {
@@ -37,8 +37,7 @@ impl DependencyCache {
     /// Initialize the cache directory
     pub fn init(&self) -> Result<()> {
         if self.enabled && !self.cache_dir.exists() {
-            fs::create_dir_all(&self.cache_dir)
-                .context("Failed to create cache directory")?;
+            fs::create_dir_all(&self.cache_dir).context("Failed to create cache directory")?;
         }
         Ok(())
     }
@@ -49,7 +48,12 @@ impl DependencyCache {
     }
 
     /// Check if a dependency is cached
-    pub fn is_cached(&self, name: &str, version: &str, expected_hash: Option<&str>) -> Result<bool> {
+    pub fn is_cached(
+        &self,
+        name: &str,
+        version: &str,
+        expected_hash: Option<&str>,
+    ) -> Result<bool> {
         if !self.enabled {
             return Ok(false);
         }
@@ -63,7 +67,10 @@ impl DependencyCache {
         if let Some(expected) = expected_hash {
             let actual = calculate_directory_hash(&cache_path)?;
             if actual != expected {
-                println!("⚠️  Cache hash mismatch for {}, re-downloading", name.yellow());
+                println!(
+                    "⚠️  Cache hash mismatch for {}, re-downloading",
+                    name.yellow()
+                );
                 return Ok(false);
             }
         }
@@ -78,11 +85,10 @@ impl DependencyCache {
         }
 
         let cache_path = self.get_cache_path(name, version);
-        
+
         // Remove existing cache if present
         if cache_path.exists() {
-            fs::remove_dir_all(&cache_path)
-                .context("Failed to remove old cache")?;
+            fs::remove_dir_all(&cache_path).context("Failed to remove old cache")?;
         }
 
         // Copy to cache
@@ -108,8 +114,7 @@ impl DependencyCache {
 
         // Remove destination if exists
         if dest_path.exists() {
-            fs::remove_dir_all(dest_path)
-                .context("Failed to remove destination")?;
+            fs::remove_dir_all(dest_path).context("Failed to remove destination")?;
         }
 
         // Copy from cache
@@ -127,10 +132,8 @@ impl DependencyCache {
         }
 
         if force {
-            fs::remove_dir_all(&self.cache_dir)
-                .context("Failed to clear cache")?;
-            fs::create_dir_all(&self.cache_dir)
-                .context("Failed to recreate cache directory")?;
+            fs::remove_dir_all(&self.cache_dir).context("Failed to clear cache")?;
+            fs::create_dir_all(&self.cache_dir).context("Failed to recreate cache directory")?;
             println!("🗑️  Cache cleared (forced)");
         } else {
             // Only remove old cache entries (could be enhanced with age check)
@@ -239,7 +242,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let cache_dir = temp_dir.path().join("cache");
         let cache = DependencyCache::new(cache_dir.clone(), true);
-        
+
         cache.init().unwrap();
         assert!(cache_dir.exists());
     }

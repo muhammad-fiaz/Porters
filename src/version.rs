@@ -3,7 +3,7 @@
 //! This module provides functionality for checking version requirements
 //! of tools and dependencies, ensuring compatibility.
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use std::cmp::Ordering;
 use std::process::Command;
 
@@ -40,29 +40,36 @@ impl Version {
     /// Parse a version string like "1.2.3"
     pub fn parse(s: &str) -> Result<Self> {
         let parts: Vec<&str> = s.trim().split('.').collect();
-        
+
         if parts.is_empty() {
             bail!("Empty version string");
         }
-        
-        let major = parts[0].parse::<u32>()
+
+        let major = parts[0]
+            .parse::<u32>()
             .with_context(|| format!("Invalid major version: {}", parts[0]))?;
-        
+
         let minor = if parts.len() > 1 {
-            parts[1].parse::<u32>()
+            parts[1]
+                .parse::<u32>()
                 .with_context(|| format!("Invalid minor version: {}", parts[1]))?
         } else {
             0
         };
-        
+
         let patch = if parts.len() > 2 {
-            parts[2].parse::<u32>()
+            parts[2]
+                .parse::<u32>()
                 .with_context(|| format!("Invalid patch version: {}", parts[2]))?
         } else {
             0
         };
-        
-        Ok(Version { major, minor, patch })
+
+        Ok(Version {
+            major,
+            minor,
+            patch,
+        })
     }
 }
 
@@ -94,43 +101,43 @@ impl VersionReq {
     /// Parse a version requirement string
     pub fn parse(s: &str) -> Result<Self> {
         let s = s.trim();
-        
+
         if s == "*" {
             return Ok(VersionReq::Any);
         }
-        
+
         if let Some(ver) = s.strip_prefix(">=") {
             return Ok(VersionReq::GreaterEq(Version::parse(ver)?));
         }
-        
+
         if let Some(ver) = s.strip_prefix("<=") {
             return Ok(VersionReq::LessEq(Version::parse(ver)?));
         }
-        
+
         if let Some(ver) = s.strip_prefix('>') {
             return Ok(VersionReq::Greater(Version::parse(ver)?));
         }
-        
+
         if let Some(ver) = s.strip_prefix('<') {
             return Ok(VersionReq::Less(Version::parse(ver)?));
         }
-        
+
         if let Some(ver) = s.strip_prefix('^') {
             return Ok(VersionReq::Compatible(Version::parse(ver)?));
         }
-        
+
         if let Some(ver) = s.strip_prefix('~') {
             return Ok(VersionReq::Tilde(Version::parse(ver)?));
         }
-        
+
         if let Some(ver) = s.strip_prefix("==") {
             return Ok(VersionReq::Exact(Version::parse(ver)?));
         }
-        
+
         // Default to exact match
         Ok(VersionReq::Exact(Version::parse(s)?))
     }
-    
+
     /// Check if a version satisfies this requirement
     pub fn matches(&self, version: &Version) -> bool {
         match self {
@@ -146,8 +153,8 @@ impl VersionReq {
             }
             VersionReq::Tilde(req) => {
                 // ~1.2.3 allows >=1.2.3, <1.3.0
-                version.major == req.major 
-                    && version.minor == req.minor 
+                version.major == req.major
+                    && version.minor == req.minor
                     && version.patch >= req.patch
             }
         }
@@ -192,14 +199,14 @@ impl ToolVersionChecker {
             }
             _ => bail!("Unknown tool: {}", tool),
         };
-        
+
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         let combined = format!("{}{}", stdout, stderr);
-        
+
         Self::parse_version_from_output(&combined, tool)
     }
-    
+
     /// Parse version from tool output
     fn parse_version_from_output(output: &str, tool: &str) -> Result<Version> {
         // Common patterns for version extraction
@@ -221,7 +228,7 @@ impl ToolVersionChecker {
             // "Conan version 1.50.0"
             r"Conan\s+version\s+(\d+)\.(\d+)\.(\d+)",
         ];
-        
+
         for pattern in patterns {
             if let Ok(re) = regex::Regex::new(pattern) {
                 if let Some(caps) = re.captures(output) {
@@ -229,31 +236,39 @@ impl ToolVersionChecker {
                         let major = caps[1].parse::<u32>()?;
                         let minor = caps[2].parse::<u32>()?;
                         let patch = caps[3].parse::<u32>()?;
-                        return Ok(Version { major, minor, patch });
+                        return Ok(Version {
+                            major,
+                            minor,
+                            patch,
+                        });
                     }
                 }
             }
         }
-        
-        bail!("Could not parse version for tool '{}' from output:\n{}", tool, output)
+
+        bail!(
+            "Could not parse version for tool '{}' from output:\n{}",
+            tool,
+            output
+        )
     }
-    
+
     /// Check if a tool is installed
     pub fn is_tool_installed(tool: &str) -> bool {
         Self::get_tool_version(tool).is_ok()
     }
-    
+
     /// Check if a tool version satisfies a requirement
     pub fn check_requirement(tool: &str, requirement: &str) -> Result<bool> {
         let req = VersionReq::parse(requirement)?;
-        
+
         if matches!(req, VersionReq::Any) {
             return Ok(true);
         }
-        
+
         let installed = Self::get_tool_version(tool)
             .with_context(|| format!("Tool '{}' is not installed or not found in PATH", tool))?;
-        
+
         Ok(req.matches(&installed))
     }
 }
@@ -261,53 +276,65 @@ impl ToolVersionChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_version_parsing() {
         let v = Version::parse("1.2.3").unwrap();
         assert_eq!(v.major, 1);
         assert_eq!(v.minor, 2);
         assert_eq!(v.patch, 3);
-        
+
         let v2 = Version::parse("10").unwrap();
         assert_eq!(v2.major, 10);
         assert_eq!(v2.minor, 0);
         assert_eq!(v2.patch, 0);
     }
-    
+
     #[test]
     fn test_version_comparison() {
         let v1 = Version::parse("1.2.3").unwrap();
         let v2 = Version::parse("1.2.4").unwrap();
         let v3 = Version::parse("1.3.0").unwrap();
         let v4 = Version::parse("2.0.0").unwrap();
-        
+
         assert!(v1 < v2);
         assert!(v2 < v3);
         assert!(v3 < v4);
         assert!(v1 == v1);
     }
-    
+
     #[test]
     fn test_version_req_parsing() {
         assert!(matches!(VersionReq::parse("*").unwrap(), VersionReq::Any));
-        assert!(matches!(VersionReq::parse(">=1.2.3").unwrap(), VersionReq::GreaterEq(_)));
-        assert!(matches!(VersionReq::parse("^1.2.3").unwrap(), VersionReq::Compatible(_)));
-        assert!(matches!(VersionReq::parse("~1.2.3").unwrap(), VersionReq::Tilde(_)));
-        assert!(matches!(VersionReq::parse("1.2.3").unwrap(), VersionReq::Exact(_)));
+        assert!(matches!(
+            VersionReq::parse(">=1.2.3").unwrap(),
+            VersionReq::GreaterEq(_)
+        ));
+        assert!(matches!(
+            VersionReq::parse("^1.2.3").unwrap(),
+            VersionReq::Compatible(_)
+        ));
+        assert!(matches!(
+            VersionReq::parse("~1.2.3").unwrap(),
+            VersionReq::Tilde(_)
+        ));
+        assert!(matches!(
+            VersionReq::parse("1.2.3").unwrap(),
+            VersionReq::Exact(_)
+        ));
     }
-    
+
     #[test]
     fn test_version_req_matching() {
         let v = Version::parse("1.2.3").unwrap();
-        
+
         assert!(VersionReq::parse("*").unwrap().matches(&v));
         assert!(VersionReq::parse(">=1.2.0").unwrap().matches(&v));
         assert!(VersionReq::parse("<=1.2.5").unwrap().matches(&v));
         assert!(VersionReq::parse("^1.2.0").unwrap().matches(&v));
         assert!(VersionReq::parse("~1.2.0").unwrap().matches(&v));
         assert!(VersionReq::parse("1.2.3").unwrap().matches(&v));
-        
+
         assert!(!VersionReq::parse(">=1.3.0").unwrap().matches(&v));
         assert!(!VersionReq::parse("<1.2.3").unwrap().matches(&v));
         assert!(!VersionReq::parse("^2.0.0").unwrap().matches(&v));

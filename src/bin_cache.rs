@@ -4,18 +4,18 @@
 //! recompiling dependencies when their source hasn't changed.
 
 use anyhow::{Context, Result};
+use colored::Colorize;
 use std::fs;
 use std::path::{Path, PathBuf};
-use colored::Colorize;
 
 /// Binary cache for compiled dependencies
-/// 
+///
 /// Stores and retrieves pre-compiled binaries based on dependency hash
 /// and build configuration hash.
 pub struct BinaryCache {
     /// Directory where cached binaries are stored
     cache_dir: PathBuf,
-    
+
     /// Whether caching is enabled
     enabled: bool,
 }
@@ -25,7 +25,7 @@ impl BinaryCache {
     pub fn new(cache_dir: PathBuf, enabled: bool) -> Self {
         Self { cache_dir, enabled }
     }
-    
+
     /// Check if binary caching is enabled
     pub fn is_enabled(&self) -> bool {
         self.enabled
@@ -41,15 +41,15 @@ impl BinaryCache {
     }
 
     /// Get cache key from dependency hash and build configuration
-    fn get_cache_key(
-        &self,
-        name: &str,
-        version: &str,
-        dep_hash: &str,
-        build_hash: &str,
-    ) -> String {
+    fn get_cache_key(&self, name: &str, version: &str, dep_hash: &str, build_hash: &str) -> String {
         // Cache key format: name-version-dephash-buildhash
-        format!("{}-{}-{}-{}", name, version, &dep_hash[..8], &build_hash[..8])
+        format!(
+            "{}-{}-{}-{}",
+            name,
+            version,
+            &dep_hash[..8],
+            &build_hash[..8]
+        )
     }
 
     /// Get the binary cache path
@@ -65,13 +65,7 @@ impl BinaryCache {
     }
 
     /// Check if compiled binary is cached
-    pub fn is_cached(
-        &self,
-        name: &str,
-        version: &str,
-        dep_hash: &str,
-        build_hash: &str,
-    ) -> bool {
+    pub fn is_cached(&self, name: &str, version: &str, dep_hash: &str, build_hash: &str) -> bool {
         if !self.enabled {
             return false;
         }
@@ -157,7 +151,11 @@ impl BinaryCache {
             self.copy_dir_all(&cache_path.join("include"), &dest_include)?;
         }
 
-        println!("⚡ Retrieved compiled binary for {} v{} from cache", name.cyan(), version);
+        println!(
+            "⚡ Retrieved compiled binary for {} v{} from cache",
+            name.cyan(),
+            version
+        );
         Ok(())
     }
 
@@ -168,10 +166,8 @@ impl BinaryCache {
             return Ok(());
         }
 
-        fs::remove_dir_all(&self.cache_dir)
-            .context("Failed to clear binary cache")?;
-        fs::create_dir_all(&self.cache_dir)
-            .context("Failed to recreate binary cache directory")?;
+        fs::remove_dir_all(&self.cache_dir).context("Failed to clear binary cache")?;
+        fs::create_dir_all(&self.cache_dir).context("Failed to recreate binary cache directory")?;
 
         println!("🗑️  Binary cache cleared");
         Ok(())

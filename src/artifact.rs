@@ -6,15 +6,15 @@
 //! **Note**: This is a future feature for build artifact tracking.
 
 use anyhow::Result;
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use colored::Colorize;
 use walkdir::WalkDir;
 
 /// Build artifact types
-/// 
+///
 /// Categorizes different types of build outputs.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[allow(dead_code)]
@@ -112,10 +112,7 @@ impl ArtifactManager {
 
     /// Process a single file
     fn process_file(&mut self, path: &Path) -> Result<()> {
-        let ext = path
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("");
+        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
         let artifact_type = ArtifactType::from_extension(ext);
 
@@ -131,7 +128,7 @@ impl ArtifactManager {
                     return Ok(()); // Not executable, skip
                 }
             }
-            
+
             #[cfg(not(unix))]
             if matches!(artifact_type, ArtifactType::Unknown) {
                 return Ok(());
@@ -204,8 +201,8 @@ impl ArtifactManager {
 
     /// Package artifacts for distribution
     pub fn package(&self, output_path: &Path, name: &str, version: &str) -> Result<()> {
-        use flate2::write::GzEncoder;
         use flate2::Compression;
+        use flate2::write::GzEncoder;
 
         println!("📦 Packaging artifacts...");
 
@@ -220,7 +217,9 @@ impl ArtifactManager {
         for (artifact_name, artifact) in &self.manifest.artifacts {
             if matches!(
                 artifact.artifact_type,
-                ArtifactType::Executable | ArtifactType::StaticLibrary | ArtifactType::SharedLibrary
+                ArtifactType::Executable
+                    | ArtifactType::StaticLibrary
+                    | ArtifactType::SharedLibrary
             ) {
                 tar.append_path_with_name(&artifact.path, artifact_name)?;
             }

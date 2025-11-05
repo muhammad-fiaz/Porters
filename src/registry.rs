@@ -6,14 +6,14 @@
 //! **Note**: This is a future feature for package registry support.
 
 use anyhow::{Context, Result};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::fs;
-use colored::Colorize;
+use std::path::{Path, PathBuf};
 
 /// Package registry configuration
-/// 
+///
 /// Represents a single package registry with authentication and metadata.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(dead_code)]
@@ -108,7 +108,10 @@ impl RegistryManager {
                 continue;
             }
 
-            match self.download_from_registry(registry, name, version, dest).await {
+            match self
+                .download_from_registry(registry, name, version, dest)
+                .await
+            {
                 Ok(metadata) => {
                     println!(
                         "📦 Downloaded {} v{} from {}",
@@ -140,7 +143,10 @@ impl RegistryManager {
         dest: &Path,
     ) -> Result<PackageMetadata> {
         let client = reqwest::Client::new();
-        let url = format!("{}/api/v1/packages/{}/{}/download", registry.url, name, version);
+        let url = format!(
+            "{}/api/v1/packages/{}/{}/download",
+            registry.url, name, version
+        );
 
         let mut request = client.get(&url);
         if let Some(token) = &registry.auth_token {
@@ -239,17 +245,14 @@ impl RegistryManager {
             anyhow::bail!("Publish failed: {}", error);
         }
 
-        println!(
-            "✅ Published to {} successfully",
-            registry_name.green()
-        );
+        println!("✅ Published to {} successfully", registry_name.green());
         Ok(())
     }
 
     /// Create package archive for publishing
     fn create_package_archive(&self, package_path: &Path, version: &str) -> Result<PathBuf> {
-        use flate2::write::GzEncoder;
         use flate2::Compression;
+        use flate2::write::GzEncoder;
 
         let name = package_path
             .file_name()

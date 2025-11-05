@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    
+
     // Only run post-install on actual install, not regular builds
     if env::var("CARGO_INSTALL").is_ok() {
         // Create post-install hook script
@@ -16,7 +16,7 @@ fn create_post_install_script() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let mut script_path = PathBuf::from(out_dir);
     script_path.push("post_install.txt");
-    
+
     let message = r#"
 ================================================================================
   Porters installed successfully! 🎉
@@ -46,6 +46,6 @@ Quick test:
 
 ================================================================================
 "#;
-    
+
     let _ = fs::write(script_path, message);
 }

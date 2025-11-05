@@ -6,19 +6,19 @@
 //! - Dependency graph analysis with topological sorting
 //! - Support for Git, path, and registry sources
 
+use crate::config::{Dependency, PortersConfig};
 use anyhow::{Context, Result, anyhow};
+use petgraph::algo::toposort;
+use petgraph::graph::{DiGraph, NodeIndex};
 use semver::Version;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use crate::config::{Dependency, PortersConfig};
-use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::algo::toposort;
 
 /// Dependency resolver with constraint solving and graph analysis
 ///
 /// Builds a dependency graph, detects conflicts, and produces a
 /// topologically sorted resolution order for proper build sequencing.
-/// 
+///
 /// **Note**: Advanced feature for future constraint-based resolution
 #[allow(dead_code)]
 pub struct DependencyResolver {
@@ -66,52 +66,64 @@ impl DependencyResolver {
             node_map: HashMap::new(),
         }
     }
-    
+
     /// Resolve all dependencies with constraint checking and transitive resolution
-    pub async fn resolve(&mut self, config: &PortersConfig) -> Result<HashMap<String, ResolvedDependency>> {
+    pub async fn resolve(
+        &mut self,
+        config: &PortersConfig,
+    ) -> Result<HashMap<String, ResolvedDependency>> {
         let current_platform = get_current_platform();
-        
+
         // Collect all dependencies (regular + dev)
         let mut all_deps = config.dependencies.clone();
         all_deps.extend(config.dev_dependencies.clone());
-        
+
         // Resolve dependencies recursively
         for (name, dep) in all_deps {
-            self.resolve_dependency_recursive(&name, &dep, &current_platform, None).await?;
+            self.resolve_dependency_recursive(&name, &dep, &current_platform, None)
+                .await?;
         }
-        
+
         // Topologically sort to get dependency order
         match toposort(&self.dep_graph, None) {
             Ok(sorted) => {
                 // Dependencies are now in correct build order
                 let build_order: Vec<String> = sorted
                     .iter()
-                    .filter_map(|idx| {
-                        self.dep_graph.node_weight(*idx).cloned()
-                    })
+                    .filter_map(|idx| self.dep_graph.node_weight(*idx).cloned())
                     .collect();
-                
+
                 if !build_order.is_empty() {
-                    println!("📦 Resolved dependency build order: {}", build_order.join(" → "));
+                    println!(
+                        "📦 Resolved dependency build order: {}",
+                        build_order.join(" → ")
+                    );
                 }
             }
             Err(cycle) => {
                 let unknown = "unknown".to_string();
-                let cycle_node = self.dep_graph.node_weight(cycle.node_id())
+                let cycle_node = self
+                    .dep_graph
+                    .node_weight(cycle.node_id())
                     .unwrap_or(&unknown);
-                return Err(anyhow!("Circular dependency detected involving: {}", cycle_node));
+                return Err(anyhow!(
+                    "Circular dependency detected involving: {}",
+                    cycle_node
+                ));
             }
         }
-        
+
         // Check for conflicts
         if !self.conflicts.is_empty() {
-            return Err(anyhow!("Dependency conflicts detected:\n{}", 
-                self.format_conflicts()));
+            return Err(anyhow!(
+                "Dependency conflicts detected:\n{}",
+                self.format_conflicts()
+            ));
         }
-        
+
         Ok(self.resolved.clone())
     }
-    
+
     /// Recursively resolve a dependency and its transitive dependencies
     async fn resolve_dependency_recursive(
         &mut self,
@@ -128,14 +140,20 @@ impl DependencyResolver {
             }
             return Ok(());
         }
-        
+
         match dep {
             Dependency::Simple(version) => {
                 let transitive_deps = Vec::new();
-                self.add_resolved(name, None, DependencySource::Registry {
-                    version: version.clone(),
-                }, vec![], transitive_deps)?;
-                
+                self.add_resolved(
+                    name,
+                    None,
+                    DependencySource::Registry {
+                        version: version.clone(),
+                    },
+                    vec![],
+                    transitive_deps,
+                )?;
+
                 if let Some(parent_name) = parent {
                     self.add_dependency_edge(parent_name, name);
                 }
@@ -156,70 +174,91 @@ impl DependencyResolver {
                         return Ok(());
                     }
                 }
-                
+
                 // Check version constraints
                 if let Some(constraint) = constraints {
                     if !self.check_constraint(constraint)? {
-                        return Err(anyhow!("Constraint '{}' not satisfied for {}", constraint, name));
+                        return Err(anyhow!(
+                            "Constraint '{}' not satisfied for {}",
+                            constraint,
+                            name
+                        ));
                     }
                 }
-                
+
                 // Determine source and resolve transitively
                 let (source, transitive_deps) = if let Some(git_url) = git {
                     // For git dependencies, could parse their config (future enhancement)
                     let deps = Vec::new(); // Simplified for now
-                    (DependencySource::Git {
-                        url: git_url.clone(),
-                        rev: "HEAD".to_string(),
-                    }, deps)
+                    (
+                        DependencySource::Git {
+                            url: git_url.clone(),
+                            rev: "HEAD".to_string(),
+                        },
+                        deps,
+                    )
                 } else if let Some(path_str) = path {
                     // For path dependencies, parse their porters.toml
                     let deps = self.resolve_path_transitive(path_str)?;
-                    (DependencySource::Path {
-                        path: path_str.clone(),
-                    }, deps)
+                    (
+                        DependencySource::Path {
+                            path: path_str.clone(),
+                        },
+                        deps,
+                    )
                 } else {
                     // Registry dependencies (future feature)
-                    (DependencySource::Registry {
-                        version: version.clone().unwrap_or("*".to_string()),
-                    }, Vec::new())
+                    (
+                        DependencySource::Registry {
+                            version: version.clone().unwrap_or("*".to_string()),
+                        },
+                        Vec::new(),
+                    )
                 };
-                
-                let ver = version.as_ref()
-                    .and_then(|v| Version::parse(v).ok());
-                
-                self.add_resolved(name, ver, source.clone(), features.clone(), transitive_deps.clone())?;
-                
+
+                let ver = version.as_ref().and_then(|v| Version::parse(v).ok());
+
+                self.add_resolved(
+                    name,
+                    ver,
+                    source.clone(),
+                    features.clone(),
+                    transitive_deps.clone(),
+                )?;
+
                 if let Some(parent_name) = parent {
                     self.add_dependency_edge(parent_name, name);
                 }
-                
+
                 // Recursively resolve transitive dependencies
                 for trans_dep_name in &transitive_deps {
-                    if let Some(trans_dep_spec) = self.get_transitive_dep_spec(trans_dep_name, &source).await {
+                    if let Some(trans_dep_spec) =
+                        self.get_transitive_dep_spec(trans_dep_name, &source).await
+                    {
                         Box::pin(self.resolve_dependency_recursive(
                             trans_dep_name,
                             &trans_dep_spec,
                             platform,
                             Some(name),
-                        )).await?;
+                        ))
+                        .await?;
                     }
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Resolve transitive dependencies from a path source
     fn resolve_path_transitive(&self, path: &str) -> Result<Vec<String>> {
         let dep_config_path = PathBuf::from(path).join("porters.toml");
-        
+
         if !dep_config_path.exists() {
             // Dependency doesn't have porters.toml, no transitive deps
             return Ok(Vec::new());
         }
-        
+
         // Load the dependency's configuration
         match PortersConfig::load(&dep_config_path) {
             Ok(dep_config) => {
@@ -235,7 +274,7 @@ impl DependencyResolver {
             }
         }
     }
-    
+
     /// Get transitive dependency specification
     async fn get_transitive_dep_spec(
         &self,
@@ -259,18 +298,22 @@ impl DependencyResolver {
             }
         }
     }
-    
+
     /// Add an edge in the dependency graph
     fn add_dependency_edge(&mut self, parent: &str, child: &str) {
-        let parent_idx = *self.node_map.entry(parent.to_string())
+        let parent_idx = *self
+            .node_map
+            .entry(parent.to_string())
             .or_insert_with(|| self.dep_graph.add_node(parent.to_string()));
-        
-        let child_idx = *self.node_map.entry(child.to_string())
+
+        let child_idx = *self
+            .node_map
+            .entry(child.to_string())
             .or_insert_with(|| self.dep_graph.add_node(child.to_string()));
-        
+
         self.dep_graph.add_edge(parent_idx, child_idx, ());
     }
-    
+
     fn add_resolved(
         &mut self,
         name: &str,
@@ -285,30 +328,30 @@ impl DependencyResolver {
                 if existing_ver != new_ver {
                     self.conflicts.push(DependencyConflict {
                         package: name.to_string(),
-                        requested_versions: vec![
-                            existing_ver.to_string(),
-                            new_ver.to_string(),
-                        ],
+                        requested_versions: vec![existing_ver.to_string(), new_ver.to_string()],
                     });
                 }
             }
         } else {
-            self.resolved.insert(name.to_string(), ResolvedDependency {
-                name: name.to_string(),
-                version,
-                source,
-                features,
-                transitive_deps,
-            });
+            self.resolved.insert(
+                name.to_string(),
+                ResolvedDependency {
+                    name: name.to_string(),
+                    version,
+                    source,
+                    features,
+                    transitive_deps,
+                },
+            );
         }
-        
+
         Ok(())
     }
-    
+
     fn check_constraint(&self, constraint: &str) -> Result<bool> {
         // Simple constraint checking - can be extended
         // Format: "min_version >= 1.0.0", "platform == linux", etc.
-        
+
         if constraint.contains(">=") {
             // Version constraint (simplified)
             Ok(true)
@@ -325,11 +368,19 @@ impl DependencyResolver {
             Ok(true)
         }
     }
-    
+
     fn format_conflicts(&self) -> String {
-        self.conflicts.iter().map(|c| {
-            format!("  {} requires versions: {}", c.package, c.requested_versions.join(", "))
-        }).collect::<Vec<_>>().join("\n")
+        self.conflicts
+            .iter()
+            .map(|c| {
+                format!(
+                    "  {} requires versions: {}",
+                    c.package,
+                    c.requested_versions.join(", ")
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 }
 
@@ -338,13 +389,13 @@ impl DependencyResolver {
 pub fn get_current_platform() -> String {
     #[cfg(target_os = "windows")]
     return "windows".to_string();
-    
+
     #[cfg(target_os = "macos")]
     return "macos".to_string();
-    
+
     #[cfg(target_os = "linux")]
     return "linux".to_string();
-    
+
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
     return "unknown".to_string();
 }

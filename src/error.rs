@@ -40,7 +40,7 @@ impl fmt::Display for PortersError {
             PortersError::Extension(msg) => ("Extension", msg),
             PortersError::Unknown(msg) => ("Unknown", msg),
         };
-        
+
         write!(f, "[{}] {}", category, message)
     }
 }
@@ -55,9 +55,9 @@ pub fn display_error(error: &dyn std::error::Error, is_warning: bool) {
     } else {
         "❌ ERROR"
     };
-    
+
     eprintln!("\n{}: {}", prefix, error);
-    
+
     if !is_warning {
         eprintln!("\n🤔 Oops! Looks like something went wrong.");
         eprintln!("   If you think this is a bug in Porters, please report it to:");
@@ -74,16 +74,16 @@ pub fn display_anyhow_error(error: &anyhow::Error, is_warning: bool) {
     } else {
         "❌ ERROR"
     };
-    
+
     eprintln!("\n{}: {}", prefix, error);
-    
+
     // Display chain of causes
     let mut current = error.source();
     while let Some(cause) = current {
         eprintln!("   Caused by: {}", cause);
         current = cause.source();
     }
-    
+
     if !is_warning {
         eprintln!("\n🤔 Oops! Looks like something went wrong.");
         eprintln!("   If you think this is a bug in Porters, please report it to:");
@@ -169,13 +169,13 @@ macro_rules! porters_error {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_error_display() {
         let error = build_system_error("CMake not found");
         assert_eq!(error.to_string(), "[Build System] CMake not found");
     }
-    
+
     #[test]
     fn test_error_types() {
         let _ = dependency_error("Failed to resolve");

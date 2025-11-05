@@ -17,14 +17,14 @@ pub enum BuildSystem {
     Meson,
     SCons,
     Jam,
-    
+
     // CMake ecosystem
     CMake,
     Conan,
     Vcpkg,
     #[allow(dead_code)]
     Hunter,
-    
+
     // Modern alternatives
     XMake,
     Bazel,
@@ -32,7 +32,7 @@ pub enum BuildSystem {
     Premake,
     QMake,
     GradleCpp,
-    
+
     // Custom
     #[allow(dead_code)]
     Custom,
@@ -60,7 +60,7 @@ impl BuildSystem {
             BuildSystem::Custom => "custom",
         }
     }
-    
+
     /// Parse build system from string
     #[allow(dead_code)]
     pub fn from_str(s: &str) -> Option<Self> {
@@ -85,7 +85,7 @@ impl BuildSystem {
             _ => None,
         }
     }
-    
+
     /// Detection files for each build system
     pub fn detection_files(&self) -> &[&str] {
         match self {
@@ -108,7 +108,7 @@ impl BuildSystem {
             BuildSystem::Custom => &[],
         }
     }
-    
+
     /// Command to check if build tool is installed
     #[allow(dead_code)]
     pub fn check_command(&self) -> &str {
@@ -132,26 +132,40 @@ impl BuildSystem {
             BuildSystem::Custom => "",
         }
     }
-    
+
     /// Installation instructions
     #[allow(dead_code)]
     pub fn install_instructions(&self) -> &str {
         match self {
-            BuildSystem::Make => "sudo apt install make  # Ubuntu/Debian\nbrew install make  # macOS",
-            BuildSystem::Ninja => "sudo apt install ninja-build  # Ubuntu/Debian\nbrew install ninja  # macOS",
-            BuildSystem::Autotools => "sudo apt install autoconf automake  # Ubuntu/Debian\nbrew install autoconf automake  # macOS",
+            BuildSystem::Make => {
+                "sudo apt install make  # Ubuntu/Debian\nbrew install make  # macOS"
+            }
+            BuildSystem::Ninja => {
+                "sudo apt install ninja-build  # Ubuntu/Debian\nbrew install ninja  # macOS"
+            }
+            BuildSystem::Autotools => {
+                "sudo apt install autoconf automake  # Ubuntu/Debian\nbrew install autoconf automake  # macOS"
+            }
             BuildSystem::Meson => "pip install meson ninja  # All platforms",
             BuildSystem::SCons => "pip install scons  # All platforms",
             BuildSystem::Jam => "Download from boost.org/build",
-            BuildSystem::CMake => "sudo apt install cmake  # Ubuntu/Debian\nbrew install cmake  # macOS\nchoco install cmake  # Windows",
+            BuildSystem::CMake => {
+                "sudo apt install cmake  # Ubuntu/Debian\nbrew install cmake  # macOS\nchoco install cmake  # Windows"
+            }
             BuildSystem::Conan => "pip install conan  # All platforms",
-            BuildSystem::Vcpkg => "git clone https://github.com/microsoft/vcpkg && ./vcpkg/bootstrap-vcpkg.sh",
+            BuildSystem::Vcpkg => {
+                "git clone https://github.com/microsoft/vcpkg && ./vcpkg/bootstrap-vcpkg.sh"
+            }
             BuildSystem::Hunter => "Integrated with CMake - no separate install needed",
-            BuildSystem::XMake => "curl -fsSL https://xmake.io/shget.text | bash  # Linux/macOS\nscoop install xmake  # Windows",
+            BuildSystem::XMake => {
+                "curl -fsSL https://xmake.io/shget.text | bash  # Linux/macOS\nscoop install xmake  # Windows"
+            }
             BuildSystem::Bazel => "Download from bazel.build",
             BuildSystem::Buck2 => "cargo install buck2  # Via cargo",
             BuildSystem::Premake => "Download from premake.github.io",
-            BuildSystem::QMake => "sudo apt install qt5-qmake  # Ubuntu/Debian\nbrew install qt  # macOS",
+            BuildSystem::QMake => {
+                "sudo apt install qt5-qmake  # Ubuntu/Debian\nbrew install qt  # macOS"
+            }
             BuildSystem::GradleCpp => "Download from gradle.org",
             BuildSystem::Custom => "Custom build script",
         }
@@ -186,7 +200,7 @@ impl Compiler {
             Compiler::Unknown => "unknown",
         }
     }
-    
+
     pub fn detect_c_compiler() -> Self {
         if Command::new("clang").arg("--version").output().is_ok() {
             Compiler::Clang
@@ -202,7 +216,7 @@ impl Compiler {
             Compiler::Unknown
         }
     }
-    
+
     pub fn detect_cpp_compiler() -> Self {
         if Command::new("clang++").arg("--version").output().is_ok() {
             Compiler::Clang
@@ -223,7 +237,7 @@ impl Compiler {
 /// Auto-detect build system from project directory
 pub fn detect_build_system<P: AsRef<Path>>(path: P) -> Option<BuildSystem> {
     let path = path.as_ref();
-    
+
     // Check each build system's detection files
     let systems = [
         BuildSystem::CMake,
@@ -242,7 +256,7 @@ pub fn detect_build_system<P: AsRef<Path>>(path: P) -> Option<BuildSystem> {
         BuildSystem::QMake,
         BuildSystem::GradleCpp,
     ];
-    
+
     for system in &systems {
         for file_pattern in system.detection_files() {
             // Handle wildcards
@@ -262,27 +276,21 @@ pub fn detect_build_system<P: AsRef<Path>>(path: P) -> Option<BuildSystem> {
             }
         }
     }
-    
+
     None
 }
 
 /// Check if a build tool is installed
 #[allow(dead_code)]
 pub fn is_tool_installed(tool: &str) -> bool {
-    Command::new(tool)
-        .arg("--version")
-        .output()
-        .is_ok()
+    Command::new(tool).arg("--version").output().is_ok()
 }
 
 /// Get version of installed tool
 #[allow(dead_code)]
 pub fn get_tool_version(tool: &str) -> Option<String> {
-    let output = Command::new(tool)
-        .arg("--version")
-        .output()
-        .ok()?;
-    
+    let output = Command::new(tool).arg("--version").output().ok()?;
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     stdout.lines().next().map(|s| s.to_string())
 }
@@ -290,14 +298,14 @@ pub fn get_tool_version(tool: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_build_system_from_str() {
         assert_eq!(BuildSystem::from_str("cmake"), Some(BuildSystem::CMake));
         assert_eq!(BuildSystem::from_str("xmake"), Some(BuildSystem::XMake));
         assert_eq!(BuildSystem::from_str("bazel"), Some(BuildSystem::Bazel));
     }
-    
+
     #[test]
     fn test_compiler_detection() {
         let compiler = Compiler::detect_cpp_compiler();

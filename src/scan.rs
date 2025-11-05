@@ -39,13 +39,15 @@ pub struct ProjectSources {
 
 /// Scan a project directory for C/C++ source and header files
 pub fn scan_project<P: AsRef<Path>>(root: P) -> Result<ProjectSources> {
-    let root = root.as_ref().canonicalize()
+    let root = root
+        .as_ref()
+        .canonicalize()
         .with_context(|| format!("Failed to canonicalize path: {}", root.as_ref().display()))?;
-    
+
     let mut source_files = Vec::new();
     let mut header_files = Vec::new();
     let mut include_dirs = HashSet::new();
-    
+
     for entry in WalkDir::new(&root)
         .follow_links(true)
         .into_iter()
@@ -53,17 +55,17 @@ pub fn scan_project<P: AsRef<Path>>(root: P) -> Result<ProjectSources> {
     {
         let entry = entry?;
         let path = entry.path();
-        
+
         if !path.is_file() {
             continue;
         }
-        
+
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if SOURCE_EXTENSIONS.contains(&ext) {
                 source_files.push(path.to_path_buf());
             } else if HEADER_EXTENSIONS.contains(&ext) {
                 header_files.push(path.to_path_buf());
-                
+
                 // Add parent directory as include path
                 if let Some(parent) = path.parent() {
                     include_dirs.insert(parent.to_path_buf());
@@ -71,7 +73,7 @@ pub fn scan_project<P: AsRef<Path>>(root: P) -> Result<ProjectSources> {
             }
         }
     }
-    
+
     // Add common include directories
     let common_includes = vec!["include", "src", "inc"];
     for dir_name in common_includes {
@@ -80,9 +82,9 @@ pub fn scan_project<P: AsRef<Path>>(root: P) -> Result<ProjectSources> {
             include_dirs.insert(inc_path);
         }
     }
-    
+
     let include_paths: Vec<PathBuf> = include_dirs.into_iter().collect();
-    
+
     Ok(ProjectSources {
         source_files,
         header_files,
@@ -104,9 +106,9 @@ fn is_excluded_dir(path: &Path) -> bool {
 pub fn find_sources<P: AsRef<Path>>(root: P, pattern: &str) -> Result<Vec<PathBuf>> {
     let root = root.as_ref();
     let regex = regex::Regex::new(pattern)?;
-    
+
     let mut matches = Vec::new();
-    
+
     for entry in WalkDir::new(root)
         .follow_links(true)
         .into_iter()
@@ -114,7 +116,7 @@ pub fn find_sources<P: AsRef<Path>>(root: P, pattern: &str) -> Result<Vec<PathBu
     {
         let entry = entry?;
         let path = entry.path();
-        
+
         if path.is_file() {
             if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
                 if regex.is_match(file_name) {
@@ -123,7 +125,7 @@ pub fn find_sources<P: AsRef<Path>>(root: P, pattern: &str) -> Result<Vec<PathBu
             }
         }
     }
-    
+
     Ok(matches)
 }
 
@@ -132,7 +134,7 @@ pub fn find_sources<P: AsRef<Path>>(root: P, pattern: &str) -> Result<Vec<PathBu
 pub fn scan_test_files<P: AsRef<Path>>(root: P) -> Result<Vec<PathBuf>> {
     let root = root.as_ref();
     let mut test_files = Vec::new();
-    
+
     for entry in WalkDir::new(root)
         .follow_links(true)
         .into_iter()
@@ -140,21 +142,23 @@ pub fn scan_test_files<P: AsRef<Path>>(root: P) -> Result<Vec<PathBuf>> {
     {
         let entry = entry?;
         let path = entry.path();
-        
+
         if !path.is_file() {
             continue;
         }
-        
+
         // Check if file is in a test directory or has "test" in its name
         let is_test = path.components().any(|c| {
-            c.as_os_str().to_str()
+            c.as_os_str()
+                .to_str()
                 .map(|s| s.contains("test") || s == "tests")
                 .unwrap_or(false)
-        }) || path.file_name()
+        }) || path
+            .file_name()
             .and_then(|n| n.to_str())
             .map(|n| n.contains("test"))
             .unwrap_or(false);
-        
+
         if is_test {
             if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if SOURCE_EXTENSIONS.contains(&ext) {
@@ -163,14 +167,14 @@ pub fn scan_test_files<P: AsRef<Path>>(root: P) -> Result<Vec<PathBuf>> {
             }
         }
     }
-    
+
     Ok(test_files)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_excluded_dirs() {
         assert!(is_excluded_dir(Path::new("vendor")));

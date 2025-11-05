@@ -44,8 +44,18 @@ pub fn print_package(msg: &str) {
 pub fn print_graph_node(name: &str, version: &str, depth: usize) {
     let indent = "  ".repeat(depth);
     if depth == 0 {
-        println!("{}{} {}", indent, "📦".bright_magenta(), format!("{} ({})", name, version).bold());
+        println!(
+            "{}{} {}",
+            indent,
+            "📦".bright_magenta(),
+            format!("{} ({})", name, version).bold()
+        );
     } else {
-        println!("{}├─ {} {}", indent, "📦".bright_blue(), format!("{} ({})", name, version));
+        println!(
+            "{}├─ {} {}",
+            indent,
+            "📦".bright_blue(),
+            format!("{} ({})", name, version)
+        );
     }
 }
