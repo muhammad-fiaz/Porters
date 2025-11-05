@@ -1,0 +1,20 @@
+[book]
+title = "Porters Documentation"
+authors = ["Muhammad Fiaz"]
+language = "en"
+multilingual = false
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = true
+
+[output.html]
+mathjax-support = true
+git-repository-url = "https://github.com/muhammad-fiaz/Porters"
+edit-url-template = "https://github.com/muhammad-fiaz/Porters/edit/main/docs/{path}"
+site-url = "https://muhammad-fiaz.github.io/porters/"
+
+[output.html.fold]
+enable = true
+level = 0

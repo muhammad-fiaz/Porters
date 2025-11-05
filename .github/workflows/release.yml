@@ -1,0 +1,175 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: porters
+            asset_name: porters-linux-x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact_name: porters
+            asset_name: porters-linux-x86_64-musl
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: porters.exe
+            asset_name: porters-windows-x86_64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: porters
+            asset_name: porters-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: porters
+            asset_name: porters-macos-aarch64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.target }}
+
+      - name: Strip binary (Unix)
+        if: matrix.os != 'windows-latest'
+        run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+
+      - name: Create archive (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+          mv ${{ matrix.asset_name }}.tar.gz ../../../
+
+      - name: Create archive (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          cd target/${{ matrix.target }}/release
+          Compress-Archive -Path ${{ matrix.artifact_name }} -DestinationPath ../../../${{ matrix.asset_name }}.zip
+
+      - name: Upload artifact (Unix)
+        if: matrix.os != 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}.tar.gz
+
+      - name: Upload artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}.zip
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          echo "Extracting release notes for version $VERSION"
+          
+          # Extract section from CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$ d' > release_notes.md
+          else
+            echo "Version $VERSION" > release_notes.md
+            echo "" >> release_notes.md
+            echo "See [CHANGELOG.md](CHANGELOG.md) for details." >> release_notes.md
+          fi
+          
+          # Add installation instructions
+          cat >> release_notes.md << 'EOF'
+          
+          ## Installation
+          
+          ### Via Cargo
+          ```bash
+          cargo install porters
+          ```
+          
+          ### Binary Downloads
+          
+          | Platform | Architecture | Download |
+          |----------|--------------|----------|
+          | Linux | x86_64 (GNU) | [porters-linux-x86_64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-linux-x86_64.tar.gz) |
+          | Linux | x86_64 (musl) | [porters-linux-x86_64-musl.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-linux-x86_64-musl.tar.gz) |
+          | Windows | x86_64 | [porters-windows-x86_64.exe.zip](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-windows-x86_64.exe.zip) |
+          | macOS | Intel (x86_64) | [porters-macos-x86_64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-macos-x86_64.tar.gz) |
+          | macOS | Apple Silicon (ARM64) | [porters-macos-aarch64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-macos-aarch64.tar.gz) |
+          
+          ### Upgrade Existing Installation
+          ```bash
+          porters upgrade
+          ```
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release_notes.md
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  publish-crate:
+    name: Publish to crates.io
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Publish to crates.io
+        uses: actions-rs/cargo@v1
+        with:
+          command: publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
