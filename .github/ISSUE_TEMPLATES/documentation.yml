@@ -1,0 +1,75 @@
+name: Documentation Issue
+description: Report issues with documentation or suggest improvements
+title: "[DOCS] "
+labels: ["documentation", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve our documentation! Report issues or suggest enhancements.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation issue is this?
+      options:
+        - User Guide/Installation
+        - API Reference
+        - Examples/Tutorials
+        - Troubleshooting
+        - Contributing Guide
+        - README
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the documentation issue or improvement
+      placeholder: "The documentation for... is unclear because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where in the documentation is this issue?
+      placeholder: "File: docs/src/... Section: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Content
+      description: What does the current documentation say?
+      placeholder: "Currently it says..."
+
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested Improvement
+      description: How should it be improved?
+      placeholder: "It should say... or include..."
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any additional context or examples
+      placeholder: "Screenshots, links to similar documentation, etc."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have checked that this documentation issue hasn't been reported before
+          required: true
+        - label: The issue is with the documentation itself, not the code
+          required: true

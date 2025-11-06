@@ -1,0 +1,74 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Your ideas help make Porters better for everyone.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: A brief description of the feature you'd like to see
+      placeholder: "Add support for..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem/Use Case
+      description: What problem would this feature solve? What's the current limitation?
+      placeholder: "Currently, when I... I have to... It would be better if..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe how you think this feature should work
+      placeholder: "I think this could work by..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative approaches?
+      placeholder: "I also considered... but..."
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Nice to have
+        - Would be helpful
+        - Important for my use case
+        - Critical/blocking my work
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any additional context, screenshots, or examples
+      placeholder: "Here's a mockup of what I mean..."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched for similar feature requests and couldn't find any
+          required: true
+        - label: This feature would benefit other users, not just me
+          required: true

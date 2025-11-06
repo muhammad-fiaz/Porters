@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://muhammad-fiaz.github.io/porters/
+    about: Check our documentation for help and guides
+  - name: 💬 Discussions
+    url: https://github.com/muhammad-fiaz/porters/discussions
+    about: Ask questions and discuss ideas in our discussions forum
+  - name: 🐛 Security Issue
+    url: https://github.com/muhammad-fiaz/porters/security/advisories/new
+    about: Report security vulnerabilities privately
+  - name: 💡 Feature Request Discussion
+    url: https://github.com/muhammad-fiaz/porters/discussions/categories/ideas
+    about: Discuss feature ideas before submitting a formal request

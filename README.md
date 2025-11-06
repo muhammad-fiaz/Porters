@@ -10,7 +10,8 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 
 > This Project is in Active Development!
 
-## ✨ Features
+<details>
+<summary>✨ Features</summary>
 
 ### Core Functionality
 - 🚀 **Zero-Config Project Init** - Automatically detects existing C/C++ projects
@@ -56,7 +57,49 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 - ⚠️ **Enhanced Error Handling** - Helpful messages with GitHub issue links
 - 🚨 **Version Validation** - Pre-build checks for tool version requirements
 
-## 📥 Installation
+</details>
+
+## 📍 Prerequisites
+
+Before installing Porters, ensure you have the following tools installed:
+
+### Core Requirements
+- **Rust & Cargo** - Required for Porters itself (installation and core functionality)
+- **Git** - Required for dependency management and cloning repositories
+
+### Build System Support (Install as needed)
+Porters auto-detects and supports 14+ build systems. Install the ones you plan to use:
+
+#### Modern Build Systems
+- **CMake** - Cross-platform build generator
+- **XMake** - Lua-based modern build system  
+- **Meson** - Fast, user-friendly build system
+- **Bazel** - Google's scalable build system
+- **Buck2** - Meta's fast build system
+
+#### Traditional Build Systems
+- **Make** - Makefile-based builds
+- **Ninja** - Fast, lightweight build system
+- **Autotools** - configure/make (GNU Build System)
+- **SCons** - Python-based build tool
+
+#### Meta Build Systems
+- **Premake** - Project file generator (Visual Studio, Makefiles, Xcode)
+- **QMake** - Qt's build system
+
+#### Package Managers with Build Integration
+- **Conan** - C/C++ package manager with CMake integration
+- **vcpkg** - Microsoft's C++ library manager
+
+#### Compilers
+- **GCC/G++** - GNU Compiler Collection
+- **Clang/Clang++** - LLVM compiler
+- **MSVC** - Microsoft Visual C++ (Windows)
+- **MinGW** - Minimalist GNU for Windows
+
+**Note:** You don't need to install all build systems - Porters will auto-detect and use what's available for your projects.
+
+## 📦 Installation
 
 ### Quick Install (Recommended)
 
@@ -164,48 +207,101 @@ porters run-script <name>     # Run named script from config
 porters <custom-command>      # Run custom command from config
 ```
 
-## 📝 Configuration Example
+## 📝 Configuration Structure Example
 
 ```toml
 [project]
 name = "my-project"
-version = "0.1.0"
-authors = ["Your Name <email@example.com>"]
-description = "An awesome C++ project"
+version = "1.0.0"
+description = "My awesome C++ project"
 license = "Apache-2.0"
+authors = ["Your Name <you@example.com>"]
 repository = "https://github.com/username/my-project"
 project-type = "application"  # or "library"
 entry_point = "src/main"
 platforms = ["windows", "macos", "linux"]
-keywords = ["networking", "cpp"]
+keywords = ["application", "c", "cpp"]
+readme = "README.md"
+
+# Tool version requirements (like Python's requirements.txt)
+[requires]
+cpp = ">=17"           # C++ standard version
+cmake = ">=3.20"       # CMake version
+gcc = ">=9.0"          # GCC version
+clang = ">=12.0"       # Clang version (alternative to gcc)
+ninja = ">=1.10"       # Ninja build tool version
+make = ">=4.0"         # Make version
+meson = ">=0.60"       # Meson version
+bazel = ">=5.0"        # Bazel version
+conan = ">=1.50"       # Conan version
+vcpkg = "*"            # Any version of vcpkg
+
+# Extensions to auto-install from crates.io
+extensions = [
+    "porters-format",    # Code formatter extension
+    "porters-lint",      # Linting extension
+    "porters-doc"        # Documentation generator
+]
 
 [dependencies]
 fmt = { git = "https://github.com/fmtlib/fmt", tag = "10.1.1" }
+spdlog = { git = "https://github.com/gabime/spdlog", branch = "v1.x" }
 mylib = { path = "../mylib" }
 
 [dev-dependencies]
-gtest = { git = "https://github.com/google/googletest" }
+catch2 = { git = "https://github.com/catchorg/Catch2" }
+benchmark = { git = "https://github.com/google/benchmark" }
+
+[optional-dependencies]
+zlib = { git = "https://github.com/madler/zlib" }
 
 [build]
-system = "cmake"  # Auto-detected from CMakeLists.txt
+system = "cmake"
+options = ["-DBUILD_SHARED_LIBS=ON"]
 
-# Enhanced build configuration
-[build.flags]
-cflags = ["-Wall", "-Wextra", "-O2"]
-cxxflags = ["-std=c++17", "-Wall"]
-ldflags = ["-pthread"]
-defines = ["USE_FEATURE_X"]
+[build.env]
+CC = "clang"
+CXX = "clang++"
 
-[build.include]
-include = ["include/", "src/"]
-
-[build.linking]
-libraries = ["pthread", "m"]
-library_paths = ["/usr/local/lib"]
-
+# Build lifecycle scripts
 [build.scripts]
-pre-build = "scripts/pre_build.sh"
-post-build = "scripts/post_build.sh"
+pre-build = "echo Building..."
+post-build = "strip build/myapp"
+pre-install = "echo Installing..."
+post-install = "echo Done!"
+
+# Custom CLI commands
+[[commands]]
+name = "format"
+description = "Format source code"
+script = "clang-format -i src/**/*.cpp"
+
+[[commands]]
+name = "docs"
+description = "Generate documentation"
+script = "doxygen Doxyfile"
+[commands.env]
+DOXYGEN_OUTPUT = "docs/html"
+
+# Named script shortcuts
+[scripts]
+test-all = "cargo build && cargo test"
+deploy = "./deploy.sh production"
+
+# Direct file execution configuration (OPTIONAL - works automatically)
+[run]
+# Extra include directories (beyond automatic dependency includes)
+include-dirs = ["./include", "./extra/include"]
+
+# Compiler flags (only if you want warnings, optimizations, etc.)
+compiler-flags = ["-Wall", "-O2", "-std=c17"]
+
+# Linker flags (only if you need extra libraries)
+linker-flags = ["-lm", "-lpthread"]
+
+# Override compiler (only if you need a specific one)
+c-compiler = "clang"    # Default: auto-detect
+cpp-compiler = "clang++"  # Default: auto-detect
 ```
 
 ## 🔌 Extension System
@@ -250,7 +346,8 @@ script = "scripts/format.sh"
 
 See the [Extension Guide](https://muhammad-fiaz.github.io/porters/extensions.html) for details.
 
-## 🔨 Supported Build Systems (14)
+<details>
+<summary>🔨 Supported Build Systems (17+)</summary>
 
 Porters **natively supports and executes** the following build systems with auto-detection:
 
@@ -258,32 +355,35 @@ Porters **natively supports and executes** the following build systems with auto
 - **Make** - Makefile-based builds
 - **Ninja** - Fast, lightweight build system
 - **Autotools** - configure/make (GNU Build System)
-- **SCons** - Python-based build tool
-
-### Modern Build Systems
-- **CMake** - Cross-platform build generator
-- **XMake** - Lua-based modern build system
 - **Meson** - Fast, user-friendly build system
-- **Bazel** - Google's scalable build system
-- **Buck2** - Meta's fast build system
+- **SCons** - Python-based build tool
+- **Jam** - Boost.Build system
 
-### Meta Build Systems
-- **Premake** - Project file generator (Visual Studio, Makefiles, Xcode)
-- **QMake** - Qt's build system
-
-### Package Managers with Build Integration
+### CMake Ecosystem
+- **CMake** - Cross-platform build generator
 - **Conan** - C/C++ package manager with CMake integration
 - **vcpkg** - Microsoft's C++ library manager
+- **Hunter** - CMake-based package manager
+
+### Modern Build Systems
+- **XMake** - Lua-based modern build system
+- **Bazel** - Google's scalable build system
+- **Buck2** - Meta's fast build system
+- **Premake** - Project file generator (Visual Studio, Makefiles, Xcode)
+- **QMake** - Qt's build system
+- **Gradle C++** - Gradle build system for C++
 
 ### Custom Build
 - **Custom Scripts** - Define your own build commands in `porters.toml`
 
 ### Auto-Detection Priority
-1. Package managers (Conan, vcpkg)
-2. Modern systems (Bazel, Buck2, CMake, XMake, Meson)
+1. Package managers (Conan, vcpkg, Hunter)
+2. Modern systems (Bazel, Buck2, CMake, XMake, Meson, Gradle C++)
 3. Meta build (Premake, QMake)
-4. Traditional (Ninja, Autotools, SCons, Make)
+4. Traditional (Ninja, Autotools, SCons, Jam, Make)
 5. Explicit configuration via `build.system` in porters.toml
+
+</details>
 
 ## 📦 Dependency Management
 
@@ -369,12 +469,7 @@ This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE)
 
 ## 🐛 Issues & Support
 
-Found a bug or have a feature request?
-
-**🤔 Oops! Looks like something went wrong?**
-
-If you think this is a bug in Porters, please report it to:
-[https://github.com/muhammad-fiaz/Porters/issues](https://github.com/muhammad-fiaz/Porters/issues)
+if you found any issues please report them at [https://github.com/muhammad-fiaz/Porters/issues](https://github.com/muhammad-fiaz/Porters/issues)
 
 ## 👤 Author
 
