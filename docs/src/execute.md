@@ -331,11 +331,11 @@ $ porters execute app.c
 | Feature | `porters execute` | `porters run` |
 |---------|-------------------|---------------|
 | **Purpose** | Single-file quick execution | Run compiled project binary |
-| **Requires Project** | ❌ No | ✅ Yes (porters.toml) |
-| **Compilation** | ✅ Compiles on-the-fly | ❌ Uses pre-built binary |
-| **Build System** | ❌ None (direct compiler) | ✅ CMake/XMake/Meson/Make/etc. |
-| **Multi-file Support** | ⚠️ Single file only | ✅ Full project |
-| **Speed** | ⚠️ Compiles each time | ✅ Fast (already built) |
+| **Requires Project** | No | Yes (porters.toml) |
+| **Compilation** | Compiles on-the-fly | Uses pre-built binary |
+| **Build System** | None (direct compiler) | CMake/XMake/Meson/Make/etc. |
+| **Multi-file Support** | Single file only | Full project |
+| **Speed** | Compiles each time | Fast (already built) |
 | **Best For** | Prototyping, testing, scripts | Production applications |
 
 **When to use `porters execute`:**
