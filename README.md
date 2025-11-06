@@ -116,7 +116,16 @@ Porters auto-detects and supports 14+ build systems. Install the ones you plan t
 
 ## 📦 Installation
 
-### Quick Install (Recommended)
+### Via Cargo (Recommended)
+```bash
+cargo install porters
+
+# After installation, add to PATH if needed:
+# Windows: [Environment]::SetEnvironmentVariable("Path", $env:Path + ";$env:USERPROFILE\.cargo\bin", "User")
+# Linux/macOS: export PATH="$HOME/.cargo/bin:$PATH"
+```
+
+### Quick Install
 
 **Windows:**
 ```powershell
@@ -140,15 +149,6 @@ The installer will:
 - ✅ Install Porters via cargo
 - ✅ **Automatically add to PATH** (with your permission)
 - ✅ Verify the installation
-
-### Via Cargo
-```bash
-cargo install porters
-
-# After installation, add to PATH if needed:
-# Windows: [Environment]::SetEnvironmentVariable("Path", $env:Path + ";$env:USERPROFILE\.cargo\bin", "User")
-# Linux/macOS: export PATH="$HOME/.cargo/bin:$PATH"
-```
 
 ### From Source
 ```bash
