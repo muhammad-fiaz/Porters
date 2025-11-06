@@ -156,7 +156,7 @@ pub fn display_update_available(latest_version: &str) -> Result<()> {
         let release: GitHubRelease = response.json()?;
 
         println!("\n┌─────────────────────────────────────────────────────────┐");
-        println!("│          🎉 New Version Available! 🎉                  │");
+        println!("│          🎉  New Version Available!  🎉                 │");
         println!("├─────────────────────────────────────────────────────────┤");
         println!(
             "│ Current: v{}                                        │",
@@ -199,7 +199,7 @@ pub fn silent_update_check() {
 
     // Perform the update check
     if let Ok(Some(latest)) = check_for_updates() {
-        println!("\n💡 A new version of porters is available: v{}", latest);
+        println!("\n💡  A new version of porters is available: v{}", latest);
         println!("   Run 'porters upgrade' to update");
         println!("   To disable this check, set 'auto-update-check = false' in porters.toml\n");
     }

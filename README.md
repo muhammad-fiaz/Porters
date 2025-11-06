@@ -1,5 +1,5 @@
 <div align="center">
-<img width="1536" height="1024" alt="porters_logo" src="https://github.com/user-attachments/assets/17c507aa-3131-49b6-a682-e2ae55c3841c" />
+<img alt="porters_logo" src="https://github.com/user-attachments/assets/17c507aa-3131-49b6-a682-e2ae55c3841c" />
 
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/v/porters" alt="Crates.io"></a>
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/d/porters" alt="Crates.io Downloads"></a>
@@ -16,11 +16,13 @@
 
 <p><em>A universal C/C++ project manager and build orchestrator with GitHub-integrated package publishing</em></p>
 
-**📚 [Documentation](https://muhammad-fiaz.github.io/Porters/) | [Configurations](https://muhammad-fiaz.github.io/Porters/configuration/) | [Quick Start](https://muhammad-fiaz.github.io/Porters/getting-started/)**
+**📚 [Documentation](https://muhammad-fiaz.github.io/Porters/) | [Configurations](https://muhammad-fiaz.github.io/Porters/configuration.html) | [Quick Start](https://muhammad-fiaz.github.io/Porters/getting-started.html)**
 
 </div>
 
 Porters is a modern, production-ready project manager for C/C++ that simplifies dependency management, build orchestration, and package publishing. Inspired by Cargo but designed specifically for C/C++ ecosystems.
+
+---
 
 <details>
 <summary>✨ Features</summary>
@@ -72,6 +74,10 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 </details>
 
 <details>
+
+---
+
+
 <summary>📍 Prerequisites</summary>
 
 Before installing Porters, ensure you have the following tools installed:
@@ -114,9 +120,13 @@ Porters auto-detects and supports 14+ build systems. Install the ones you plan t
 
 </details>
 
+---
+
 ## 📦 Installation
 
 ### Via Cargo (Recommended)
+> Note: You need to install Rust and Cargo first. See [Installation Guide](https://muhammad-fiaz.github.io/Porters/installation.html).
+
 ```bash
 cargo install porters
 

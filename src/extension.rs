@@ -136,7 +136,7 @@ impl ExtensionManager {
                 if dest.exists() {
                     let extension = self.load_extension(&dest)?;
                     self.loaded_extensions.push(extension);
-                    println!("✅ Extension '{}' loaded successfully", name);
+                    println!("✅  Extension '{}' loaded successfully", name);
                 } else {
                     println!("⚠️  Extension '{}' not found.", name);
                     println!(
@@ -148,7 +148,7 @@ impl ExtensionManager {
             }
             ExtensionSource::Git(url) => {
                 // Clone from git
-                println!("📦 Installing extension '{}' from {}...", name, url);
+                println!("📦  Installing extension '{}' from {}...", name, url);
                 let dest = self.extensions_dir.join(name);
 
                 use git2::Repository;
@@ -157,18 +157,18 @@ impl ExtensionManager {
                 // Load the extension
                 let extension = self.load_extension(&dest)?;
                 self.loaded_extensions.push(extension);
-                println!("✅ Extension '{}' installed successfully", name);
+                println!("✅  Extension '{}' installed successfully", name);
             }
             ExtensionSource::Path(path) => {
                 // Copy from local path
-                println!("📦 Installing extension '{}' from path...", name);
+                println!("📦  Installing extension '{}' from path...", name);
                 let dest = self.extensions_dir.join(name);
 
                 Self::copy_dir(&path, &dest)?;
 
                 let extension = self.load_extension(&dest)?;
                 self.loaded_extensions.push(extension);
-                println!("✅ Extension '{}' installed successfully", name);
+                println!("✅  Extension '{}' installed successfully", name);
             }
         }
 
@@ -182,7 +182,7 @@ impl ExtensionManager {
         if extension_path.exists() {
             std::fs::remove_dir_all(&extension_path)?;
             self.loaded_extensions.retain(|e| e.manifest.name != name);
-            println!("✅ Extension '{}' uninstalled", name);
+            println!("✅  Extension '{}' uninstalled", name);
         } else {
             println!("⚠️  Extension '{}' not found", name);
         }
@@ -338,7 +338,7 @@ impl ExtensionManager {
             "✅ Extension template created at {}",
             extension_dir.display()
         );
-        println!("\n📝 Next steps:");
+        println!("\n📝  Next steps:");
         println!("   1. Edit extension.toml to configure your extension");
         println!("   2. Add hook scripts in the hooks/ directory");
         println!(

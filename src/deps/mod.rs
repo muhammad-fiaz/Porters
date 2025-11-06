@@ -31,6 +31,9 @@ pub struct ResolvedDependency {
     pub include_paths: Vec<PathBuf>,
     pub lib_paths: Vec<PathBuf>,
     pub checksum: Option<String>,
+    /// Nested dependencies (transitive dependencies)
+    #[serde(default)]
+    pub dependencies: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,6 +186,9 @@ async fn resolve_git_dependency(
         // Scan for include paths
         let sources = scan::scan_project(&dep_dir)?;
 
+        // Check for nested dependencies
+        let nested_deps = resolve_nested_dependencies(&dep_dir).await?;
+
         Ok(ResolvedDependency {
             name: name.to_string(),
             version: commit_id.to_string()[..8].to_string(),
@@ -194,6 +200,7 @@ async fn resolve_git_dependency(
             include_paths: sources.include_paths,
             lib_paths: vec![],
             checksum: Some(checksum),
+            dependencies: nested_deps,
         })
     } else {
         print_info(&format!("Cloning {} from {}...", name, url));
@@ -230,6 +237,9 @@ async fn resolve_git_dependency(
         // Scan for include paths
         let sources = scan::scan_project(&dep_dir)?;
 
+        // Check for nested dependencies
+        let nested_deps = resolve_nested_dependencies(&dep_dir).await?;
+
         Ok(ResolvedDependency {
             name: name.to_string(),
             version: commit_id.to_string()[..8].to_string(),
@@ -241,6 +251,7 @@ async fn resolve_git_dependency(
             include_paths: sources.include_paths,
             lib_paths: vec![],
             checksum: Some(checksum),
+            dependencies: nested_deps,
         })
     }
 }
@@ -275,6 +286,7 @@ fn resolve_path_dependency(name: &str, path: &str) -> Result<ResolvedDependency>
         include_paths: sources.include_paths,
         lib_paths: vec![],
         checksum: Some(checksum),
+        dependencies: vec![], // Path dependencies don't track nested deps
     })
 }
 
@@ -433,4 +445,32 @@ pub async fn clone_git_repo(url: &str, dest: &Path) -> Result<String> {
     print_info(&format!("Checksum: {}", &checksum[..16]));
 
     Ok(checksum)
+}
+
+/// Resolve nested dependencies from a porters.toml file in the dependency directory
+async fn resolve_nested_dependencies(dep_path: &Path) -> Result<Vec<String>> {
+    let porters_toml = dep_path.join("porters.toml");
+
+    // If the dependency doesn't have a porters.toml, return empty
+    if !porters_toml.exists() {
+        return Ok(vec![]);
+    }
+
+    // Try to load the porters.toml from the dependency
+    match PortersConfig::load(porters_toml.to_str().unwrap_or("")) {
+        Ok(config) => {
+            // Extract dependency names
+            let dep_names: Vec<String> = config.all_dependencies().into_keys().collect();
+
+            if !dep_names.is_empty() {
+                print_info(&format!("  Found {} nested dependencies", dep_names.len()));
+            }
+
+            Ok(dep_names)
+        }
+        Err(_) => {
+            // If we can't load the config, just return empty
+            Ok(vec![])
+        }
+    }
 }

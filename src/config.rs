@@ -153,6 +153,11 @@ pub struct BuildConfig {
 
     #[serde(default)]
     pub scripts: BuildScripts,
+
+    /// Custom output executable/library name (default: project name)
+    /// Example: "my-app" or "libmylib"
+    #[serde(skip_serializing_if = "Option::is_none", rename = "output-name")]
+    pub output_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -414,6 +419,7 @@ pub struct CacheConfig {
 /// - Exclude patterns for files
 /// - Custom compiler/linker flags
 /// - Override default compilers
+/// - Custom output executable name
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RunConfig {
     /// Additional include directories for direct execution (OPTIONAL)
@@ -449,6 +455,22 @@ pub struct RunConfig {
     /// Default C++ compiler (OPTIONAL - defaults to auto-detected g++/clang++)
     #[serde(skip_serializing_if = "Option::is_none", rename = "cpp-compiler")]
     pub cpp_compiler: Option<String>,
+
+    /// Open programs in external terminal window (default: false)
+    /// When true, programs run in a separate terminal that stays open
+    #[serde(default, rename = "use-external-terminal")]
+    pub use_external_terminal: bool,
+
+    /// Run programs without console window (for GUI apps) (default: false)
+    /// Useful for graphical applications that don't need console output
+    #[serde(default, rename = "no-console")]
+    pub no_console: bool,
+
+    /// Default output executable name (OPTIONAL)
+    /// **Automatic**: Uses source filename without extension (e.g., main.c -> main.exe)
+    /// **Manual**: Set custom name (e.g., "my-app" -> my-app.exe on Windows)
+    #[serde(skip_serializing_if = "Option::is_none", rename = "output-name")]
+    pub output_name: Option<String>,
 }
 
 fn default_true() -> bool {

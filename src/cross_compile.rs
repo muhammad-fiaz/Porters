@@ -187,7 +187,10 @@ impl CrossCompiler {
 
     /// Compile for specific target
     pub fn compile(&self, target: &Target, build_system: &str) -> Result<PathBuf> {
-        println!("🔨 Cross-compiling for {}...", target.display_name().cyan());
+        println!(
+            "🔨  Cross-compiling for {}...",
+            target.display_name().cyan()
+        );
 
         // Get target configuration
         let target_config = self.config.targets.get(target.triple());

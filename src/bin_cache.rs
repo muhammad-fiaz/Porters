@@ -116,7 +116,11 @@ impl BinaryCache {
             self.copy_dir_all(&build_dir.join("include"), &include_dir)?;
         }
 
-        println!("💾 Cached compiled binary for {} v{}", name.cyan(), version);
+        println!(
+            "💾  Cached compiled binary for {} v{}",
+            name.cyan(),
+            version
+        );
         Ok(())
     }
 
@@ -162,7 +166,7 @@ impl BinaryCache {
     /// Clear binary cache
     pub fn clear(&self) -> Result<()> {
         if !self.cache_dir.exists() {
-            println!("✨ Binary cache is already clean");
+            println!("✨  Binary cache is already clean");
             return Ok(());
         }
 

@@ -55,10 +55,34 @@ test: add tests for lock file generation
 
 ### Pull Requests
 
-1. Ensure all tests pass
-2. Update documentation if needed
-3. Add tests for new features
-4. Follow existing code style
+When submitting a pull request:
+
+1. **Use the PR Template** - GitHub automatically loads `.github/pull_request_template.md`
+   - Complete all relevant sections (type of change, related issues, description)
+   - Check off all applicable items in the checklists
+   - Document breaking changes with migration guide if applicable
+   
+2. **Ensure all tests pass** - Run `cargo test` locally before pushing
+
+3. **Update documentation** - Any new features or changes must update `docs/src/`
+
+4. **Add tests for new features** - Maintain or improve code coverage
+
+5. **Follow existing code style** - Run `cargo fmt` and `cargo clippy`
+
+6. **Build system verification** - Test with all supported build systems (CMake, XMake, Meson, Make)
+
+**PR Template Sections:**
+- Type of change (bug fix, feature, breaking change, docs, refactor, etc.)
+- Related issues
+- Test configuration and steps
+- Code quality checklist (clippy, fmt, self-review)
+- Testing checklist (unit tests, integration tests, manual testing)
+- Documentation checklist (commands.md, configuration.md, README, CHANGELOG)
+- Breaking changes migration guide
+- Performance impact assessment
+
+See `.github/pull_request_template.md` for the complete checklist.
 
 ## Project Structure
 
