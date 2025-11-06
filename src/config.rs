@@ -45,6 +45,10 @@ pub struct PortersConfig {
 
     #[serde(default = "default_true", rename = "auto-update-check")]
     pub auto_update_check: bool,
+
+    /// Offline mode (disable all network activity, use only local/cached dependencies)
+    #[serde(default)]
+    pub offline: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

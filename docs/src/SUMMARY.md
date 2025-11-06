@@ -8,6 +8,8 @@
 - [Getting Started](./getting-started.md)
 - [Dependency Management](./dependencies.md)
 - [Package Managers](./package-managers.md)
+- [Registry](./registry.md)
+- [Caching](./caching.md)
 - [Building Projects](./building.md)
 - [Execute - Single File Execution](./execute.md)
 - [Publishing](./publishing.md)

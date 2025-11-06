@@ -79,6 +79,48 @@ check_updates = true
 - `dir` - Directory for temporary build files and executables
 - `max_size_mb` - Maximum cache size in megabytes
 - `auto_clean` - Automatically clean old cache files
+- `cache_dir` - Custom global cache directory path (optional)
+
+**Example**:
+```toml
+[cache]
+enabled = true
+max_size_mb = 2048
+auto_clean = true
+cache_dir = "~/.porters/cache"  # Optional custom path
+```
+
+#### `[registry]` Section
+- `url` - Registry repository URL (default: https://github.com/muhammad-fiaz/porters)
+- `auto_update` - Automatically update registry index
+- `index_path` - Local registry index directory
+- `last_update` - Timestamp of last registry update
+
+**Example**:
+```toml
+[registry]
+url = "https://github.com/muhammad-fiaz/porters"
+auto_update = true
+index_path = "~/.porters/registry-index"
+last_update = "2024-01-15T10:30:00Z"
+```
+
+#### Global Offline Mode
+
+Enable offline mode globally to prevent all network operations:
+
+```toml
+# In ~/.porters/config.toml
+offline = true
+```
+
+When offline mode is enabled:
+- ✅ Uses only cached dependencies
+- ✅ Uses local registry index
+- ❌ No network requests
+- ❌ Cannot download new packages
+
+**Use case**: Working in environments without internet access or wanting to ensure reproducible builds.
 
 #### `[system]` Section
 - `last_check` - Timestamp of last system requirements check
@@ -206,6 +248,7 @@ entry_point = "src/main"
 platforms = ["windows", "macos", "linux"]
 keywords = ["application", "c", "cpp"]
 readme = "README.md"
+offline = false  # Enable offline mode for this project
 
 # Tool version requirements (like Python's requirements.txt)
 [requires]
@@ -692,7 +735,189 @@ This means there's a circular dependency chain. Check your dependency tree.
 Two dependencies require different versions of 'fmt'. You must manually resolve this conflict.
 ```
 
+---
+
+## Offline Mode
+
+Porters supports working entirely offline using only cached dependencies and local registry index. This is useful for:
+
+- 🔒 Secure environments without internet access
+- ✈️ Air-gapped networks
+- 🏗️ Reproducible builds
+- 📦 CI/CD pipelines with pre-populated cache
+
+### Enabling Offline Mode
+
+**Global offline mode** (affects all projects):
+
+```toml
+# ~/.porters/config.toml
+offline = true
+```
+
+**Project offline mode** (project-specific):
+
+```toml
+# porters.toml
+[project]
+offline = true
+```
+
+**Temporary offline mode** (command-line):
+
+```bash
+porters build --offline
+porters add <dep> --offline
+porters sync --offline
+```
+
+### How Offline Mode Works
+
+When offline mode is enabled:
+
+1. **Network Operations Blocked**:
+   - ❌ No Git clones/fetches
+   - ❌ No registry updates from GitHub
+   - ❌ No package downloads
+
+2. **Cache-First Resolution**:
+   - ✅ Uses global cache (`~/.porters/cache/`)
+   - ✅ Uses local cache (`.porters/cache/`)
+   - ✅ Uses local registry index (`~/.porters/registry-index/`)
+
+3. **Error Handling**:
+   - If dependency not in cache → clear error message
+   - Suggests running without `--offline` to download
+
+### Preparing for Offline Mode
+
+Before going offline, ensure all dependencies are cached:
+
+```bash
+# 1. Sync all dependencies (downloads if needed)
+porters sync
+
+# 2. Verify cache contents
+porters cache list
+
+# 3. Enable offline mode
+porters config set offline true
+
+# 4. Test that build works offline
+porters build --offline
+```
+
+### Offline Mode Example Workflow
+
+**Setup (with internet)**:
+```bash
+# Initialize project
+porters init
+
+# Add dependencies
+porters add https://github.com/fmtlib/fmt
+porters add https://github.com/gabime/spdlog
+
+# Sync (downloads and caches)
+porters sync
+
+# Verify cache
+porters cache stats
+# Output: Packages: 2, Total Size: 15.2 MB
+```
+
+**Work offline (no internet)**:
+```bash
+# Enable offline mode
+export PORTERS_OFFLINE=1
+# or add offline=true to porters.toml
+
+# Build works entirely from cache
+porters build --offline
+# ✅ Using globally cached fmt
+# ✅ Using globally cached spdlog
+# 🔨 Building project...
+```
+
+### Offline Mode with Registry
+
+The registry can be used offline with a local index:
+
+```bash
+# 1. Update registry index (with internet)
+porters registry update
+
+# 2. Work offline
+porters search fmt --offline
+# Searches local registry index
+
+porters info spdlog --offline
+# Shows info from local index
+```
+
+### Troubleshooting Offline Mode
+
+**"Package not found in cache"**:
+```bash
+# Temporarily disable offline to download
+porters sync
+# Then re-enable offline
+```
+
+**"Registry index not found"**:
+```bash
+# Update registry index first
+porters registry update
+# Then work offline
+```
+
+**Check what's cached**:
+```bash
+# List all cached packages
+porters cache list
+
+# Show cache statistics
+porters cache stats
+```
+
+### Best Practices
+
+1. **Pre-populate cache before going offline**:
+   ```bash
+   porters sync
+   porters cache verify
+   ```
+
+2. **Use lock file for reproducibility**:
+   ```bash
+   porters lock
+   # Commit porters.lock to version control
+   ```
+
+3. **Periodic cache updates**:
+   ```bash
+   # Weekly: update registry and dependencies
+   porters registry update
+   porters update
+   ```
+
+4. **CI/CD offline builds**:
+   ```yaml
+   # .github/workflows/build.yml
+   - name: Restore cache
+     uses: actions/cache@v3
+     with:
+       path: ~/.porters/cache
+       key: ${{ runner.os }}-porters-${{ hashFiles('**/porters.lock') }}
+   
+   - name: Build offline
+     run: porters build --offline
+   ```
+
+---
+
 ## Next Steps
 
+- [Caching](./caching.md)
 - [Command Reference](./commands.md)
 - [Dependencies](./dependencies.md)

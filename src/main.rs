@@ -2,7 +2,7 @@
 //!
 //! Porters is a comprehensive package manager and build orchestrator for C/C++ projects,
 //! designed to simplify dependency management, cross-platform builds, and project workflows.
-//! ```
+//!
 //! Licensed under the Apache License, Version 2.0
 //! See [LICENSE](https://github.com/muhammad-fiaz/Porters/blob/main/LICENSE)
 
@@ -21,14 +21,15 @@ mod deps;
 mod error;
 mod export;
 mod extension;
-mod global;
 mod global_config;
+mod global_packages;
 mod hash;
 mod license;
 mod lockfile;
 mod pkg_managers;
 mod publish;
 mod registry;
+mod resolver;
 mod scan;
 mod update;
 mod util;
@@ -128,6 +129,13 @@ enum Commands {
     Xmake {
         #[command(subcommand)]
         action: PackageManagerAction,
+    },
+
+    ///  Manage Porters registry packages
+    #[command(visible_alias = "reg")]
+    Registry {
+        #[command(subcommand)]
+        action: RegistryAction,
     },
 
     /// �🔨 Build the project
@@ -458,6 +466,37 @@ enum ExtensionAction {
     },
 }
 
+#[derive(Subcommand)]
+enum RegistryAction {
+    /// 🔍 Search for packages in the registry
+    Search {
+        /// Search query (name, description, or tag)
+        query: String,
+    },
+
+    /// ➕ Add a package from the registry
+    Add {
+        /// Package name
+        package: String,
+
+        /// Install globally (default: local to project)
+        #[arg(long, short = 'g')]
+        global: bool,
+    },
+
+    /// 📋 List all packages in the registry
+    List,
+
+    /// 🔄 Update local registry index
+    Update,
+
+    /// ℹ️ Show detailed information about a package
+    Info {
+        /// Package name
+        package: String,
+    },
+}
+
 /// Initialize Porters on first run or load global config
 fn initialize_porters() -> Result<()> {
     use global_config::{GlobalPortersConfig, SystemCheck};
@@ -572,6 +611,7 @@ async fn main() -> Result<()> {
         Commands::Conan { action } => handle_conan_action(action).await,
         Commands::Vcpkg { action } => handle_vcpkg_action(action).await,
         Commands::Xmake { action } => handle_xmake_action(action).await,
+        Commands::Registry { action } => handle_registry_action(action).await,
         Commands::GlobalList => global_list_packages().await,
         Commands::CleanCache { force } => clean_cache(force).await,
         Commands::SelfUpdate => self_update().await,
@@ -2400,7 +2440,7 @@ fn execute_build_script(script: &str, script_type: &str) -> Result<()> {
 
 /// Verify checksums of resolved dependencies against lockfile
 fn verify_dependency_checksums(resolved_deps: &[deps::ResolvedDependency]) -> Result<()> {
-    let lock_file_path = global::project_lock_file(".");
+    let lock_file_path = global_packages::project_lock_file(".");
 
     // Load lockfile if it exists
     if !lock_file_path.exists() {
@@ -2430,7 +2470,7 @@ fn verify_dependency_checksums(resolved_deps: &[deps::ResolvedDependency]) -> Re
         };
 
         // Get dependency directory
-        let dep_path = global::project_deps_dir(".").join(&dep.name);
+        let dep_path = global_packages::project_deps_dir(".").join(&dep.name);
         if !dep_path.exists() {
             anyhow::bail!(
                 "Dependency {} not found at {}",
@@ -3142,7 +3182,7 @@ async fn install_package(
     ext_manager.execute_hook("pre_install", &hook_context)?;
 
     // Initialize global directory
-    global::GlobalConfig::initialize()?;
+    global_packages::GlobalConfig::initialize()?;
 
     let source = if let Some(git_url) = git {
         git_url
@@ -3162,7 +3202,7 @@ async fn install_package(
     };
 
     // Install to global location
-    let packages_dir = global::GlobalConfig::packages_dir()?;
+    let packages_dir = global_packages::GlobalConfig::packages_dir()?;
     let install_path = packages_dir.join(pkg_name);
 
     print_info(&format!("Installing to: {}", install_path.display()));
@@ -3175,7 +3215,7 @@ async fn install_package(
     }
 
     // Update global config
-    let mut global_config = global::GlobalConfig::load()?;
+    let mut global_config = global_packages::GlobalConfig::load()?;
     global_config.add_package(
         pkg_name.to_string(),
         "latest".to_string(),
@@ -3484,7 +3524,7 @@ async fn sync_dependencies(
     ext_manager.execute_hook("pre_sync", &hook_context)?;
 
     // Create ports directory for project-local dependencies
-    let ports_dir = global::project_deps_dir(".");
+    let ports_dir = global_packages::project_deps_dir(".");
     std::fs::create_dir_all(&ports_dir)?;
 
     // Collect all dependencies to install
@@ -3702,7 +3742,7 @@ fn print_dependency(name: &str, dep: &config::Dependency, tree: bool, indent: us
 async fn global_list_packages() -> Result<()> {
     print_step("📦 Listing globally installed packages");
 
-    let global_config = global::GlobalConfig::load()?;
+    let global_config = global_packages::GlobalConfig::load()?;
     let packages = global_config.list_packages();
 
     if packages.is_empty() {
@@ -3714,7 +3754,7 @@ async fn global_list_packages() -> Result<()> {
             println!("  ✅ {} @ {} ({})", pkg.name, pkg.version, pkg.source);
             println!("      {}", pkg.install_path.display());
         }
-        let global_dir = global::GlobalConfig::global_dir()?;
+        let global_dir = global_packages::GlobalConfig::global_dir()?;
         println!("\nLocation: {}", global_dir.display());
     }
 
@@ -4884,6 +4924,111 @@ async fn handle_xmake_action(action: PackageManagerAction) -> Result<()> {
                 println!("🔍 Search results for '{}':", query);
                 for result in results {
                     println!("  {}", result);
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_registry_action(action: RegistryAction) -> Result<()> {
+    use crate::registry::RegistryManager;
+    use colored::Colorize;
+    use std::env;
+
+    // Get paths
+    let registry_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("registry");
+    let home_dir =
+        dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?;
+    let cache_path = home_dir.join(".porters");
+
+    let manager = RegistryManager::new(registry_path, cache_path);
+    manager.init()?;
+
+    match action {
+        RegistryAction::Search { query } => {
+            let results = manager.search(&query)?;
+            if results.is_empty() {
+                println!("{}", format!(" No packages found for '{}'", query).yellow());
+            } else {
+                println!(
+                    "{}",
+                    format!(" Found {} package(s) for '{}':", results.len(), query).cyan()
+                );
+                println!();
+                for pkg in results {
+                    manager.display_package(&pkg);
+                    println!();
+                }
+            }
+        }
+        RegistryAction::Add { package, global } => {
+            let pkg = manager.load_package(&package)?;
+
+            println!(
+                "{}",
+                format!(" Adding {} v{}", pkg.name, pkg.version).cyan()
+            );
+            println!("{}", format!("   Repository: {}", pkg.repository).dimmed());
+
+            // Resolve dependencies
+            let resolved = manager.resolve_dependencies(&package)?;
+
+            if !resolved.is_empty() {
+                println!();
+                println!("{}", "Dependencies:".cyan());
+                for dep in &resolved {
+                    println!("   {} v{} ({})", dep.name, dep.version, dep.source);
+                }
+            }
+
+            let scope = if global { "global" } else { "project" };
+            println!();
+            println!(
+                "{}",
+                format!(" Package {} would be installed to {}", pkg.name, scope).green()
+            );
+            println!(
+                "{}",
+                "  (Implementation of actual installation coming in next phase)".dimmed()
+            );
+        }
+        RegistryAction::List => {
+            let packages = manager.list_all()?;
+            if packages.is_empty() {
+                println!("{}", " No packages in registry".yellow());
+            } else {
+                println!(
+                    "{}",
+                    format!(" Registry contains {} packages:", packages.len()).cyan()
+                );
+                println!();
+                for pkg in packages {
+                    println!(
+                        "  {}  {} v{}",
+                        "".cyan(),
+                        pkg.name.bright_white(),
+                        pkg.version.dimmed()
+                    );
+                    println!("     {}", pkg.description.dimmed());
+                }
+            }
+        }
+        RegistryAction::Update => {
+            manager.update_index()?;
+            println!("{}", " Registry index updated successfully".green());
+        }
+        RegistryAction::Info { package } => {
+            let pkg = manager.load_package(&package)?;
+            manager.display_package(&pkg);
+
+            // Show dependencies
+            if !pkg.dependencies.is_empty() {
+                println!();
+                println!("{}", "Dependencies:".cyan());
+                for (name, version) in &pkg.dependencies {
+                    println!("   {} {}", name, version);
                 }
             }
         }

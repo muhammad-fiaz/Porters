@@ -30,7 +30,7 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 ### Core Functionality
 - 🚀 **Zero-Config Project Init** - Automatically detects existing C/C++ projects
 - ⚡ **Direct File Execution** - `porters execute file.c` compiles and runs instantly with automatic dependency resolution
-- 📦 **Unified Dependency Management** - Git (SSH/HTTPS), path, and global/local support
+- 📦 **Unified Dependency Management** - Git (SSH/HTTPS), path, global/local support, and registry
 - 🔨 **14 Build System Support** - Auto-detect and seamlessly integrate with CMake, XMake, Meson, Make, Ninja, Autotools, SCons, Bazel, Buck2, Premake, QMake, Conan, vcpkg, or custom builds
 - 🎯 **Smart Project Scaffolding** - Interactive project creation with license selection
 - 🤖 **Smart Auto-Configuration** - Everything works automatically with optional manual overrides
@@ -38,10 +38,12 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 - 📊 **Dependency Graph Visualization** - Understand your project dependencies
 - 🔒 **Lockfile Support** - Reproducible builds with `porters.lock`
 - 📤 **GitHub Publishing** - Automated package releases with artifacts
+- 📚 **Package Registry** - Search and install packages from the Porters registry
 
 ### Advanced Features
 - 🔌 **Extension System** - Create and publish custom extensions to crates.io
 - 🌍 **Global Package Installation** - Centralized dependency management in `~/.porters/`
+- 💾 **Global Dependency Cache** - Shared cache across all projects in `~/.porters/cache/`
 - 📂 **Isolated Virtual Environments** - Project-specific dependencies in `ports/` folder
 - 🔄 **Smart Sync** - `porters sync` with `--dev` and `--optional` flags
 - 🛠️ **Compiler Detection** - Auto-detect GCC, Clang, MSVC, LLVM, MinGW, Emscripten
@@ -53,6 +55,8 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 - 🔗 **Transitive Dependencies** - Automatic resolution of dependencies-of-dependencies
 - 🎨 **Custom Commands** - Define project-specific CLI commands in config
 - 📜 **Named Scripts** - Quick shortcuts for common tasks
+- 🌐 **Remote Registry Sync** - Automatically fetch package index from GitHub
+- ✈️ **Offline Mode** - Work without internet using cached dependencies
 
 ### Extension Ecosystem
 - 📦 **Auto-Install Extensions** - Automatically install extensions from porters.toml
@@ -70,6 +74,8 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 - 🔍 **Build Tool Detection** - Automatic checking and installation guidance
 - ⚠️ **Enhanced Error Handling** - Helpful messages with GitHub issue links
 - 🚨 **Version Validation** - Pre-build checks for tool version requirements
+- 📦 **Registry System** - Search, discover, and install curated C/C++ packages
+- 💻 **Global Configuration** - Centralized settings in `~/.porters/config.toml`
 
 </details>
 

@@ -1,0 +1,27 @@
+{
+  "name": "zlib",
+  "description": "A massively spiffy yet delicately unobtrusive compression library",
+  "repository": "https://github.com/madler/zlib",
+  "version": "1.3.1",
+  "license": "Zlib",
+  "build_system": "cmake",
+  "homepage": "https://zlib.net/",
+  "documentation": "https://zlib.net/manual.html",
+  "dependencies": {},
+  "options": {
+    "shared": true,
+    "static": true
+  },
+  "install": {
+    "cmake": {
+      "find_package": "ZLIB",
+      "targets": ["ZLIB::ZLIB"]
+    },
+    "pkg_config": {
+      "name": "zlib"
+    }
+  },
+  "tags": ["compression", "deflate", "gzip", "c-library"],
+  "platforms": ["linux", "windows", "macos", "freebsd", "android", "ios"],
+  "constraints": {}
+}

@@ -1,0 +1,27 @@
+{
+  "name": "asio",
+  "description": "Cross-platform C++ library for network and low-level I/O programming",
+  "repository": "https://github.com/chriskohlhoff/asio",
+  "version": "1.28.0",
+  "license": "BSL-1.0",
+  "build_system": "cmake",
+  "homepage": "https://think-async.com/Asio/",
+  "documentation": "https://think-async.com/Asio/asio-1.28.0/doc/",
+  "dependencies": {},
+  "options": {
+    "shared": false,
+    "tests": false,
+    "examples": false
+  },
+  "install": {
+    "cmake": {
+      "find_package": "asio",
+      "targets": ["asio::asio"]
+    }
+  },
+  "tags": ["networking", "async", "header-only", "io", "modern-cpp"],
+  "platforms": ["linux", "windows", "macos", "freebsd"],
+  "constraints": {
+    "min_cpp_standard": "11"
+  }
+}

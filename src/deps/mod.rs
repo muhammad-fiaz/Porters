@@ -3,6 +3,7 @@
 //! This module handles dependency resolution, fetching, and validation.
 //! It supports Git-based dependencies, local path dependencies, and optional
 //! registry integration, ensuring proper version tracking and checksum verification.
+//! Integrates with global cache for faster dependency resolution.
 
 use anyhow::{Context, Result};
 use git2::Repository;
@@ -11,7 +12,9 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use crate::cache::GlobalCache;
 use crate::config::{Dependency, PortersConfig};
+use crate::global_config::GlobalPortersConfig;
 use crate::scan;
 use crate::util::pretty::*;
 
@@ -136,6 +139,13 @@ async fn resolve_git_dependency(
     rev: Option<&str>,
     cache_dir: &Path,
 ) -> Result<ResolvedDependency> {
+    // Check if offline mode is enabled
+    let global_config = GlobalPortersConfig::load_or_create().ok();
+    let is_offline = global_config
+        .as_ref()
+        .map(|c| c.is_offline())
+        .unwrap_or(false);
+
     // Create a unique directory name for this dependency
     let mut hasher = Sha256::new();
     hasher.update(url.as_bytes());
@@ -145,6 +155,48 @@ async fn resolve_git_dependency(
     let dep_dir = cache_dir
         .join("sources")
         .join(format!("{}-{}", name, short_hash));
+
+    // Try global cache first
+    let global_cache = GlobalCache::new().ok();
+    let version_hint = rev.or(tag).or(branch).unwrap_or("latest");
+
+    if let Some(cache) = &global_cache
+        && cache.has_package(name, version_hint)
+    {
+        print_success(&format!("✨ Using globally cached {}", name));
+        // Ensure destination exists
+        std::fs::create_dir_all(&dep_dir)?;
+        // Retrieve from global cache to local cache
+        if cache.retrieve_package(name, version_hint, &dep_dir).is_ok() {
+            // Scan the retrieved package
+            let sources = scan::scan_project(&dep_dir)?;
+            let checksum = crate::hash::calculate_directory_hash(&dep_dir)
+                .unwrap_or_else(|_| "unknown".to_string());
+
+            return Ok(ResolvedDependency {
+                name: name.to_string(),
+                version: version_hint.to_string(),
+                source: DependencySource::Git {
+                    url: url.to_string(),
+                    rev: version_hint.to_string(),
+                },
+                path: dep_dir,
+                include_paths: sources.include_paths,
+                lib_paths: vec![],
+                checksum: Some(checksum),
+                dependencies: vec![], // Will be resolved if needed
+            });
+        }
+    }
+
+    // If offline and not in cache, fail
+    if is_offline {
+        return Err(anyhow::anyhow!(
+            "🔒 Offline mode enabled and {} not found in cache. Cannot download from {}",
+            name,
+            url
+        ));
+    }
 
     // Clone or update the repository
     if dep_dir.exists() {
@@ -189,19 +241,30 @@ async fn resolve_git_dependency(
         // Check for nested dependencies
         let nested_deps = resolve_nested_dependencies(&dep_dir).await?;
 
-        Ok(ResolvedDependency {
+        let resolved_dep = ResolvedDependency {
             name: name.to_string(),
             version: commit_id.to_string()[..8].to_string(),
             source: DependencySource::Git {
                 url: url.to_string(),
                 rev: commit_id.to_string(),
             },
-            path: dep_dir,
-            include_paths: sources.include_paths,
+            path: dep_dir.clone(),
+            include_paths: sources.include_paths.clone(),
             lib_paths: vec![],
-            checksum: Some(checksum),
+            checksum: Some(checksum.clone()),
             dependencies: nested_deps,
-        })
+        };
+
+        // Store in global cache for future use
+        if let Some(cache) = &global_cache {
+            let _ = cache.store_package(name, version_hint, &dep_dir);
+            print_info(&format!(
+                "📦 Cached {} globally for faster future access",
+                name
+            ));
+        }
+
+        Ok(resolved_dep)
     } else {
         print_info(&format!("Cloning {} from {}...", name, url));
         std::fs::create_dir_all(&dep_dir)?;
@@ -240,19 +303,30 @@ async fn resolve_git_dependency(
         // Check for nested dependencies
         let nested_deps = resolve_nested_dependencies(&dep_dir).await?;
 
-        Ok(ResolvedDependency {
+        let resolved_dep = ResolvedDependency {
             name: name.to_string(),
             version: commit_id.to_string()[..8].to_string(),
             source: DependencySource::Git {
                 url: url.to_string(),
                 rev: commit_id.to_string(),
             },
-            path: dep_dir,
-            include_paths: sources.include_paths,
+            path: dep_dir.clone(),
+            include_paths: sources.include_paths.clone(),
             lib_paths: vec![],
-            checksum: Some(checksum),
+            checksum: Some(checksum.clone()),
             dependencies: nested_deps,
-        })
+        };
+
+        // Store in global cache for future use
+        if let Some(cache) = &global_cache {
+            let _ = cache.store_package(name, version_hint, &dep_dir);
+            print_success(&format!(
+                "📦 Cached {} globally for faster future access",
+                name
+            ));
+        }
+
+        Ok(resolved_dep)
     }
 }
 

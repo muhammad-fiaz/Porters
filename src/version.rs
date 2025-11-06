@@ -29,7 +29,7 @@ pub enum VersionReq {
 }
 
 /// Semantic version (major.minor.patch)
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Version {
     pub major: u32,
     pub minor: u32,
@@ -37,6 +37,16 @@ pub struct Version {
 }
 
 impl Version {
+    /// Create a new version
+    #[allow(dead_code)]
+    pub fn new(major: u32, minor: u32, patch: u32) -> Self {
+        Version {
+            major,
+            minor,
+            patch,
+        }
+    }
+
     /// Parse a version string like "1.2.3"
     pub fn parse(s: &str) -> Result<Self> {
         let parts: Vec<&str> = s.trim().split('.').collect();
