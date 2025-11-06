@@ -16,7 +16,7 @@
 
 <p><em>A universal C/C++ project manager and build orchestrator with GitHub-integrated package publishing</em></p>
 
-**📚 [Documentation](https://muhammad-fiaz.github.io/porters/) | [API Reference](https://muhammad-fiaz.github.io/porters/api-reference/) | [Quick Start](https://muhammad-fiaz.github.io/porters/getting-started/)**
+**📚 [Documentation](https://muhammad-fiaz.github.io/Porters/) | [Configurations](https://muhammad-fiaz.github.io/Porters/configuration/) | [Quick Start](https://muhammad-fiaz.github.io/porters/getting-started/)**
 
 </div>
 
