@@ -125,7 +125,7 @@ cargo install porters
 # Linux/macOS: export PATH="$HOME/.cargo/bin:$PATH"
 ```
 
-### Quick Install
+### Quick Manual Install
 
 **Windows:**
 ```powershell
