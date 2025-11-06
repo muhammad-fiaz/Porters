@@ -200,7 +200,9 @@ porters execute main.cpp arg1 arg2
 
 See [Execute Guide](https://muhammad-fiaz.github.io/Porters/execute.html) for detailed documentation.
 
-## 📋 Commands```bash
+## 📋 Commands
+
+```bash
 porters create <name>         # Create new project
 porters init                  # Initialize existing project
 porters add <package>         # Add dependency
