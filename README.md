@@ -222,7 +222,8 @@ porters run-script <name>     # Run named script from config
 porters <custom-command>      # Run custom command from config
 ```
 
-## 📝 Configuration Structure Example
+<details>
+<summary>📝 Configuration Structure Example</summary>
 
 ```toml
 [project]
@@ -318,6 +319,8 @@ linker-flags = ["-lm", "-lpthread"]
 c-compiler = "clang"    # Default: auto-detect
 cpp-compiler = "clang++"  # Default: auto-detect
 ```
+
+</details>
 
 ## 🔌 Extension System
 
