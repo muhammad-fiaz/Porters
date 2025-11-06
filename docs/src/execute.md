@@ -14,6 +14,7 @@
 - ✅ **Dependency Resolution** - Reads `porters.toml` if present, optional otherwise
 - ✅ **Automatic Include/Lib Paths** - Zero configuration dependency integration
 - ✅ **One Command Execution** - Compiles and runs in a single step
+- ✅ **External Terminal Support** - Open programs in new terminal windows with `--external`
 
 ## Basic Usage
 
@@ -31,6 +32,50 @@ porters execute prog.c++
 
 # With command-line arguments
 porters execute myprogram.c arg1 arg2 arg3
+
+# Open in external terminal window (new console)
+porters execute game.cpp --external
+porters execute interactive.c --external arg1 arg2
+```
+
+### External Terminal Mode
+
+The `--external` flag opens your program in a **new terminal window** instead of running it in the current terminal. This is useful for:
+
+- **Interactive programs** that need user input
+- **Games** or graphical console applications
+- **Long-running programs** you want to monitor separately
+- **Programs with special console requirements** (colors, cursor control, etc.)
+
+**Platform-Specific Behavior:**
+
+**Windows:**
+- Opens in new `cmd.exe` window
+- Window stays open after program exits (shows "Press any key to close...")
+- Displays compilation status in original terminal
+
+**Linux:**
+- Tries terminal emulators in order: `gnome-terminal`, `konsole`, `xterm`
+- Opens in new window with your default terminal emulator
+- Window stays open after program exits
+
+**macOS:**
+- Opens in new Terminal.app window
+- Uses AppleScript to create new terminal tab/window
+- Window stays open after program exits
+
+**Example:**
+```bash
+$ porters execute snake_game.cpp --external
+➡️  Executing single file: snake_game.cpp
+ℹ️  Using compiler: g++
+ℹ️  Compiling...
+✅  Compilation successful!
+➡️  Opening in external terminal...
+ℹ️  Program launched in external terminal
+
+# A new terminal window opens and runs your game
+# Original terminal returns to prompt immediately
 ```
 
 ### Supported File Extensions

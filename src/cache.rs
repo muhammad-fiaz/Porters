@@ -97,7 +97,7 @@ impl DependencyCache {
         // Calculate hash
         let hash = calculate_directory_hash(&cache_path)?;
 
-        println!("💾 Cached {} v{}", name.cyan(), version);
+        println!("💾  Cached {} v{}", name.cyan(), version);
         Ok(hash)
     }
 
@@ -120,14 +120,14 @@ impl DependencyCache {
         // Copy from cache
         self.copy_dir_all(&cache_path, dest_path)?;
 
-        println!("📦 Retrieved {} v{} from cache", name.cyan(), version);
+        println!("📦  Retrieved {} v{} from cache", name.cyan(), version);
         Ok(())
     }
 
     /// Clear all cache
     pub fn clear(&self, force: bool) -> Result<()> {
         if !self.cache_dir.exists() {
-            println!("✨ Cache is already clean");
+            println!("✨  Cache is already clean");
             return Ok(());
         }
 

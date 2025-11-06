@@ -13,7 +13,9 @@ mod deps;
 mod error;
 mod extension;
 mod global;
+mod global_config;
 mod hash;
+mod license;
 mod lockfile;
 mod publish;
 mod registry;
@@ -36,10 +38,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Initialize a new porters project in current directory
+    /// 🚀 Initialize a new porters project in current directory
     Init,
 
-    /// Create a new porters project in a new directory
+    /// 📦 Create a new porters project in a new directory
     Create {
         /// Project name
         name: String,
@@ -49,7 +51,7 @@ enum Commands {
         yes: bool,
     },
 
-    /// Add a dependency
+    /// ➕ Add a dependency
     Add {
         /// Package name or path/git URL
         package: String,
@@ -75,13 +77,13 @@ enum Commands {
         tag: Option<String>,
     },
 
-    /// Remove a dependency
+    /// ➖ Remove a dependency
     Remove {
         /// Package name
         package: String,
     },
 
-    /// Build the project
+    /// 🔨 Build the project
     Build {
         /// Build for all supported platforms
         #[arg(long)]
@@ -104,14 +106,14 @@ enum Commands {
         args: Vec<String>,
     },
 
-    /// Run the project
+    /// ▶️ Run the project
     Run {
         /// Additional run arguments
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
 
-    /// Execute a single C/C++ file directly with dependencies
+    /// ⚡ Execute a single C/C++ file directly with dependencies
     Execute {
         /// Source file to compile and run (.c or .cpp)
         file: String,
@@ -119,27 +121,49 @@ enum Commands {
         /// Arguments to pass to the executable
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
+
+        /// Open in external system terminal instead of current terminal
+        #[arg(long)]
+        external: bool,
+
+        /// Run without console window (for GUI applications)
+        #[arg(long)]
+        no_console: bool,
+
+        /// Custom output executable name (default: source filename without extension)
+        #[arg(long, short)]
+        output: Option<String>,
     },
 
-    /// Run tests
+    /// 🧪 Run tests
     Test,
 
-    /// Update dependencies
+    /// ✅ Check compilation without creating executables (syntax check)
+    Check {
+        /// Specific file to check (optional - checks all project files if not provided)
+        file: Option<String>,
+
+        /// Show verbose compiler output
+        #[arg(short, long)]
+        verbose: bool,
+    },
+
+    /// 🔄 Update dependencies
     Update,
 
-    /// Clean build artifacts
+    /// 🧹 Clean build artifacts
     Clean,
 
-    /// Generate or update lockfile
+    /// 🔒 Generate or update lockfile
     Lock,
 
-    /// Vendor dependencies into project
+    /// 📋 Vendor dependencies into project
     Vendor,
 
-    /// Show dependency graph
+    /// 🌳 Show dependency graph
     Graph,
 
-    /// Publish package to GitHub releases
+    /// 📤 Publish package to GitHub releases
     Publish {
         /// GitHub access token (or use GITHUB_TOKEN env var)
         #[arg(long)]
@@ -150,10 +174,10 @@ enum Commands {
         dry_run: bool,
     },
 
-    /// Upgrade porters to the latest version
+    /// ⬆️ Upgrade porters to the latest version
     Upgrade,
 
-    /// Install a package globally
+    /// 🌍 Install a package globally
     Install {
         /// Package name or git URL
         package: String,
@@ -171,7 +195,7 @@ enum Commands {
         tag: Option<String>,
     },
 
-    /// Sync dependencies from porters.toml
+    /// 🔄 Sync dependencies from porters.toml
     Sync {
         /// Include dev dependencies
         #[arg(long)]
@@ -186,46 +210,46 @@ enum Commands {
         no_cache: bool,
     },
 
-    /// Manage extensions
+    /// 🔌 Manage extensions
     Extension {
         #[command(subcommand)]
         action: ExtensionAction,
     },
 
-    /// Run a custom script from porters.toml
+    /// 📜 Run a custom script from porters.toml
     RunScript {
         /// Script name
         name: String,
     },
 
-    /// List project dependencies
+    /// 📊 List project dependencies
     List {
         /// Show dependency tree
         #[arg(long)]
         tree: bool,
     },
 
-    /// List globally installed packages
+    /// 🌐 List globally installed packages
     GlobalList,
 
-    /// Clean cache
+    /// 🗑️ Clean cache
     CleanCache {
         /// Force clean (including binary cache)
         #[arg(long)]
         force: bool,
     },
 
-    /// Update porters itself to latest version
+    /// ♻️ Update porters itself to latest version
     SelfUpdate,
 
-    /// Update all dependencies to latest compatible versions
+    /// 🔼 Update all dependencies to latest compatible versions
     UpdateDeps {
         /// Update to absolute latest (ignore constraints)
         #[arg(long)]
         latest: bool,
     },
 
-    /// Cross-compile for specific platform(s)
+    /// 🎯 Cross-compile for specific platform(s)
     Compile {
         /// Compile for all supported platforms
         #[arg(long)]
@@ -252,14 +276,24 @@ enum Commands {
         target: Option<String>,
     },
 
-    /// Execute a custom command (dynamically matched from config)
+    /// 🔧 Execute a custom command (dynamically matched from config)
     #[command(external_subcommand)]
     Custom(Vec<String>),
+
+    /// ➕ Add porters to system PATH
+    AddToPath {
+        /// Overwrite existing PATH entry if present
+        #[arg(long)]
+        overwrite: bool,
+    },
+
+    /// ➖ Remove porters from system PATH
+    RemoveFromPath,
 }
 
 #[derive(Subcommand)]
 enum ExtensionAction {
-    /// Install an extension
+    /// 📥 Install an extension
     Install {
         /// Extension name
         name: String,
@@ -273,24 +307,69 @@ enum ExtensionAction {
         path: Option<String>,
     },
 
-    /// Uninstall an extension
+    /// 🗑️ Uninstall an extension
     Uninstall {
         /// Extension name
         name: String,
     },
 
-    /// List installed extensions
+    /// 📋 List installed extensions
     List,
 
-    /// Create extension template
+    /// 🆕 Create extension template
     Create {
         /// Extension name
         name: String,
     },
 }
 
+/// Initialize Porters on first run or load global config
+fn initialize_porters() -> Result<()> {
+    use global_config::{GlobalPortersConfig, SystemCheck};
+
+    // Load or create global config
+    let mut config = GlobalPortersConfig::load_or_create()?;
+
+    // Check if this is first run (no config file existed)
+    let config_path = GlobalPortersConfig::config_path()?;
+    let is_first_run = !config_path.exists() || config.porters_version.is_empty();
+
+    // Update version if needed
+    if config.porters_version != env!("CARGO_PKG_VERSION") {
+        config.porters_version = env!("CARGO_PKG_VERSION").to_string();
+        let _ = config.save();
+    }
+
+    // On first run or if no compiler detected, run system check
+    if is_first_run || std::env::args().any(|arg| arg == "--check-system") {
+        let system_check = SystemCheck::run();
+
+        if is_first_run {
+            println!();
+            print_success("Welcome to Porters! 🚀");
+            println!();
+        }
+
+        // Always show system check on first run
+        if is_first_run || !system_check.has_compiler {
+            system_check.display();
+
+            if !system_check.has_compiler {
+                print_error("Cannot proceed without a C/C++ compiler!");
+                println!();
+                anyhow::bail!("Missing required system dependencies");
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Initialize global config and check system requirements
+    initialize_porters()?;
+
     // Check and setup PATH on first run
     check_path_setup();
 
@@ -319,8 +398,15 @@ async fn main() -> Result<()> {
             args,
         } => build_project(all_platforms, linux, windows, macos, args).await,
         Commands::Run { args } => run_project(args).await,
-        Commands::Execute { file, args } => execute_single_file(&file, args).await,
+        Commands::Execute {
+            file,
+            args,
+            external,
+            no_console,
+            output,
+        } => execute_single_file(&file, args, external, no_console, output.as_deref()).await,
         Commands::Test => test_project().await,
+        Commands::Check { file, verbose } => check_compilation(file.as_deref(), verbose).await,
         Commands::Update => update_dependencies().await,
         Commands::Clean => clean_project().await,
         Commands::Lock => generate_lockfile().await,
@@ -355,6 +441,8 @@ async fn main() -> Result<()> {
             target,
         } => compile_cross(all_platforms, linux, windows, macos, baremetal, target).await,
         Commands::Custom(args) => execute_custom_command(args).await,
+        Commands::AddToPath { overwrite } => add_to_path(overwrite),
+        Commands::RemoveFromPath => remove_from_path(),
     }
 }
 
@@ -407,7 +495,7 @@ async fn init_project() -> Result<()> {
 
     let license = dialoguer::Select::new()
         .with_prompt("License")
-        .items(&[
+        .items([
             "Apache-2.0",
             "MIT",
             "GPL-3.0",
@@ -573,7 +661,16 @@ async fn create_project(name: &str, use_defaults: bool) -> Result<()> {
         };
 
     // Create project structure based on project type
-    create_project_structure(&language)?;
+    create_project_structure(
+        &language,
+        &project_type,
+        name,
+        &author,
+        &email,
+        &repo,
+        &license,
+        &build_system,
+    )?;
 
     // Create porters.toml with all metadata
     create_porters_config_enhanced(ProjectConfig {
@@ -614,7 +711,7 @@ fn get_project_details() -> Result<ProjectDetails> {
     let theme = dialoguer::theme::ColorfulTheme::default();
 
     // Project type selection
-    let project_types = vec!["Application (executable)", "Library (static/shared)"];
+    let project_types = vec!["🚀 Application (executable)", "📦 Library (static/shared)"];
     let type_idx = Select::with_theme(&theme)
         .with_prompt("Select project type")
         .items(&project_types)
@@ -629,7 +726,11 @@ fn get_project_details() -> Result<ProjectDetails> {
     .to_string();
 
     // Language selection
-    let languages = vec!["C", "C++", "Both (C and C++)"];
+    let languages = vec![
+        "🔵 C (Pure C)",
+        "🔴 C++ (Pure C++)",
+        "🟣 Both (Hybrid C/C++ with extern \"C\")",
+    ];
     let language_idx = Select::with_theme(&theme)
         .with_prompt("Select project language")
         .items(&languages)
@@ -646,7 +747,7 @@ fn get_project_details() -> Result<ProjectDetails> {
     // For libraries, ask for library name
     let entry_point = if project_type == "library" {
         let lib_name: String = Input::with_theme(&theme)
-            .with_prompt("Library name (optional, press Enter to use project name)")
+            .with_prompt("📚 Library name (optional, press Enter to use project name)")
             .allow_empty(true)
             .interact_text()?;
 
@@ -661,7 +762,7 @@ fn get_project_details() -> Result<ProjectDetails> {
 
     // Author name (optional)
     let author: String = Input::with_theme(&theme)
-        .with_prompt("Author name (optional, press Enter to skip)")
+        .with_prompt("👤 Author name (optional, press Enter to skip)")
         .allow_empty(true)
         .interact_text()?;
 
@@ -673,7 +774,7 @@ fn get_project_details() -> Result<ProjectDetails> {
 
     // Email (optional)
     let email: String = Input::with_theme(&theme)
-        .with_prompt("Email (optional, press Enter to skip)")
+        .with_prompt("📧 Email (optional, press Enter to skip)")
         .allow_empty(true)
         .interact_text()?;
 
@@ -685,7 +786,7 @@ fn get_project_details() -> Result<ProjectDetails> {
 
     // Repository URL (optional)
     let repo: String = Input::with_theme(&theme)
-        .with_prompt("Repository URL (optional, press Enter to skip)")
+        .with_prompt("🔗 Repository URL (optional, press Enter to skip)")
         .allow_empty(true)
         .interact_text()?;
 
@@ -697,18 +798,19 @@ fn get_project_details() -> Result<ProjectDetails> {
 
     // License selection
     let license_idx = Select::with_theme(&theme)
-        .with_prompt("Select license")
-        .items(&[
-            "Apache-2.0",
-            "MIT",
-            "GPL-3.0",
-            "GPL-2.0",
-            "BSD-3-Clause",
-            "BSD-2-Clause",
-            "MPL-2.0",
-            "LGPL-3.0",
-            "Unlicense",
-            "None",
+        .with_prompt("📝 Select license")
+        .items([
+            "⚖️  Apache-2.0 (Permissive, with patent protection)",
+            "📄 MIT (Very permissive, simple)",
+            "🔓 GPL-3.0 (Copyleft, strong protection)",
+            "🔓 GPL-2.0 (Copyleft, older version)",
+            "📋 BSD-3-Clause (Permissive, with attribution)",
+            "📋 BSD-2-Clause (Permissive, simpler)",
+            "🔧 MPL-2.0 (Weak copyleft, file-level)",
+            "📚 LGPL-3.0 (For libraries, weak copyleft)",
+            "🆓 Unlicense (Public domain)",
+            "✏️  Custom (Create your own)",
+            "❌ None",
         ])
         .default(0)
         .interact()?;
@@ -723,13 +825,20 @@ fn get_project_details() -> Result<ProjectDetails> {
         6 => Some("MPL-2.0".to_string()),
         7 => Some("LGPL-3.0".to_string()),
         8 => Some("Unlicense".to_string()),
+        9 => Some("Custom".to_string()),
         _ => None,
     };
 
     // Build system selection
-    let build_systems = vec!["CMake", "XMake", "Meson", "Make", "Custom"];
+    let build_systems = vec![
+        "🔨 CMake (Industry standard, most popular)",
+        "⚡ XMake (Modern, fast, Lua-based)",
+        "🏗️  Meson (Fast, Python-based)",
+        "🔧 Make (Traditional, simple)",
+        "✨ Custom (Manual configuration)",
+    ];
     let build_idx = Select::with_theme(&theme)
-        .with_prompt("Select build system")
+        .with_prompt("⚙️  Select build system")
         .items(&build_systems)
         .default(0)
         .interact()?;
@@ -755,48 +864,432 @@ fn get_project_details() -> Result<ProjectDetails> {
     ))
 }
 
-fn create_project_structure(language: &str) -> Result<()> {
+#[allow(clippy::too_many_arguments)]
+fn create_project_structure(
+    language: &str,
+    project_type: &str,
+    project_name: &str,
+    author: &Option<String>,
+    email: &Option<String>,
+    repo: &Option<String>,
+    license: &Option<String>,
+    build_system: &str,
+) -> Result<()> {
     // Create directory structure
     std::fs::create_dir_all("src")?;
     std::fs::create_dir_all("include")?;
 
-    // Create main source file
-    match language {
-        "c" => {
+    if project_type == "library" {
+        std::fs::create_dir_all("examples")?;
+        std::fs::create_dir_all("tests")?;
+    }
+
+    let is_cpp = language == "cpp" || language == "both";
+
+    // Create main source file based on project type
+    if project_type == "application" {
+        // Application project
+        if language == "both" {
+            // Hybrid project: Create both C and C++ files with extern "C" example
+            std::fs::write(
+                "src/main.cpp",
+                r#"#include <iostream>
+#include "c_module.h"
+
+int main(int argc, char *argv[]) {
+    std::cout << "🚀 Hello from C++ (Porters Hybrid Project)!" << std::endl;
+    
+    // Call C function from C++ code
+    const char* c_message = get_c_message();
+    std::cout << "📦 Message from C module: " << c_message << std::endl;
+    
+    return 0;
+}
+"#,
+            )?;
+
+            // Create C module header
+            std::fs::write(
+                "include/c_module.h",
+                r#"#ifndef C_MODULE_H
+#define C_MODULE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Get a message from the C module
+ * This function can be called from both C and C++ code
+ */
+const char* get_c_message(void);
+
+/**
+ * Process a number using C code
+ */
+int c_process_number(int value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* C_MODULE_H */
+"#,
+            )?;
+
+            // Create C module implementation
+            std::fs::write(
+                "src/c_module.c",
+                r#"#include "c_module.h"
+#include <stdio.h>
+
+const char* get_c_message(void) {
+    return "This is a C function callable from C++!";
+}
+
+int c_process_number(int value) {
+    printf("Processing %d in C code\n", value);
+    return value * 2;
+}
+"#,
+            )?;
+
+            // Create C++ utility header
+            std::fs::write(
+                "include/cpp_utils.hpp",
+                r#"#ifndef CPP_UTILS_HPP
+#define CPP_UTILS_HPP
+
+#include <string>
+#include <vector>
+
+namespace utils {
+
+/**
+ * C++ utility class
+ * Can use C functions via extern "C"
+ */
+class StringHelper {
+public:
+    static std::string to_upper(const std::string& str);
+    static std::vector<std::string> split(const std::string& str, char delimiter);
+};
+
+} // namespace utils
+
+#endif /* CPP_UTILS_HPP */
+"#,
+            )?;
+
+            // Create C++ utility implementation
+            std::fs::write(
+                "src/cpp_utils.cpp",
+                r#"#include "cpp_utils.hpp"
+#include <algorithm>
+#include <sstream>
+
+namespace utils {
+
+std::string StringHelper::to_upper(const std::string& str) {
+    std::string result = str;
+    std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+    return result;
+}
+
+std::vector<std::string> StringHelper::split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::stringstream ss(str);
+    std::string token;
+    
+    while (std::getline(ss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    
+    return tokens;
+}
+
+} // namespace utils
+"#,
+            )?;
+        } else if is_cpp {
+            std::fs::write(
+                "src/main.cpp",
+                r#"#include <iostream>
+
+int main(int argc, char *argv[]) {
+    std::cout << "🚀 Hello from Porters!" << std::endl;
+    return 0;
+}
+"#,
+            )?;
+        } else {
             std::fs::write(
                 "src/main.c",
                 r#"#include <stdio.h>
 
 int main(int argc, char *argv[]) {
-    printf("Hello from Porters!\n");
+    printf("🚀 Hello from Porters!\n");
     return 0;
 }
 "#,
             )?;
         }
-        "cpp" => {
-            std::fs::write(
-                "src/main.cpp",
-                r#"#include <iostream>
+    } else {
+        // Library project
+        let lib_name = project_name.replace("-", "_");
 
-int main(int argc, char *argv[]) {
-    std::cout << "Hello from Porters!" << std::endl;
-    return 0;
-}
+        // Create library header
+        if is_cpp {
+            std::fs::write(
+                format!("include/{}.hpp", lib_name),
+                format!(
+                    r#"#ifndef {}_HPP
+#define {}_HPP
+
+#include <string>
+
+namespace {} {{
+
+class Example {{
+public:
+    Example();
+    ~Example();
+    
+    std::string get_message() const;
+    void set_message(const std::string& msg);
+    
+private:
+    std::string message_;
+}};
+
+}} // namespace {}
+
+#endif // {}_HPP
 "#,
+                    lib_name.to_uppercase(),
+                    lib_name.to_uppercase(),
+                    lib_name,
+                    lib_name,
+                    lib_name.to_uppercase()
+                ),
+            )?;
+
+            // Create library implementation
+            std::fs::write(
+                format!("src/{}.cpp", lib_name),
+                format!(
+                    r#"#include "{}.hpp"
+
+namespace {} {{
+
+Example::Example() : message_("Hello from {} library!") {{
+}}
+
+Example::~Example() {{
+}}
+
+std::string Example::get_message() const {{
+    return message_;
+}}
+
+void Example::set_message(const std::string& msg) {{
+    message_ = msg;
+}}
+
+}} // namespace {}
+"#,
+                    lib_name, lib_name, lib_name, lib_name
+                ),
+            )?;
+
+            // Create example usage
+            std::fs::write(
+                "examples/basic_usage.cpp",
+                format!(
+                    r#"#include <iostream>
+#include "{}.hpp"
+
+int main() {{
+    {}::Example example;
+    std::cout << example.get_message() << std::endl;
+    
+    example.set_message("Custom message!");
+    std::cout << example.get_message() << std::endl;
+    
+    return 0;
+}}
+"#,
+                    lib_name, lib_name
+                ),
+            )?;
+        } else {
+            // C library
+            std::fs::write(
+                format!("include/{}.h", lib_name),
+                format!(
+                    r#"#ifndef {}_H
+#define {}_H
+
+#ifdef __cplusplus
+extern "C" {{
+#endif
+
+typedef struct {}_example {}_example_t;
+
+{}_example_t* {}_example_create(void);
+void {}_example_destroy({}_example_t* example);
+
+const char* {}_example_get_message(const {}_example_t* example);
+void {}_example_set_message({}_example_t* example, const char* msg);
+
+#ifdef __cplusplus
+}}
+#endif
+
+#endif /* {}_H */
+"#,
+                    lib_name.to_uppercase(),
+                    lib_name.to_uppercase(),
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name.to_uppercase()
+                ),
+            )?;
+
+            std::fs::write(
+                format!("src/{}.c", lib_name),
+                format!(
+                    r#"#include "{}.h"
+#include <stdlib.h>
+#include <string.h>
+
+struct {}_example {{
+    char* message;
+}};
+
+{}_example_t* {}_example_create(void) {{
+    {}_example_t* example = malloc(sizeof({}_example_t));
+    if (example) {{
+        example->message = strdup("Hello from {} library!");
+    }}
+    return example;
+}}
+
+void {}_example_destroy({}_example_t* example) {{
+    if (example) {{
+        free(example->message);
+        free(example);
+    }}
+}}
+
+const char* {}_example_get_message(const {}_example_t* example) {{
+    return example ? example->message : NULL;
+}}
+
+void {}_example_set_message({}_example_t* example, const char* msg) {{
+    if (example && msg) {{
+        free(example->message);
+        example->message = strdup(msg);
+    }}
+}}
+"#,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name,
+                    lib_name
+                ),
+            )?;
+
+            // Create example
+            std::fs::write(
+                "examples/basic_usage.c",
+                format!(
+                    r#"#include <stdio.h>
+#include "{}.h"
+
+int main(void) {{
+    {}_example_t* example = {}_example_create();
+    
+    printf("%s\n", {}_example_get_message(example));
+    
+    {}_example_set_message(example, "Custom message!");
+    printf("%s\n", {}_example_get_message(example));
+    
+    {}_example_destroy(example);
+    return 0;
+}}
+"#,
+                    lib_name, lib_name, lib_name, lib_name, lib_name, lib_name, lib_name
+                ),
             )?;
         }
-        _ => {
-            // both
-            std::fs::write(
-                "src/main.cpp",
-                r#"#include <iostream>
 
-int main(int argc, char *argv[]) {
-    std::cout << "Hello from Porters!" << std::endl;
+        // Create test file
+        if is_cpp {
+            std::fs::write(
+                "tests/test_basic.cpp",
+                format!(
+                    r#"#include <cassert>
+#include "{}.hpp"
+
+int main() {{
+    {}::Example example;
+    
+    // Test default message
+    assert(!example.get_message().empty());
+    
+    // Test set/get
+    example.set_message("Test message");
+    assert(example.get_message() == "Test message");
+    
     return 0;
-}
+}}
 "#,
+                    lib_name, lib_name
+                ),
+            )?;
+        } else {
+            std::fs::write(
+                "tests/test_basic.c",
+                format!(
+                    r#"#include <assert.h>
+#include <string.h>
+#include "{}.h"
+
+int main(void) {{
+    {}_example_t* example = {}_example_create();
+    assert(example != NULL);
+    
+    // Test default message
+    assert({}_example_get_message(example) != NULL);
+    
+    // Test set/get
+    {}_example_set_message(example, "Test message");
+    assert(strcmp({}_example_get_message(example), "Test message") == 0);
+    
+    {}_example_destroy(example);
+    return 0;
+}}
+"#,
+                    lib_name, lib_name, lib_name, lib_name, lib_name, lib_name, lib_name
+                ),
             )?;
         }
     }
@@ -836,26 +1329,391 @@ Thumbs.db
 "#,
     )?;
 
-    // Create README
-    std::fs::write(
-        "README.md",
-        r#"# Project
+    // Create comprehensive README
+    let project_type_str = if project_type == "library" {
+        "library"
+    } else {
+        "application"
+    };
+    let language_badge = match language {
+        "c" => "![Language](https://img.shields.io/badge/language-C-blue.svg)",
+        "cpp" => "![Language](https://img.shields.io/badge/language-C++-blue.svg)",
+        "both" => "![Language](https://img.shields.io/badge/language-C%2FC++-blue.svg)",
+        _ => "",
+    };
 
-A C/C++ project managed by Porters.
+    let author_section = if let Some(author_name) = author {
+        if let Some(email_addr) = email {
+            format!("\n## Author\n\n👤 **{}** <{}>\n", author_name, email_addr)
+        } else {
+            format!("\n## Author\n\n👤 **{}**\n", author_name)
+        }
+    } else {
+        String::new()
+    };
 
-## Building
+    let repo_section = if let Some(repository_url) = repo {
+        format!(
+            "\n## Repository\n\n🔗 [{}]({})\n\n\
+            ### Contributing\n\n\
+            Contributions are welcome! Please feel free to submit a Pull Request.\n",
+            repository_url, repository_url
+        )
+    } else {
+        String::new()
+    };
+
+    let readme_content = if project_type == "library" {
+        format!(
+            r#"# {project_name}
+
+{language_badge}
+[![License](https://img.shields.io/badge/license-{license}-green.svg)]({license_link})
+
+> A {lang_full} {project_type_str} managed by [Porters](https://github.com/muhammad-fiaz/porters)
+
+## 📋 Description
+
+{description}
+
+## ✨ Features
+
+- ✅ Cross-platform support (Windows, Linux, macOS)
+- ✅ Modern {lang_full} codebase
+- ✅ Easy integration with Porters package manager
+- ✅ Comprehensive examples and tests
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- [Porters](https://github.com/muhammad-fiaz/porters) - Universal C/C++ package manager
+- A C/C++ compiler (GCC, Clang, or MSVC)
+
+### Building
 
 ```bash
+# Clone the repository
+git clone {repo_placeholder}
+cd {project_name}
+
+# Build the library
 porters build
 ```
 
-## Running
+### Running Examples
 
 ```bash
-porters run
+# Run the basic usage example
+porters execute examples/basic_usage.{ext}
 ```
+
+### Running Tests
+
+```bash
+# Run tests
+porters execute tests/test_basic.{ext}
+```
+
+## 📦 Installation
+
+### Using Porters (Recommended)
+
+Add to your `porters.toml`:
+
+```toml
+[dependencies]
+{project_name} = {{ git = "{repo_placeholder}" }}
+```
+
+Or install locally:
+
+```bash
+porters add {project_name} --path /path/to/{project_name}
+```
+
+### Manual Integration
+
+Include the library in your project:
+
+```{lang_example}
+{include_example}
+```
+
+## 📚 Usage
+
+### Basic Example
+
+```{lang_example}
+{usage_example}
+```
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+{project_name}/
+├── include/          # Public headers
+├── src/              # Source files
+├── examples/         # Usage examples
+├── tests/            # Test files
+├── porters.toml      # Porters configuration
+└── README.md         # This file
+```
+
+### Building from Source
+
+```bash
+# Build in release mode
+porters build --release
+
+# Build for specific platform
+porters build --target x86_64-pc-windows-msvc
+```
+
+### Adding Dependencies
+
+```bash
+# Add a dependency
+porters add <package-name>
+
+# Add from Git
+porters add <package> --git https://github.com/user/repo
+```
+{author_section}{repo_section}
+## 📄 License
+
+This project is licensed under the {license} License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Porters](https://github.com/muhammad-fiaz/porters)
+- Powered by the C/C++ community
+
+---
+
+**Made with ❤️ using Porters**
 "#,
-    )?;
+            project_name = project_name,
+            language_badge = language_badge,
+            license = license.as_deref().unwrap_or("MIT"),
+            license_link = match license.as_deref() {
+                Some("Apache-2.0") => "https://opensource.org/licenses/Apache-2.0",
+                Some("MIT") => "https://opensource.org/licenses/MIT",
+                Some("GPL-3.0") => "https://www.gnu.org/licenses/gpl-3.0",
+                Some("GPL-2.0") => "https://www.gnu.org/licenses/gpl-2.0",
+                Some("BSD-3-Clause") => "https://opensource.org/licenses/BSD-3-Clause",
+                Some("BSD-2-Clause") => "https://opensource.org/licenses/BSD-2-Clause",
+                Some("MPL-2.0") => "https://opensource.org/licenses/MPL-2.0",
+                Some("LGPL-3.0") => "https://www.gnu.org/licenses/lgpl-3.0",
+                Some("Unlicense") => "https://unlicense.org",
+                _ => "LICENSE",
+            },
+            lang_full = match language {
+                "c" => "C",
+                "cpp" => "C++",
+                "both" => "C/C++ hybrid",
+                _ => "C/C++",
+            },
+            project_type_str = project_type_str,
+            description = "Add your library description here",
+            repo_placeholder = repo
+                .as_deref()
+                .unwrap_or("https://github.com/yourusername/yourrepo"),
+            ext = if language == "c" { "c" } else { "cpp" },
+            lang_example = if language == "c" { "c" } else { "cpp" },
+            include_example = if language == "c" {
+                format!("#include \"{}.h\"", project_name.replace("-", "_"))
+            } else {
+                format!("#include \"{}.hpp\"", project_name.replace("-", "_"))
+            },
+            usage_example = if language == "c" {
+                format!(
+                    "#include <stdio.h>\n\
+                     #include \"{}.h\"\n\n\
+                     int main(void) {{\n    \
+                         // Use the library\n    \
+                         return 0;\n\
+                     }}",
+                    project_name.replace("-", "_")
+                )
+            } else {
+                format!(
+                    "#include <iostream>\n\
+                     #include \"{}.hpp\"\n\n\
+                     int main() {{\n    \
+                         // Use the library\n    \
+                         return 0;\n\
+                     }}",
+                    project_name.replace("-", "_")
+                )
+            },
+            author_section = author_section,
+            repo_section = repo_section,
+        )
+    } else {
+        format!(
+            r#"# {project_name}
+
+{language_badge}
+[![License](https://img.shields.io/badge/license-{license}-green.svg)]({license_link})
+
+> A {lang_full} {project_type_str} managed by [Porters](https://github.com/muhammad-fiaz/porters)
+
+## 📋 Description
+
+{description}
+
+## ✨ Features
+
+- 🚀 Fast and efficient {lang_full} application
+- 🌍 Cross-platform support (Windows, Linux, macOS)
+- 📦 Managed by Porters for easy dependency handling
+- ⚙️ Configured with {build_system}
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- [Porters](https://github.com/muhammad-fiaz/porters) - Universal C/C++ package manager
+- A C/C++ compiler (GCC, Clang, or MSVC)
+- {build_system_name} build system
+
+### Installation
+
+```bash
+# Clone the repository
+git clone {repo_placeholder}
+cd {project_name}
+
+# Build the application
+porters build
+```
+
+### Running
+
+```bash
+# Run the application
+porters run
+
+# Or execute directly with arguments
+porters run -- arg1 arg2
+```
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+{project_name}/
+├── src/              # Source files
+│   └── main.{ext}    # Entry point{hybrid_structure}
+├── include/          # Header files
+├── porters.toml      # Porters configuration
+└── README.md         # This file
+```
+
+### Building
+
+```bash
+# Debug build
+porters build
+
+# Release build
+porters build --release
+
+# Build for specific platform
+porters build --target x86_64-pc-windows-msvc
+```
+
+### Adding Dependencies
+
+```bash
+# Add a dependency
+porters add <package-name>
+
+# Add from Git
+porters add <package> --git https://github.com/user/repo
+
+# Add dev dependency
+porters add <package> --dev
+```
+
+### Testing
+
+```bash
+# Run tests (if configured)
+porters test
+```
+{author_section}{repo_section}
+## 📄 License
+
+This project is licensed under the {license} License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Porters](https://github.com/muhammad-fiaz/porters)
+- Powered by the C/C++ community
+
+---
+
+**Made with ❤️ using Porters**
+"#,
+            project_name = project_name,
+            language_badge = language_badge,
+            license = license.as_deref().unwrap_or("MIT"),
+            license_link = match license.as_deref() {
+                Some("Apache-2.0") => "https://opensource.org/licenses/Apache-2.0",
+                Some("MIT") => "https://opensource.org/licenses/MIT",
+                Some("GPL-3.0") => "https://www.gnu.org/licenses/gpl-3.0",
+                Some("GPL-2.0") => "https://www.gnu.org/licenses/gpl-2.0",
+                Some("BSD-3-Clause") => "https://opensource.org/licenses/BSD-3-Clause",
+                Some("BSD-2-Clause") => "https://opensource.org/licenses/BSD-2-Clause",
+                Some("MPL-2.0") => "https://opensource.org/licenses/MPL-2.0",
+                Some("LGPL-3.0") => "https://www.gnu.org/licenses/lgpl-3.0",
+                Some("Unlicense") => "https://unlicense.org",
+                _ => "LICENSE",
+            },
+            lang_full = match language {
+                "c" => "C",
+                "cpp" => "C++",
+                "both" => "C/C++ hybrid",
+                _ => "C/C++",
+            },
+            project_type_str = project_type_str,
+            description = "Add your application description here",
+            build_system = build_system,
+            build_system_name = match build_system {
+                "cmake" => "CMake",
+                "xmake" => "XMake",
+                "meson" => "Meson",
+                "make" => "Make",
+                _ => "Custom",
+            },
+            repo_placeholder = repo
+                .as_deref()
+                .unwrap_or("https://github.com/yourusername/yourrepo"),
+            ext = if language == "c" { "c" } else { "cpp" },
+            hybrid_structure = if language == "both" {
+                "\n│   ├── c_module.c   # C implementation\n\
+                 │   └── cpp_utils.cpp # C++ implementation"
+            } else {
+                ""
+            },
+            author_section = author_section,
+            repo_section = repo_section,
+        )
+    };
+
+    std::fs::write("README.md", readme_content)?;
+
+    // Create LICENSE file if license is specified
+    if let Some(license_id) = license {
+        let author_name = author.as_deref().unwrap_or("Author");
+        license::LicenseGenerator::write_license_file(license_id, author_name, project_name)?;
+        print_success(&format!("Created LICENSE file ({} license)", license_id));
+    }
 
     Ok(())
 }
@@ -1092,7 +1950,7 @@ fn check_build_tools() {
         println!();
         print_warning("Some build tools are not installed:");
         for (name, url) in missing {
-            println!("  📥 Install {} from: {}", name, url);
+            println!("  📥  Install {} from: {}", name, url);
         }
         println!();
         print_info("Install missing tools to use all Porters features");
@@ -1528,6 +2386,342 @@ async fn test_project() -> Result<()> {
     Ok(())
 }
 
+/// Checks compilation of source files without creating executables (syntax-only check).
+///
+/// This function performs a fast compilation check to validate code syntax and catch
+/// compilation errors without generating executable files. It's useful for rapid
+/// feedback during development and CI/CD pipelines.
+///
+/// # Arguments
+///
+/// * `file` - Optional path to a specific source file to check. If `None`, checks all
+///   source files in the project. Supports both C (.c) and C++ (.cpp/.cc/.cxx) files.
+/// * `verbose` - If `true`, displays detailed compiler output including warnings and full
+///   error traces. If `false`, shows only summary information.
+///
+/// # Behavior
+///
+/// - **Single File Mode** (`file` is `Some`): Checks only the specified file
+/// - **Project Mode** (`file` is `None`): Discovers and checks all `.c`, `.cpp`, `.cc`,
+///   and `.cxx` files in the `src/` directory
+/// - **Compiler Flags**: Uses `-fsyntax-only` (GCC/Clang) or `/Zs` (MSVC) to skip
+///   code generation and linking, resulting in faster checks
+/// - **Dependencies**: Automatically includes dependency paths from `porters.toml`
+/// - **Error Reporting**: Captures and displays compiler stderr with emoji indicators
+///
+/// # Returns
+///
+/// * `Result<()>` - Success if all files compile without errors, error otherwise
+///
+/// # Examples
+///
+/// ```bash
+/// # Check all source files in the project
+/// porters check
+///
+/// # Check a specific file
+/// porters check src/main.c
+///
+/// # Check with verbose compiler output
+/// porters check --verbose
+/// porters check src/utils.cpp --verbose
+/// ```
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The specified file doesn't exist
+/// - No source files found in project mode
+/// - Compiler is not installed or not found
+/// - Configuration file (`porters.toml`) is invalid
+/// - Compilation errors are detected
+///
+/// # Implementation Details
+///
+/// The function performs the following steps:
+/// 1. Determines which files to check (single file or all files)
+/// 2. Loads project configuration and resolves dependencies
+/// 3. Detects appropriate compiler (GCC, Clang, or MSVC)
+/// 4. Builds compile command with syntax-only flags
+/// 5. Executes compiler and captures output
+/// 6. Displays results with color-coded emoji indicators
+async fn check_compilation(file: Option<&str>, verbose: bool) -> Result<()> {
+    use std::path::Path;
+    use std::process::Command;
+
+    print_step("✅ Checking compilation (syntax-only)");
+
+    // Determine which files to check
+    let files_to_check: Vec<String> = if let Some(specific_file) = file {
+        // Single file mode
+        if !Path::new(specific_file).exists() {
+            return Err(anyhow::anyhow!("❌ File not found: {}", specific_file));
+        }
+        println!("🎯 Checking single file: {}", specific_file);
+        vec![specific_file.to_string()]
+    } else {
+        // Project mode - discover all source files
+        println!("🔍 Discovering source files in project...");
+        let sources = scan::scan_project(".")?;
+
+        if sources.source_files.is_empty() {
+            return Err(anyhow::anyhow!("❌ No source files found in project"));
+        }
+
+        println!("📦 Found {} source file(s)", sources.source_files.len());
+        sources
+            .source_files
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect()
+    };
+
+    // Load configuration and resolve dependencies
+    let config = match PortersConfig::load("porters.toml") {
+        Ok(cfg) => cfg,
+        Err(_) => {
+            println!("⚠️  No porters.toml found, checking without configuration");
+            // Continue without config
+            let mut all_passed = true;
+            let mut total_checked = 0;
+            let mut total_errors = 0;
+
+            for source_file in &files_to_check {
+                total_checked += 1;
+                let path = Path::new(source_file);
+                let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+
+                // Determine if C or C++ and detect appropriate compiler
+                let (compiler, is_cpp) = match extension {
+                    "cpp" | "cc" | "cxx" | "C" => {
+                        let cpp_compiler = detect_cpp_compiler();
+                        (cpp_compiler, true)
+                    }
+                    _ => {
+                        let c_compiler = detect_c_compiler();
+                        (c_compiler, false)
+                    }
+                };
+
+                println!(
+                    "\n🔨 Checking: {} ({})",
+                    source_file,
+                    if is_cpp { "C++" } else { "C" }
+                );
+                if verbose {
+                    println!("🔧 Using compiler: {}", compiler);
+                }
+
+                // Build compiler command
+                let mut cmd = Command::new(&compiler);
+
+                // Add syntax-only flag
+                if compiler.contains("cl.exe") || compiler.contains("cl ") {
+                    cmd.arg("/Zs").arg("/nologo");
+                } else {
+                    cmd.arg("-fsyntax-only");
+                }
+
+                cmd.arg(source_file);
+
+                let output = cmd.output()?;
+
+                if output.status.success() {
+                    println!("✅ PASSED: {}", source_file);
+                } else {
+                    all_passed = false;
+                    total_errors += 1;
+                    println!("❌ FAILED: {}", source_file);
+
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+
+                    if verbose {
+                        println!("\n📋 Detailed compiler output:");
+                        println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                        if !stdout.is_empty() {
+                            println!("{}", stdout);
+                        }
+                        if !stderr.is_empty() {
+                            println!("{}", stderr);
+                        }
+                        println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                    } else if !stderr.is_empty() {
+                        let lines: Vec<&str> = stderr.lines().take(10).collect();
+                        println!("\n❌ Compilation errors:");
+                        for line in lines {
+                            println!("  {}", line);
+                        }
+                        let total_lines = stderr.lines().count();
+                        if total_lines > 10 {
+                            println!(
+                                "  ... ({} more lines, use --verbose for full output)",
+                                total_lines - 10
+                            );
+                        }
+                    }
+                }
+            }
+
+            println!("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            println!("📊 Compilation Check Summary");
+            println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            println!("   Total files checked: {}", total_checked);
+            println!("   ✅ Passed: {}", total_checked - total_errors);
+            println!("   ❌ Failed: {}", total_errors);
+            println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+            if all_passed {
+                print_success("All compilation checks passed! ✅");
+                return Ok(());
+            } else {
+                return Err(anyhow::anyhow!(
+                    "❌ Compilation check failed: {} error(s) found",
+                    total_errors
+                ));
+            }
+        }
+    };
+
+    let resolved_deps = deps::resolve_dependencies(&config).await?;
+
+    // Build include paths from dependencies
+    let mut include_paths = Vec::new();
+    for dep in &resolved_deps {
+        for include_path in &dep.include_paths {
+            include_paths.push(format!("-I{}", include_path.display()));
+        }
+    }
+
+    // Check each file
+    let mut all_passed = true;
+    let mut total_checked = 0;
+    let mut total_errors = 0;
+
+    for source_file in &files_to_check {
+        total_checked += 1;
+        let path = Path::new(source_file);
+        let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+
+        // Determine if C or C++ and detect appropriate compiler
+        let (compiler, is_cpp) = match extension {
+            "cpp" | "cc" | "cxx" | "C" => {
+                let cpp_compiler = detect_cpp_compiler();
+                (cpp_compiler, true)
+            }
+            _ => {
+                let c_compiler = detect_c_compiler();
+                (c_compiler, false)
+            }
+        };
+
+        println!(
+            "\n🔨 Checking: {} ({})",
+            source_file,
+            if is_cpp { "C++" } else { "C" }
+        );
+        if verbose {
+            println!("🔧 Using compiler: {}", compiler);
+        }
+
+        // Build compiler command
+        let mut cmd = Command::new(&compiler);
+
+        // Add syntax-only flag
+        if compiler.contains("cl.exe") || compiler.contains("cl ") {
+            // MSVC
+            cmd.arg("/Zs"); // Syntax check only
+            cmd.arg("/nologo"); // Suppress banner
+        } else {
+            // GCC/Clang
+            cmd.arg("-fsyntax-only"); // Syntax check only
+        }
+
+        // Add include paths
+        for include in &include_paths {
+            cmd.arg(include);
+        }
+
+        // Add compiler flags from config
+        if is_cpp {
+            for flag in &config.build.flags.cxxflags {
+                cmd.arg(flag);
+            }
+        } else {
+            for flag in &config.build.flags.cflags {
+                cmd.arg(flag);
+            }
+        }
+
+        // Add the source file
+        cmd.arg(source_file);
+
+        // Execute compiler
+        let output = cmd.output()?;
+
+        // Process results
+        if output.status.success() {
+            println!("✅ PASSED: {}", source_file);
+        } else {
+            all_passed = false;
+            total_errors += 1;
+            println!("❌ FAILED: {}", source_file);
+
+            // Display compiler output
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
+
+            if verbose {
+                println!("\n📋 Detailed compiler output:");
+                println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                if !stdout.is_empty() {
+                    println!("{}", stdout);
+                }
+                if !stderr.is_empty() {
+                    println!("{}", stderr);
+                }
+                println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            } else {
+                // Show concise error output
+                if !stderr.is_empty() {
+                    // Show first few lines of errors
+                    let lines: Vec<&str> = stderr.lines().take(10).collect();
+                    println!("\n❌ Compilation errors:");
+                    for line in lines {
+                        println!("  {}", line);
+                    }
+                    let total_lines = stderr.lines().count();
+                    if total_lines > 10 {
+                        println!(
+                            "  ... ({} more lines, use --verbose for full output)",
+                            total_lines - 10
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    // Print summary
+    println!("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println!("📊 Compilation Check Summary");
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println!("   Total files checked: {}", total_checked);
+    println!("   ✅ Passed: {}", total_checked - total_errors);
+    println!("   ❌ Failed: {}", total_errors);
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    if all_passed {
+        print_success("All compilation checks passed! ✅");
+        Ok(())
+    } else {
+        Err(anyhow::anyhow!(
+            "❌ Compilation check failed: {} error(s) found",
+            total_errors
+        ))
+    }
+}
+
 async fn update_dependencies() -> Result<()> {
     print_step("Updating dependencies");
 
@@ -1584,7 +2778,7 @@ async fn generate_lockfile() -> Result<()> {
             version: dep.version.clone(),
             source,
             checksum: dep.checksum.clone(),
-            dependencies: vec![], // TODO: Track nested dependencies
+            dependencies: dep.dependencies.clone(),
         };
 
         lockfile.add_dependency(dep.name.clone(), resolved_dep);
@@ -1781,7 +2975,7 @@ async fn handle_extension(action: ExtensionAction) -> Result<()> {
                 print_info("No extensions installed");
                 print_info("Install extensions with: porters extension install <name>");
             } else {
-                println!("\n📦 Installed Extensions:\n");
+                println!("\n📦  Installed Extensions:\n");
                 for ext in extensions {
                     println!("  {} v{}", ext.manifest.name, ext.manifest.version);
                     println!("    {}", ext.manifest.description);
@@ -2103,13 +3297,13 @@ async fn list_dependencies(tree: bool) -> Result<()> {
         return Ok(());
     }
 
-    println!("\n📦 Dependencies ({})", config.dependencies.len());
+    println!("\n📦  Dependencies ({})", config.dependencies.len());
     for (name, dep) in &config.dependencies {
         print_dependency(name, dep, tree, 0);
     }
 
     if !config.dev_dependencies.is_empty() {
-        println!("\n🔧 Dev Dependencies ({})", config.dev_dependencies.len());
+        println!("\n🔧  Dev Dependencies ({})", config.dev_dependencies.len());
         for (name, dep) in &config.dev_dependencies {
             print_dependency(name, dep, tree, 0);
         }
@@ -2158,9 +3352,9 @@ async fn global_list_packages() -> Result<()> {
         print_info("No global packages installed");
         print_info("Install packages globally with: porters install --global <package>");
     } else {
-        println!("\n📦 Global Packages ({})", packages.len());
+        println!("\n📦  Global Packages ({})", packages.len());
         for pkg in packages {
-            println!("  ✓ {} @ {} ({})", pkg.name, pkg.version, pkg.source);
+            println!("  ✓  {} @ {} ({})", pkg.name, pkg.version, pkg.source);
             println!("      {}", pkg.install_path.display());
         }
         let global_dir = global::GlobalConfig::global_dir()?;
@@ -2387,7 +3581,7 @@ async fn compile_cross(
     ));
 
     // Show build artifact locations
-    println!("\n📦 Build Artifacts:");
+    println!("\n📦  Build Artifacts:");
     for (i, dir) in build_dirs.iter().enumerate() {
         println!("  {} {}", targets[i].display_name(), dir.display());
     }
@@ -2395,12 +3589,141 @@ async fn compile_cross(
     Ok(())
 }
 
+/// Open a program in an external system terminal
+fn open_in_external_terminal(program: &std::path::Path, args: &[String]) -> Result<()> {
+    use std::process::Command;
+
+    let program_str = program.to_string_lossy();
+    let args_str = args.join(" ");
+
+    #[cfg(target_os = "windows")]
+    {
+        // Windows: Create a temporary batch file to properly handle pause
+        let temp_dir = std::env::temp_dir();
+        let batch_file = temp_dir.join(format!("porters_run_{}.bat", std::process::id()));
+
+        let batch_content = if args.is_empty() {
+            format!(
+                "@echo off\r\n\
+                 \"{}\"\r\n\
+                 echo.\r\n\
+                 echo Press any key to close...\r\n\
+                 pause >nul\r\n\
+                 del \"%~f0\"",
+                program_str
+            )
+        } else {
+            format!(
+                "@echo off\r\n\
+                 \"{}\" {}\r\n\
+                 echo.\r\n\
+                 echo Press any key to close...\r\n\
+                 pause >nul\r\n\
+                 del \"%~f0\"",
+                program_str, args_str
+            )
+        };
+
+        std::fs::write(&batch_file, batch_content)
+            .context("Failed to create temporary batch file")?;
+
+        Command::new("cmd")
+            .args(["/C", "start", "cmd", "/C", &batch_file.to_string_lossy()])
+            .spawn()
+            .context("Failed to open external terminal on Windows")?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        // macOS: Use osascript to open Terminal.app with the command
+        let full_command = if args.is_empty() {
+            format!("{}", program_str)
+        } else {
+            format!("{} {}", program_str, args_str)
+        };
+
+        let script = format!(
+            "tell application \"Terminal\" to do script \"{}; echo ''; echo 'Press any key to close...'; read -n 1\"",
+            full_command.replace("\"", "\\\"")
+        );
+
+        Command::new("osascript")
+            .args(["-e", &script])
+            .spawn()
+            .context("Failed to open external terminal on macOS")?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // Linux: Try common terminal emulators in order of preference
+        let terminals = [
+            ("gnome-terminal", vec!["--", "bash", "-c"]),
+            ("konsole", vec!["-e", "bash", "-c"]),
+            ("xfce4-terminal", vec!["-e", "bash", "-c"]),
+            ("xterm", vec!["-e", "bash", "-c"]),
+            ("mate-terminal", vec!["-e", "bash", "-c"]),
+            ("terminator", vec!["-e", "bash", "-c"]),
+            ("alacritty", vec!["-e", "bash", "-c"]),
+            ("kitty", vec!["-e", "bash", "-c"]),
+        ];
+
+        let full_command = if args.is_empty() {
+            format!(
+                "{}; echo ''; echo 'Press Enter to close...'; read",
+                program_str
+            )
+        } else {
+            format!(
+                "{} {}; echo ''; echo 'Press Enter to close...'; read",
+                program_str, args_str
+            )
+        };
+
+        let mut launched = false;
+        for (terminal, term_args) in &terminals {
+            if Command::new(terminal)
+                .args(term_args)
+                .arg(&full_command)
+                .spawn()
+                .is_ok()
+            {
+                launched = true;
+                break;
+            }
+        }
+
+        if !launched {
+            anyhow::bail!(
+                "No suitable terminal emulator found. Please install one of: gnome-terminal, konsole, xterm"
+            );
+        }
+    }
+
+    Ok(())
+}
+
 /// Execute a single C/C++ file directly with all dependencies
-async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
+///
+/// # Arguments
+/// * `file` - Source file path to compile and execute
+/// * `args` - Arguments to pass to the compiled program
+/// * `external` - Open program in external terminal window
+/// * `no_console` - Run without console window (GUI apps)
+/// * `output_name` - Custom output executable name (optional)
+///
+/// # Returns
+/// * `Result<()>` - Success or error
+async fn execute_single_file(
+    file: &str,
+    args: Vec<String>,
+    external: bool,
+    no_console: bool,
+    output_name: Option<&str>,
+) -> Result<()> {
     use std::path::Path;
     use std::process::Command;
 
-    print_step(&format!("Executing single file: {}", file));
+    print_step(&format!("⚡ Executing single file: {}", file));
 
     // Check if file exists
     let file_path = Path::new(file);
@@ -2435,6 +3758,14 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
         None
     };
 
+    // Determine execution modes (CLI flags override config)
+    let use_external = external
+        || config
+            .as_ref()
+            .map(|c| c.run.use_external_terminal)
+            .unwrap_or(false);
+    let use_no_console = no_console || config.as_ref().map(|c| c.run.no_console).unwrap_or(false);
+
     // Determine compiler
     let compiler = if let Some(ref cfg) = config {
         if is_cpp {
@@ -2451,7 +3782,7 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
         detect_c_compiler()
     };
 
-    print_info(&format!("Using compiler: {}", compiler));
+    print_info(&format!("🔧 Using compiler: {}", compiler));
 
     // Build compiler command
     let mut cmd = Command::new(&compiler);
@@ -2466,7 +3797,7 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
 
         // Add dependency include paths
         if !cfg.dependencies.is_empty() {
-            print_info("Resolving dependencies for include paths...");
+            print_info("📦 Resolving dependencies for include paths...");
 
             // Try to resolve dependencies
             if let Ok(resolved) = deps::resolve_dependencies(cfg).await {
@@ -2492,34 +3823,124 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
         }
     }
 
-    // Output executable name
-    let output_name = if cfg!(windows) {
-        "porters_temp_exec.exe"
-    } else {
-        "./porters_temp_exec"
-    };
-    cmd.arg("-o").arg(output_name);
+    // Determine output executable name
+    // Priority: CLI --output flag > config output-name > source filename > default "a.out"
+    let output_name = output_name
+        .map(|s| s.to_string())
+        .or_else(|| config.as_ref().and_then(|c| c.run.output_name.clone()))
+        .unwrap_or_else(|| {
+            // Use source filename without extension
+            file_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("a")
+                .to_string()
+        });
 
-    print_info("Compiling...");
+    // Output executable name (use absolute path for reliability)
+    let output_path = std::env::current_dir()?.join(if cfg!(windows) {
+        format!("{}.exe", output_name)
+    } else {
+        output_name.clone()
+    });
+
+    cmd.arg("-o").arg(&output_path);
+
+    print_info(&format!("📝 Output executable: {}", output_path.display()));
+    print_info("🔨 Compiling...");
 
     // Compile the file
     let compile_output = cmd.output().context("Failed to execute compiler")?;
 
     if !compile_output.status.success() {
         let stderr = String::from_utf8_lossy(&compile_output.stderr);
-        print_error("Compilation failed!");
+        print_error("❌ Compilation failed!");
         eprintln!("{}", stderr);
         anyhow::bail!("Compilation failed");
     }
 
-    print_success("Compilation successful!");
+    print_success("✅ Compilation successful!");
 
     // Execute the compiled program
-    print_step("Running executable...");
+    if use_external {
+        print_step("🪟 Opening in external terminal...");
+        open_in_external_terminal(&output_path, &args)?;
+
+        // Wait a bit before cleanup to let terminal open
+        std::thread::sleep(std::time::Duration::from_millis(500));
+
+        print_info("🚀 Program launched in external terminal");
+        print_warning("⚠️  Note: Executable remains for you to use. Delete when done:");
+        print_info(&format!("    {}", output_path.display()));
+
+        return Ok(());
+    }
+
+    // Handle no-console mode (for GUI applications)
+    if use_no_console {
+        print_step("🎨 Running executable (no console)...");
+
+        #[cfg(target_os = "windows")]
+        {
+            // Windows: Use CREATE_NO_WINDOW flag
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+            let mut cmd = Command::new(&output_path);
+            cmd.args(&args);
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            let mut child = cmd
+                .spawn()
+                .context("Failed to execute program in no-console mode")?;
+
+            let _ = child.wait();
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            // Unix: Redirect all output to /dev/null
+            use std::process::Stdio;
+
+            let mut cmd = Command::new(&output_path);
+            cmd.args(&args);
+            cmd.stdout(Stdio::null());
+            cmd.stderr(Stdio::null());
+            cmd.stdin(Stdio::null());
+
+            let mut child = cmd
+                .spawn()
+                .context("Failed to execute program in no-console mode")?;
+
+            let _ = child.wait();
+        }
+
+        print_info("🎨 Program executed silently (no console output)");
+        print_info(&format!("📝 Executable: {}", output_path.display()));
+
+        return Ok(());
+    }
+
+    print_step("▶️  Running executable...");
     println!();
 
-    let mut exec_cmd = Command::new(output_name);
-    exec_cmd.args(&args);
+    let mut exec_cmd = if cfg!(windows) {
+        // On Windows, use cmd /c to ensure proper execution
+        let mut cmd = Command::new("cmd");
+        cmd.arg("/C");
+        cmd.arg(&output_path);
+        cmd.args(&args);
+        cmd
+    } else {
+        let mut cmd = Command::new(&output_path);
+        cmd.args(&args);
+        cmd
+    };
+
+    // Inherit stdin/stdout/stderr for interactive programs
+    exec_cmd.stdin(std::process::Stdio::inherit());
+    exec_cmd.stdout(std::process::Stdio::inherit());
+    exec_cmd.stderr(std::process::Stdio::inherit());
 
     let exec_status = exec_cmd
         .status()
@@ -2527,17 +3948,13 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
 
     println!();
 
-    // Clean up temporary executable
-    if Path::new(output_name).exists() {
-        std::fs::remove_file(output_name).context("Failed to remove temporary executable")?;
-    }
-
     if exec_status.success() {
-        print_success("Execution completed successfully! ✨");
+        print_success("✅ Execution completed successfully! ✨");
+        print_info(&format!("📝 Executable: {}", output_path.display()));
         Ok(())
     } else {
         print_error(&format!(
-            "Program exited with code: {}",
+            "❌ Program exited with code: {}",
             exec_status.code().unwrap_or(-1)
         ));
         anyhow::bail!("Execution failed");
@@ -2545,6 +3962,9 @@ async fn execute_single_file(file: &str, args: Vec<String>) -> Result<()> {
 }
 
 /// Detect the best available C compiler
+///
+/// # Returns
+/// * `String` - Compiler command name (gcc, clang, or cc)
 fn detect_c_compiler() -> String {
     use std::process::Command;
 
@@ -2557,6 +3977,9 @@ fn detect_c_compiler() -> String {
 }
 
 /// Detect the best available C++ compiler
+///
+/// # Returns
+/// * `String` - Compiler command name (g++, clang++, or c++)
 fn detect_cpp_compiler() -> String {
     use std::process::Command;
 
@@ -2568,8 +3991,147 @@ fn detect_cpp_compiler() -> String {
     "g++".to_string() // Default fallback
 }
 
-/// Check if cargo bin is in PATH and offer to add it automatically
-fn check_path_setup() {
+/// Add porters to system PATH
+///
+/// # Arguments
+/// * `overwrite` - Overwrite existing PATH entry if present
+///
+/// # Returns
+/// * `Result<()>` - Success or error
+fn add_to_path(overwrite: bool) -> Result<()> {
+    use std::env;
+    use std::path::PathBuf;
+
+    // Get current executable location (for binary installations)
+    let current_exe = if let Ok(exe_path) = env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            parent.to_path_buf()
+        } else {
+            anyhow::bail!("Cannot determine current executable directory");
+        }
+    } else {
+        anyhow::bail!("Cannot determine current executable path");
+    };
+
+    // Get cargo bin directory (for cargo installations)
+    let cargo_bin = if let Ok(cargo_home) = env::var("CARGO_HOME") {
+        PathBuf::from(cargo_home).join("bin")
+    } else if let Ok(home) = env::var("HOME") {
+        PathBuf::from(home).join(".cargo").join("bin")
+    } else if let Ok(userprofile) = env::var("USERPROFILE") {
+        PathBuf::from(userprofile).join(".cargo").join("bin")
+    } else {
+        anyhow::bail!("Cannot determine cargo bin path");
+    };
+
+    // Determine which path to add
+    let is_cargo_install = current_exe.to_string_lossy().contains(".cargo")
+        || current_exe.to_string_lossy().contains("cargo")
+        || cargo_bin == current_exe;
+
+    let path_to_add = if is_cargo_install {
+        &cargo_bin
+    } else {
+        &current_exe
+    };
+
+    let path_str = path_to_add.to_string_lossy().to_string();
+
+    // Check if already in PATH
+    if let Ok(path_var) = env::var("PATH") {
+        let paths: Vec<&str> = if cfg!(windows) {
+            path_var.split(';').collect()
+        } else {
+            path_var.split(':').collect()
+        };
+
+        let already_exists = paths
+            .iter()
+            .any(|p| p.trim() == path_str || p.trim() == path_to_add.to_str().unwrap_or(""));
+
+        if already_exists && !overwrite {
+            print_success("✅ Porters is already in your PATH!");
+            println!();
+            println!("ℹ️  Path: {}", path_str);
+            println!();
+            println!("If you want to overwrite the existing PATH entry, use:");
+            println!("  porters add-to-path --overwrite");
+            return Ok(());
+        }
+
+        if already_exists && overwrite {
+            print_info("Overwriting existing PATH entry...");
+        }
+    }
+
+    println!();
+    print_step("Adding porters to system PATH");
+    println!();
+
+    if is_cargo_install {
+        println!("ℹ️  Installation type: Cargo");
+    } else {
+        println!("ℹ️  Installation type: Binary Download");
+    }
+    println!("ℹ️  Adding path: {}", path_str);
+    println!();
+
+    if cfg!(windows) {
+        println!("📋 Windows Instructions:");
+        println!();
+        println!("Option 1: PowerShell (Run as Administrator)");
+        println!("{}", "=".repeat(60));
+        println!("[Environment]::SetEnvironmentVariable(");
+        println!("  \"Path\",");
+        println!(
+            "  [Environment]::GetEnvironmentVariable(\"Path\", \"User\") + \";{}\",",
+            path_str
+        );
+        println!("  \"User\"");
+        println!(")");
+        println!("{}", "=".repeat(60));
+        println!();
+        println!("Option 2: Manual Setup");
+        println!("  1. Search 'Environment Variables' in Start Menu");
+        println!("  2. Click 'Environment Variables'");
+        println!("  3. Under 'User variables', select 'Path' and click 'Edit'");
+        println!("  4. Click 'New' and add: {}", path_str);
+        println!("  5. Click 'OK' on all dialogs");
+        println!("  6. Restart your terminal");
+        println!();
+        println!("Option 3: Current Session Only (Temporary)");
+        println!("  $env:Path += \";{}\"", path_str);
+    } else {
+        println!("📋 Linux/macOS Instructions:");
+        println!();
+        println!("Add the following line to your shell configuration file:");
+        println!("(~/.bashrc, ~/.zshrc, or ~/.profile)");
+        println!();
+        println!("{}", "=".repeat(60));
+        println!("export PATH=\"{}:$PATH\"", path_str);
+        println!("{}", "=".repeat(60));
+        println!();
+        println!("Then reload your shell configuration:");
+        println!("  source ~/.bashrc    # or source ~/.zshrc");
+        println!();
+        println!("Current Session Only (Temporary):");
+        println!("  export PATH=\"{}:$PATH\"", path_str);
+    }
+
+    println!();
+    print_success("✨ Instructions provided above!");
+    println!();
+    println!("After adding to PATH:");
+    println!("  1. Open a NEW terminal window");
+    println!("  2. Run: porters --version");
+    println!("  3. You can now use 'porters upgrade' to update automatically");
+    println!();
+
+    Ok(())
+}
+
+/// Remove porters from system PATH
+fn remove_from_path() -> Result<()> {
     use std::env;
     use std::path::PathBuf;
 
@@ -2581,12 +4143,12 @@ fn check_path_setup() {
     } else if let Ok(userprofile) = env::var("USERPROFILE") {
         PathBuf::from(userprofile).join(".cargo").join("bin")
     } else {
-        return; // Can't determine cargo bin path
+        anyhow::bail!("Cannot determine cargo bin path");
     };
 
     let cargo_bin_str = cargo_bin.to_string_lossy().to_string();
 
-    // Check if cargo bin is in PATH
+    // Check if in PATH
     if let Ok(path_var) = env::var("PATH") {
         let paths: Vec<&str> = if cfg!(windows) {
             path_var.split(';').collect()
@@ -2594,12 +4156,121 @@ fn check_path_setup() {
             path_var.split(':').collect()
         };
 
-        // Already in PATH
-        if paths
+        let exists = paths
             .iter()
-            .any(|p| p.trim() == cargo_bin_str || p.trim() == cargo_bin.to_str().unwrap_or(""))
-        {
+            .any(|p| p.trim() == cargo_bin_str || p.trim() == cargo_bin.to_str().unwrap_or(""));
+
+        if !exists {
+            print_warning("⚠️  Porters is not currently in your PATH");
+            println!();
+            println!("ℹ️  Path checked: {}", cargo_bin_str);
+            return Ok(());
+        }
+    }
+
+    println!();
+    print_step("Removing porters from system PATH");
+    println!();
+
+    if cfg!(windows) {
+        println!("📋 Windows Instructions:");
+        println!();
+        println!("Option 1: PowerShell (Run as Administrator)");
+        println!("{}", "=".repeat(60));
+        println!("$path = [Environment]::GetEnvironmentVariable(\"Path\", \"User\")");
+        println!(
+            "$newPath = ($path -split ';' | Where-Object {{ $_ -ne '{}' }}) -join ';'",
+            cargo_bin_str
+        );
+        println!("[Environment]::SetEnvironmentVariable(\"Path\", $newPath, \"User\")");
+        println!("{}", "=".repeat(60));
+        println!();
+        println!("Option 2: Manual Setup");
+        println!("  1. Search 'Environment Variables' in Start Menu");
+        println!("  2. Click 'Environment Variables'");
+        println!("  3. Under 'User variables', select 'Path' and click 'Edit'");
+        println!("  4. Find and remove: {}", cargo_bin_str);
+        println!("  5. Click 'OK' on all dialogs");
+        println!("  6. Restart your terminal");
+        println!();
+        println!("Option 3: Current Session Only (Temporary)");
+        println!(
+            "  $env:Path = ($env:Path -split ';' | Where-Object {{ $_ -ne '{}' }}) -join ';'",
+            cargo_bin_str
+        );
+    } else {
+        println!("📋 Linux/macOS Instructions:");
+        println!();
+        println!("Remove the following line from your shell configuration file:");
+        println!("(~/.bashrc, ~/.zshrc, or ~/.profile)");
+        println!();
+        println!("{}", "=".repeat(60));
+        println!("export PATH=\"{}:$PATH\"", cargo_bin_str);
+        println!("{}", "=".repeat(60));
+        println!();
+        println!("Then reload your shell configuration:");
+        println!("  source ~/.bashrc    # or source ~/.zshrc");
+        println!();
+        println!("Or edit manually:");
+        println!("  nano ~/.bashrc      # or nano ~/.zshrc");
+    }
+
+    println!();
+    print_success("✨ Instructions provided above!");
+    println!();
+
+    Ok(())
+}
+
+/// Check if cargo bin is in PATH and offer to add it automatically
+fn check_path_setup() {
+    use std::env;
+    use std::path::PathBuf;
+
+    // Get current executable location (for binary installations)
+    let current_exe = if let Ok(exe_path) = env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            parent.to_path_buf()
+        } else {
             return;
+        }
+    } else {
+        return;
+    };
+
+    // Get cargo bin directory (for cargo installations)
+    let cargo_bin = if let Ok(cargo_home) = env::var("CARGO_HOME") {
+        PathBuf::from(cargo_home).join("bin")
+    } else if let Ok(home) = env::var("HOME") {
+        PathBuf::from(home).join(".cargo").join("bin")
+    } else if let Ok(userprofile) = env::var("USERPROFILE") {
+        PathBuf::from(userprofile).join(".cargo").join("bin")
+    } else {
+        return; // Can't determine cargo bin path
+    };
+
+    let current_exe_str = current_exe.to_string_lossy().to_string();
+    let cargo_bin_str = cargo_bin.to_string_lossy().to_string();
+
+    // Check if either location is in PATH
+    if let Ok(path_var) = env::var("PATH") {
+        let paths: Vec<&str> = if cfg!(windows) {
+            path_var.split(';').collect()
+        } else {
+            path_var.split(':').collect()
+        };
+
+        // Check if current exe location or cargo bin is in PATH
+        let in_path = paths.iter().any(|p| {
+            let trimmed = p.trim();
+            trimmed == current_exe_str
+                || trimmed == cargo_bin_str
+                || trimmed == current_exe.to_str().unwrap_or("")
+                || trimmed == cargo_bin.to_str().unwrap_or("")
+        });
+
+        if in_path {
+            return; // Already in PATH
         }
     }
 
@@ -2609,47 +4280,46 @@ fn check_path_setup() {
         return; // Already showed message
     }
 
+    // Determine installation type
+    let is_cargo_install = current_exe_str.contains(".cargo")
+        || current_exe_str.contains("cargo")
+        || cargo_bin == current_exe;
+
     // Show PATH setup message
     println!("\n{}", "=".repeat(80));
-    println!("⚠️  Cargo bin directory not found in PATH");
+    println!("⚠️  Porters is not in your system PATH");
     println!("{}", "=".repeat(80));
     println!();
-    println!("To use 'porters' command globally, add to your PATH:");
-    println!();
 
-    if cfg!(windows) {
-        println!("Windows PowerShell (Run as Administrator):");
-        println!("  [Environment]::SetEnvironmentVariable(");
-        println!("    \"Path\",");
-        println!(
-            "    [Environment]::GetEnvironmentVariable(\"Path\", \"User\") + \";{}\",",
-            cargo_bin_str
-        );
-        println!("    \"User\"");
-        println!("  )");
-        println!();
-        println!("Or add manually:");
-        println!("  1. Search 'Environment Variables' in Start Menu");
-        println!("  2. Click 'Environment Variables'");
-        println!("  3. Under 'User variables', select 'Path' and click 'Edit'");
-        println!("  4. Click 'New' and add: {}", cargo_bin_str);
-        println!("  5. Click 'OK' on all dialogs");
-        println!("  6. Restart your terminal");
-        println!();
-        println!("Current session only (temporary):");
-        println!("  $env:Path += \";{}\"", cargo_bin_str);
+    if is_cargo_install {
+        println!("ℹ️  Installation type: Cargo");
+        println!("ℹ️  Binary location: {}", cargo_bin_str);
     } else {
-        println!("Linux/macOS (add to ~/.bashrc or ~/.zshrc):");
-        println!("  export PATH=\"{}:$PATH\"", cargo_bin_str);
-        println!();
-        println!("Then run:");
-        println!("  source ~/.bashrc    # or source ~/.zshrc");
-        println!();
-        println!("Current session only (temporary):");
-        println!("  export PATH=\"{}:$PATH\"", cargo_bin_str);
+        println!("ℹ️  Installation type: Binary Download");
+        println!("ℹ️  Binary location: {}", current_exe_str);
     }
 
     println!();
+    println!("ℹ️  You can add porters to PATH automatically using:");
+    println!("    porters add-to-path");
+    println!();
+    println!("Or remove it later with:");
+    println!("    porters remove-from-path");
+    println!();
+
+    if !is_cargo_install {
+        println!("💡 Tip for binary installations:");
+        println!("   Move porters to a standard location first:");
+        if cfg!(windows) {
+            println!("   - C:\\Program Files\\porters\\ (recommended)");
+            println!("   - C:\\Users\\<YourName>\\AppData\\Local\\Programs\\porters\\");
+        } else {
+            println!("   - /usr/local/bin/ (requires sudo)");
+            println!("   - ~/.local/bin/ (user-only)");
+        }
+        println!();
+    }
+
     println!("{}", "=".repeat(80));
     println!();
 

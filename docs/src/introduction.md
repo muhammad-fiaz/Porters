@@ -14,8 +14,17 @@ Porters is a comprehensive project management tool designed specifically for C/C
 - 🔄 **Lock File Support** - Ensures reproducible builds across environments
 - 🎯 **Auto-Detection** - Automatically detects existing build systems and project structure
 - 🔧 **Interactive Project Creation** - Step-by-step project setup with customizable options
-- 📚 **GitHub Integration** - Seamlessly publish releases and manage versions
-- ⚡ **Self-Updating** - Keep Porters up-to-date with a single command
+- 🟣 **Hybrid C/C++ Support** - Seamlessly combine C and C++ code with `extern "C"` scaffolding
+- ⚡ **Zero-Config Single File Execution** - Run any C/C++ file instantly with `porters execute` - no project needed!
+- 🪟 **External Terminal Support** - Open programs in new terminal windows with `--external` flag
+- 📄 **Automatic License Generation** - Creates LICENSE files from 9+ SPDX templates (MIT, Apache-2.0, GPL, BSD, etc.)
+- 📝 **Comprehensive README Generation** - Auto-creates README with badges, usage examples, and project structure
+- 🏗️ **Application & Library Templates** - Complete scaffolding with examples, tests, and documentation
+- � **System Requirements Check** - Automatic detection of compilers and build tools on first run
+- 🌐 **Global Configuration** - User-wide settings and preferences in `~/.porters/config.toml`
+- 🛤️ **PATH Management** - Built-in commands to add/remove Cargo bin from system PATH
+- �📚 **GitHub Integration** - Seamlessly publish releases and manage versions
+- 🔄 **Self-Updating** - Keep Porters up-to-date with a single command
 
 ### Why Porters?
 
@@ -33,18 +42,32 @@ C and C++ projects have historically lacked a unified package management solutio
 # Install Porters
 cargo install porters
 
-# Create a new project
+# Porters automatically checks system requirements on first run
+# Detects compilers (gcc, g++, clang, MSVC) and build tools (CMake, Make, etc.)
+
+# Add Cargo bin to PATH (optional, for convenience)
+porters add-to-path
+
+# Create a new project (interactive wizard)
 porters create my-project
+# Choose: Application or Library
+# Select: License (MIT, Apache-2.0, GPL-3.0, BSD, etc.)
+# Porters generates: LICENSE file, README, source structure
 
 # Or initialize an existing project
 cd my-existing-project
 porters init
+# Also generates LICENSE file based on your choice
 
 # Add dependencies
 porters add fmt --git https://github.com/fmtlib/fmt
 
 # Build your project
 porters build
+
+# Execute single C/C++ files instantly (no project needed!)
+porters execute hello.cpp
+porters execute game.c --external  # Opens in new terminal window
 
 # Publish to GitHub
 porters publish

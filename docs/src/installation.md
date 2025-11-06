@@ -12,31 +12,48 @@ Before installing Porters, ensure you have the following:
   - Install from [rustup.rs](https://rustup.rs/)
   - Minimum version: Rust 1.70+
 
-### Build Tools (At least one)
+### C/C++ Compiler (At least one required)
 
-Porters works with various build systems. You'll need at least one installed:
+**Porters will check for these automatically on first run.**
+
+- **Windows**: 
+  - MSVC (Visual Studio Build Tools)
+  - MinGW-w64
+  - Clang/LLVM
+  
+- **macOS**: 
+  - Xcode Command Line Tools: `xcode-select --install`
+  - Clang (included with Xcode)
+  
+- **Linux**: 
+  - GCC: `sudo apt install gcc g++` (Debian/Ubuntu)
+  - Clang: `sudo apt install clang` (Debian/Ubuntu)
+
+### Build Tools (Optional but recommended)
+
+**At least one build system is recommended for project management:**
 
 - **CMake** (Recommended)
   - Download from [cmake.org](https://cmake.org/download/)
   - Minimum version: 3.15+
+  - Install: 
+    - Windows: `choco install cmake`
+    - Linux: `sudo apt install cmake`
+    - macOS: `brew install cmake`
 
 - **XMake**
   - Install from [xmake.io](https://xmake.io/#/guide/installation)
+  - Cross-platform build utility
 
 - **Meson**
   - Install via pip: `pip install meson ninja`
+  - Fast and user-friendly build system
 
 - **Make**
   - Usually pre-installed on Linux/macOS
   - Windows: Install via [MinGW](http://www.mingw.org/) or [Cygwin](https://www.cygwin.com/)
 
-### C/C++ Compiler
-
-You'll need a C/C++ compiler:
-
-- **Windows**: MSVC (Visual Studio), MinGW-w64, or Clang
-- **macOS**: Xcode Command Line Tools (`xcode-select --install`)
-- **Linux**: GCC or Clang (usually pre-installed)
+**Note:** Build tools are only required for project-based workflows (`porters build`, `porters create`). The `porters execute` command works without any build system!
 
 ## Installing Porters
 
@@ -50,9 +67,81 @@ cargo install porters
 
 This will download, compile, and install the latest version of Porters.
 
+### First Run System Check
+
+**After installation, when you run Porters for the first time**, it will automatically:
+
+1. **Check for C/C++ compilers** (gcc, g++, clang, MSVC, MinGW)
+2. **Check for build systems** (CMake, Make, XMake, Meson, Ninja)
+3. **Display what's found** with version numbers
+4. **Show installation instructions** for missing tools
+5. **Save detected tools** to `~/.porters/config.toml`
+6. **Block execution** if no C/C++ compiler is found
+
+**Example First Run:**
+```bash
+$ porters --version
+
+╭──────────────────────────────────────────────────╮
+│  System Requirements Check                       │
+╰──────────────────────────────────────────────────╯
+
+Compilers
+─────────
+✅ g++ (version 11.4.0)
+✅ gcc (version 11.4.0)
+❌ clang++ (not found)
+
+Build Systems
+─────────────
+✅ cmake (version 3.22.1)
+✅ make (version 4.3)
+❌ xmake (not found)
+
+Status: ✅ System ready!
+
+Installation Instructions:
+──────────────────────────
+
+To install missing tools on Linux:
+  sudo apt-get install clang xmake
+
+Porters version 0.1.0
+```
+
+**Manual System Check:**
+
+You can re-run the system check anytime:
+```bash
+porters --check-system
+```
+
+This is useful after installing new compilers or build tools to update the global configuration.
+
 #### Automatic PATH Setup
 
-On first run, Porters will check if the cargo bin directory is in your PATH. If not, it will show instructions to add it automatically.
+Porters can automatically add the Cargo bin directory to your system PATH.
+
+**Using the built-in command:**
+```bash
+# Automatically add ~/.cargo/bin to PATH
+porters add-to-path
+```
+
+This command:
+- **Windows**: Modifies User PATH via registry (requires admin privileges)
+- **Linux/macOS**: Appends to your shell profile (~/.bashrc, ~/.zshrc, etc.)
+- Detects your shell automatically
+- Creates backup before modifying
+
+**To remove from PATH:**
+```bash
+porters remove-from-path
+```
+
+**Manual PATH Setup:**
+
+If you prefer to do it manually:
 
 **Windows PowerShell (Run as Administrator):**
 ```powershell

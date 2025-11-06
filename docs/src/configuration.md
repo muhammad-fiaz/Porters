@@ -2,6 +2,191 @@
 
 Complete reference for Porters configuration files.
 
+## Global Configuration
+
+Porters maintains a global configuration file at `~/.porters/config.toml` for user-wide settings and preferences.
+
+**Location:**
+- **Windows**: `C:\Users\<YourName>\.porters\config.toml`
+- **Linux/macOS**: `~/.porters/config.toml`
+
+**Automatic Creation:**
+
+The global config is automatically created on first run. Porters will:
+1. Create the `~/.porters/` directory
+2. Generate `config.toml` with default settings
+3. Run system requirements check
+4. Save detected compilers and build tools
+
+### Global Config Structure
+
+```toml
+[porters]
+version = "0.1.0"
+config_version = "1"
+
+[user]
+# Default author information for new projects
+name = "Your Name"
+email = "you@example.com"
+default_license = "MIT"  # Default license for new projects
+
+[cache]
+# Global cache directory for compiled executables
+dir = "~/.porters/cache"
+max_size_mb = 1024
+auto_clean = true
+
+[system]
+# Last system requirements check
+last_check = "2024-01-15T10:30:00Z"
+
+[system.compilers]
+# Detected C/C++ compilers (auto-populated)
+gcc = "/usr/bin/gcc"
+gpp = "/usr/bin/g++"
+clang = "/usr/bin/clang"
+clangpp = "/usr/bin/clang++"
+
+[system.build_tools]
+# Detected build systems (auto-populated)
+cmake = "/usr/bin/cmake"
+make = "/usr/bin/make"
+xmake = "/usr/local/bin/xmake"
+meson = "/usr/bin/meson"
+ninja = "/usr/bin/ninja"
+
+[preferences]
+# User preferences
+default_build_system = "cmake"
+default_language = "cpp"
+auto_add_to_path = true
+check_updates = true
+```
+
+### Configuration Fields
+
+#### `[porters]` Section
+- `version` - Porters version that created this config
+- `config_version` - Configuration file format version
+
+#### `[user]` Section
+- `name` - Default author name for new projects
+- `email` - Default email for new projects
+- `default_license` - Default license (MIT, Apache-2.0, GPL-3.0, etc.)
+
+#### `[cache]` Section
+- `dir` - Directory for temporary build files and executables
+- `max_size_mb` - Maximum cache size in megabytes
+- `auto_clean` - Automatically clean old cache files
+
+#### `[system]` Section
+- `last_check` - Timestamp of last system requirements check
+- `compilers` - Detected compiler paths (auto-populated)
+- `build_tools` - Detected build system paths (auto-populated)
+
+#### `[preferences]` Section
+- `default_build_system` - Preferred build system (cmake, xmake, meson, make)
+- `default_language` - Preferred language (c, cpp, both)
+- `auto_add_to_path` - Automatically add Cargo bin to PATH on first run
+- `check_updates` - Check for Porters updates automatically
+
+### System Requirements Check
+
+On first run (or when running `porters --check-system`), Porters will:
+
+1. **Check for C/C++ Compilers:**
+   - gcc, g++
+   - clang, clang++
+   - MSVC (Windows)
+   - MinGW (Windows)
+
+2. **Check for Build Systems:**
+   - CMake
+   - Make
+   - XMake
+   - Meson
+   - Ninja
+
+3. **Display Results:**
+   - ✅ Found tools with version numbers
+   - ❌ Missing tools with installation instructions
+
+4. **Save to Config:**
+   - Detected tool paths saved to `~/.porters/config.toml`
+   - Used for faster detection in future runs
+
+**Example Output:**
+```text
+╭──────────────────────────────────────────────────╮
+│  System Requirements Check                       │
+╰──────────────────────────────────────────────────╯
+
+Compilers
+─────────
+✅ g++ (version 11.4.0)
+✅ gcc (version 11.4.0)
+❌ clang++ (not found)
+
+Build Systems
+─────────────
+✅ cmake (version 3.22.1)
+✅ make (version 4.3)
+
+Status: ✅ System ready!
+```
+
+**Installation Instructions:**
+
+If tools are missing, Porters displays platform-specific installation commands:
+
+**Windows:**
+```text
+Install C/C++ compiler:
+  - MSVC: Install Visual Studio Build Tools
+  - MinGW: choco install mingw
+  - Clang: choco install llvm
+
+Install build tools:
+  - CMake: choco install cmake
+```
+
+**Linux (Debian/Ubuntu):**
+```text
+sudo apt-get update
+sudo apt-get install gcc g++ clang cmake make
+```
+
+**macOS:**
+```text
+xcode-select --install
+brew install cmake
+```
+
+### Manual Configuration
+
+You can manually edit `~/.porters/config.toml` to customize settings:
+
+```toml
+[user]
+name = "Jane Developer"
+email = "jane@example.com"
+default_license = "Apache-2.0"
+
+[preferences]
+default_build_system = "xmake"
+default_language = "cpp"
+check_updates = true
+
+[cache]
+max_size_mb = 2048
+auto_clean = true
+```
+
+**After editing**, run any Porters command to apply changes.
+
+---
+
 ## porters.toml
 
 Main project configuration file.
@@ -183,13 +368,61 @@ linker-flags = ["-lm", "-lpthread"]
 # Override compiler (only if you need a specific one)
 c-compiler = "clang"    # Default: auto-detect
 cpp-compiler = "clang++"  # Default: auto-detect
+
+# Execution mode settings (default: false for both)
+use-external-terminal = false  # Open programs in new external terminal window
+no-console = false             # Run without console window (Windows GUI apps)
 ```
+
+**Execution Mode Settings:**
+
+Configure how `porters execute` runs your programs:
+
+- **`use-external-terminal`** (default: `false`)
+  - When `true`: Opens program in new external terminal window
+  - Useful for: GUI applications, interactive programs needing separate window
+  - CLI override: `--external` flag
+  - Example use cases:
+    - Interactive TUI applications that manage terminal state
+    - Games that need full terminal control
+    - Programs that should run independently of IDE/editor
+
+- **`no-console`** (default: `false`)
+  - When `true`: Runs program without console window (Windows only)
+  - Useful for: Pure GUI applications with no console output
+  - CLI override: `--no-console` flag
+  - Example use cases:
+    - Windows GUI applications using Win32 API, SDL, SFML
+    - Applications where console window would be distracting
+    - Release builds of GUI apps
+
+**Example Configurations:**
+
+```toml
+# For GUI game development
+[run]
+use-external-terminal = true  # Run in separate window
+no-console = true            # No console clutter
+linker-flags = ["-lSDL2"]    # Link SDL library
+
+# For interactive terminal application
+[run]
+use-external-terminal = true  # Needs dedicated terminal
+compiler-flags = ["-Wall", "-Wextra"]
+
+# For standard CLI tool (defaults are fine, no [run] needed)
+# Just use: porters execute main.c
+```
+
+**Note:** CLI flags (`--external`, `--no-console`) always override config settings.
 
 **When You Might Use [run]:**
 - Adding project-specific include paths not in dependencies
 - Setting custom compiler warnings or optimizations
 - Linking additional system libraries
 - Using a specific compiler version
+- Configuring default execution mode for GUI apps
+- Setting up consistent behavior for team development
 
 ### Tool Version Requirements
 

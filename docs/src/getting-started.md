@@ -2,6 +2,45 @@
 
 This guide will walk you through creating and managing your first C/C++ project with Porters.
 
+## First Run: System Requirements Check
+
+When you first install Porters and run any command, it will automatically check your system for:
+
+- **C/C++ Compilers**: gcc, g++, clang, clang++, MSVC (Windows), MinGW (Windows)
+- **Build Systems**: CMake, Make, XMake, Meson, Ninja
+
+**Example First Run:**
+```bash
+$ porters --version
+
+╭──────────────────────────────────────────────────╮
+│  System Requirements Check                       │
+╰──────────────────────────────────────────────────╯
+
+Compilers
+─────────
+✅ g++ (version 11.4.0)
+✅ gcc (version 11.4.0)
+
+Build Systems
+─────────────
+✅ cmake (version 3.22.1)
+✅ make (version 4.3)
+
+Status: ✅ System ready!
+
+Porters version 0.1.0
+```
+
+If any required tools are missing, Porters will display installation instructions for your platform.
+
+**Manual System Check:**
+
+You can run the system check anytime:
+```bash
+porters --check-system
+```
+
 ## Creating a New Project
 
 The easiest way to start is creating a new project:
@@ -15,11 +54,48 @@ This launches an interactive wizard that asks:
 1. **Project Type**: Application or Library
 2. **Language**: C, C++, or Both
 3. **Library Name**: (If creating a library)
-4. **Author**: Your name (optional)
-5. **Email**: Your email (optional)
+4. **Author**: Your name (saved to global config for future use)
+5. **Email**: Your email (saved to global config)
 6. **Repository URL**: Git repository URL (optional)
-7. **License**: Choose from Apache-2.0, MIT, GPL, etc.
+7. **License**: Choose from MIT, Apache-2.0, GPL-3.0, BSD, MPL-2.0, LGPL-3.0, Unlicense
 8. **Build System**: CMake, XMake, Meson, Make, or Custom
+
+### What Gets Created
+
+**Application Project:**
+- `src/main.cpp` or `src/main.c` with "Hello, World!" starter code
+- Build system configuration (CMakeLists.txt, xmake.lua, etc.)
+- **LICENSE file** auto-generated with your name and current year
+- README.md with build instructions
+- `porters.toml` configuration
+- Git repository initialization
+
+**Library Project:**
+- Complete library structure:
+  - `include/<libname>/<libname>.hpp` - Public header with namespace/API
+  - `src/<libname>.cpp` - Implementation
+  - `examples/example.cpp` - Usage example
+  - `tests/test_<libname>.cpp` - Test skeleton
+- Build system configuration with library target
+- **LICENSE file** auto-generated
+- README.md with library usage examples
+- `porters.toml` with `project-type = "library"`
+
+### License File Generation
+
+When you select a license, Porters automatically generates a complete LICENSE file containing:
+- Full SPDX-compliant license text
+- Your name as the copyright holder
+- Current year in copyright notice
+
+**Supported Licenses:**
+- MIT - Simple and permissive
+- Apache-2.0 - Permissive with patent grant
+- GPL-3.0 / GPL-2.0 - Strong copyleft
+- BSD-3-Clause / BSD-2-Clause - Permissive BSD variants
+- MPL-2.0 - Weak copyleft (Mozilla Public License)
+- LGPL-3.0 - Weak copyleft for libraries
+- Unlicense - Public domain dedication
 
 ### Quick Create with Defaults
 
@@ -33,6 +109,92 @@ This creates a C/C++ application with:
 - CMake as the build system
 - Apache-2.0 license
 - Basic project structure
+
+### Hybrid C/C++ Projects (Both Option)
+
+When asked for language, you can choose **"🟣 Both (Hybrid C/C++ with extern \"C\")"** to create a project that seamlessly combines C and C++ code.
+
+**Example Creation:**
+```bash
+porters create hybrid-project
+# Select: 🟣 Both (Hybrid C/C++ with extern "C")
+```
+
+**Generated Project Structure:**
+```
+hybrid-project/
+├── porters.toml
+├── CMakeLists.txt
+├── src/
+│   ├── main.cpp        # C++ entry point
+│   ├── c_module.c      # C implementation
+│   ├── cpp_utils.cpp   # C++ utilities
+├── include/
+│   ├── c_module.h      # C header with extern "C"
+│   └── cpp_utils.hpp   # C++ header
+└── README.md
+```
+
+**Why Use Hybrid Projects?**
+
+1. **Gradual Migration**: Migrate legacy C code to C++ incrementally
+2. **Best of Both Worlds**: Use C for low-level operations, C++ for high-level features
+3. **Library Integration**: Integrate existing C libraries in C++ applications
+4. **Performance**: Keep performance-critical C code while using C++ for convenience
+
+**Example Code Generated:**
+
+C++ main calls C functions via `extern "C"`:
+```cpp
+// src/main.cpp
+#include "c_module.h"     // C functions via extern "C"
+#include "cpp_utils.hpp"  // C++ utilities
+
+int main() {
+    // Call C function
+    const char* msg = get_c_message();
+    
+    // Use C++ class
+    StringHelper helper;
+    std::string upper = helper.to_upper(msg);
+    
+    return 0;
+}
+```
+
+C module with `extern "C"` wrapper:
+```c
+// include/c_module.h
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+const char* get_c_message(void);
+
+#ifdef __cplusplus
+}
+#endif
+```
+
+**Build System Handling:**
+
+CMake automatically handles mixed C/C++ compilation:
+- C files compiled with `gcc`/`clang`
+- C++ files compiled with `g++`/`clang++`
+- Proper linking of both object files
+
+**When to Choose "Both" vs Pure C/C++:**
+
+Choose **"Both"** when:
+- Migrating from C to C++ gradually
+- Integrating existing C libraries
+- Need C ABI for library exports
+- Performance-critical C code with C++ convenience layer
+
+Choose **Pure C** or **Pure C++** when:
+- New project with no legacy code
+- No need for cross-language interoperability
+- Want to enforce single language standard
 
 ## Initializing Existing Project
 
@@ -143,6 +305,46 @@ Porters will:
 2. Clone missing dependencies to `ports/`
 3. Update `porters.lock`
 4. Run the configured build system
+
+## Quick Syntax Validation
+
+**Fast compilation checking** without creating executables:
+
+```bash
+# Check all source files in the project
+porters check
+
+# Check a specific file
+porters check src/main.c
+
+# Check with verbose compiler output
+porters check --verbose
+```
+
+**Benefits:**
+- ⚡ **Faster than full builds** - No linking or executable generation
+- 🎯 **Focused error messages** - Only shows compilation issues
+- 🔍 **File-level granularity** - Check individual files or entire projects
+- 📊 **Clear summaries** - See pass/fail counts at a glance
+
+**Example Output:**
+```text
+✅ Checking compilation (syntax-only)
+🔍 Discovering source files in project...
+📦 Found 3 source file(s)
+
+🔨 Checking: src/main.c (C)
+✅ PASSED: src/main.c
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Compilation Check Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Total files checked: 3
+   ✅ Passed: 3
+   ❌ Failed: 0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ All compilation checks passed! ✅
+```
 
 ## Quick Single-File Execution (Zero Configuration!)
 
