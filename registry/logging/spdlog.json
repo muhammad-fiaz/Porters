@@ -1,0 +1,30 @@
+{
+  "name": "spdlog",
+  "description": "Fast C++ logging library with support for async logging, multiple sinks, and formatting",
+  "repository": "https://github.com/gabime/spdlog",
+  "version": "1.13.0",
+  "license": "MIT",
+  "build_system": "cmake",
+  "homepage": "https://github.com/gabime/spdlog",
+  "documentation": "https://github.com/gabime/spdlog/wiki",
+  "dependencies": {
+    "fmt": "^10.0.0"
+  },
+  "options": {
+    "shared": false,
+    "static": true,
+    "header_only": false,
+    "external_fmt": true
+  },
+  "install": {
+    "cmake": {
+      "find_package": "spdlog",
+      "targets": ["spdlog::spdlog", "spdlog::spdlog_header_only"]
+    }
+  },
+  "tags": ["logging", "async", "performance", "modern-cpp"],
+  "platforms": ["linux", "windows", "macos", "freebsd", "android", "ios"],
+  "constraints": {
+    "min_cpp_standard": "11"
+  }
+}

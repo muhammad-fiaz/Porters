@@ -3,7 +3,9 @@ name = "porters"
 version = "0.0.1"
 edition = "2024"
 authors = ["Muhammad Fiaz <contact@muhammadfiaz.com>"]
-repository = "https://github.com/muhammad-fiaz/porters"
+repository = "https://github.com/muhammad-fiaz/Porters"
+documentation = "https://muhammad-fiaz.github.io/Porters"
+homepage = "https://muhammad-fiaz.github.io/Porters"
 description = "A universal C/C++ project manager and build orchestrator"
 license = "Apache-2.0"
 
@@ -38,6 +40,7 @@ chrono = { version = "0.4", features = ["serde"] }
 num_cpus = "1.17"
 tokio-util = { version = "0.7", features = ["codec"] }
 which = "8.0"
+webbrowser = "1.0"
 
 
 [dev-dependencies]

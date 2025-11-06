@@ -2,12 +2,260 @@
 //!
 //! This module provides caching of downloaded dependencies to avoid
 //! redundant network operations and speed up dependency resolution.
+//! Supports both local project caches and global caches in ~/.porters/cache/
 
+use crate::global_config::GlobalPortersConfig;
 use crate::hash::calculate_directory_hash;
 use anyhow::{Context, Result};
 use colored::Colorize;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+/// Global dependency cache manager
+///
+/// Manages centralized cache in ~/.porters/cache/ for all projects.
+/// This allows dependencies to be shared across multiple projects,
+/// avoiding redundant downloads.
+#[allow(dead_code)]
+pub struct GlobalCache {
+    cache_dir: PathBuf,
+    enabled: bool,
+}
+
+#[allow(dead_code)]
+impl GlobalCache {
+    /// Create a new global cache instance
+    pub fn new() -> Result<Self> {
+        let config = GlobalPortersConfig::load_or_create()?;
+        let cache_dir = config.cache_dir()?;
+        let enabled = config.cache.enabled;
+
+        Ok(Self { cache_dir, enabled })
+    }
+
+    /// Create with specific cache directory
+    pub fn with_dir(cache_dir: PathBuf, enabled: bool) -> Self {
+        Self { cache_dir, enabled }
+    }
+
+    /// Initialize global cache directory
+    pub fn init(&self) -> Result<()> {
+        if self.enabled && !self.cache_dir.exists() {
+            fs::create_dir_all(&self.cache_dir)
+                .context("Failed to create global cache directory")?;
+        }
+        Ok(())
+    }
+
+    /// Get cache path for a specific package
+    pub fn get_package_cache_path(&self, name: &str, version: &str) -> PathBuf {
+        self.cache_dir.join(name).join(version)
+    }
+
+    /// Check if a package is in global cache
+    pub fn has_package(&self, name: &str, version: &str) -> bool {
+        if !self.enabled {
+            return false;
+        }
+        self.get_package_cache_path(name, version).exists()
+    }
+
+    /// Store package in global cache
+    pub fn store_package(&self, name: &str, version: &str, source_path: &Path) -> Result<String> {
+        if !self.enabled {
+            return Ok(String::new());
+        }
+
+        let cache_path = self.get_package_cache_path(name, version);
+
+        // Create parent directory
+        if let Some(parent) = cache_path.parent() {
+            fs::create_dir_all(parent).context("Failed to create package cache directory")?;
+        }
+
+        // Remove existing if present
+        if cache_path.exists() {
+            fs::remove_dir_all(&cache_path).context("Failed to remove old package cache")?;
+        }
+
+        // Copy to cache
+        copy_dir_all(source_path, &cache_path)?;
+
+        // Calculate hash
+        let hash = calculate_directory_hash(&cache_path)?;
+
+        println!("💾  Cached {} v{} globally", name.cyan(), version);
+        Ok(hash)
+    }
+
+    /// Retrieve package from global cache
+    pub fn retrieve_package(&self, name: &str, version: &str, dest_path: &Path) -> Result<()> {
+        if !self.enabled {
+            anyhow::bail!("Global cache is disabled");
+        }
+
+        let cache_path = self.get_package_cache_path(name, version);
+        if !cache_path.exists() {
+            anyhow::bail!("Package {} v{} not found in global cache", name, version);
+        }
+
+        // Remove destination if exists
+        if dest_path.exists() {
+            fs::remove_dir_all(dest_path).context("Failed to remove destination")?;
+        }
+
+        // Copy from cache
+        copy_dir_all(&cache_path, dest_path)?;
+
+        println!(
+            "📦  Retrieved {} v{} from global cache",
+            name.cyan(),
+            version
+        );
+        Ok(())
+    }
+
+    /// List all cached packages
+    pub fn list_packages(&self) -> Result<Vec<(String, Vec<String>)>> {
+        let mut packages = Vec::new();
+
+        if !self.cache_dir.exists() {
+            return Ok(packages);
+        }
+
+        for entry in fs::read_dir(&self.cache_dir)? {
+            let entry = entry?;
+            if entry.file_type()?.is_dir() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                let mut versions = Vec::new();
+
+                for version_entry in fs::read_dir(entry.path())? {
+                    let version_entry = version_entry?;
+                    if version_entry.file_type()?.is_dir() {
+                        versions.push(version_entry.file_name().to_string_lossy().to_string());
+                    }
+                }
+
+                if !versions.is_empty() {
+                    packages.push((name, versions));
+                }
+            }
+        }
+
+        Ok(packages)
+    }
+
+    /// Clear global cache
+    pub fn clear(&self) -> Result<()> {
+        if !self.cache_dir.exists() {
+            println!("✨  Global cache is already clean");
+            return Ok(());
+        }
+
+        fs::remove_dir_all(&self.cache_dir)?;
+        fs::create_dir_all(&self.cache_dir)?;
+        println!("🗑️  Global cache cleared");
+        Ok(())
+    }
+
+    /// Get global cache statistics
+    pub fn stats(&self) -> Result<GlobalCacheStats> {
+        let mut stats = GlobalCacheStats::default();
+
+        if !self.cache_dir.exists() {
+            return Ok(stats);
+        }
+
+        for entry in fs::read_dir(&self.cache_dir)? {
+            let entry = entry?;
+            if entry.file_type()?.is_dir() {
+                let package_name = entry.file_name().to_string_lossy().to_string();
+
+                for version_entry in fs::read_dir(entry.path())? {
+                    let version_entry = version_entry?;
+                    if version_entry.file_type()?.is_dir() {
+                        stats.package_count += 1;
+                        stats.total_size += dir_size(&version_entry.path())?;
+                        stats.packages.push((
+                            package_name.clone(),
+                            version_entry.file_name().to_string_lossy().to_string(),
+                        ));
+                    }
+                }
+            }
+        }
+
+        Ok(stats)
+    }
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Default)]
+pub struct GlobalCacheStats {
+    pub package_count: usize,
+    pub total_size: u64,
+    pub packages: Vec<(String, String)>,
+}
+
+#[allow(dead_code)]
+impl GlobalCacheStats {
+    pub fn human_size(&self) -> String {
+        human_readable_size(self.total_size)
+    }
+}
+
+/// Helper function to get human-readable size
+fn human_readable_size(size: u64) -> String {
+    let size_f = size as f64;
+    if size_f < 1024.0 {
+        format!("{} B", size_f)
+    } else if size_f < 1024.0 * 1024.0 {
+        format!("{:.2} KB", size_f / 1024.0)
+    } else if size_f < 1024.0 * 1024.0 * 1024.0 {
+        format!("{:.2} MB", size_f / (1024.0 * 1024.0))
+    } else {
+        format!("{:.2} GB", size_f / (1024.0 * 1024.0 * 1024.0))
+    }
+}
+
+/// Calculate directory size recursively
+fn dir_size(path: &Path) -> Result<u64> {
+    let mut size = 0;
+    if path.is_dir() {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let metadata = entry.metadata()?;
+            if metadata.is_file() {
+                size += metadata.len();
+            } else if metadata.is_dir() {
+                size += dir_size(&entry.path())?;
+            }
+        }
+    }
+    Ok(size)
+}
+
+/// Copy directory recursively, skipping .git directories
+fn copy_dir_all(src: &Path, dst: &Path) -> Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+
+        if ty.is_dir() {
+            // Skip .git directories
+            if entry.file_name() == ".git" {
+                continue;
+            }
+            copy_dir_all(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+    Ok(())
+}
 
 /// Dependency cache manager for downloaded packages
 ///
@@ -92,7 +340,7 @@ impl DependencyCache {
         }
 
         // Copy to cache
-        self.copy_dir_all(source_path, &cache_path)?;
+        copy_dir_all(source_path, &cache_path)?;
 
         // Calculate hash
         let hash = calculate_directory_hash(&cache_path)?;
@@ -118,7 +366,7 @@ impl DependencyCache {
         }
 
         // Copy from cache
-        self.copy_dir_all(&cache_path, dest_path)?;
+        copy_dir_all(&cache_path, dest_path)?;
 
         println!("📦  Retrieved {} v{} from cache", name.cyan(), version);
         Ok(())
@@ -164,53 +412,11 @@ impl DependencyCache {
             let metadata = entry.metadata()?;
             if metadata.is_dir() {
                 stats.count += 1;
-                stats.size += Self::dir_size(&entry.path())?;
+                stats.size += dir_size(&entry.path())?;
             }
         }
 
         Ok(stats)
-    }
-
-    /// Calculate directory size recursively
-    fn dir_size(path: &Path) -> Result<u64> {
-        let mut size = 0;
-        if path.is_dir() {
-            for entry in fs::read_dir(path)? {
-                let entry = entry?;
-                let metadata = entry.metadata()?;
-                if metadata.is_file() {
-                    size += metadata.len();
-                } else if metadata.is_dir() {
-                    size += Self::dir_size(&entry.path())?;
-                }
-            }
-        }
-        Ok(size)
-    }
-
-    /// Copy directory recursively
-    fn copy_dir_all(&self, src: &Path, dst: &Path) -> Result<()> {
-        fn copy_recursive(src: &Path, dst: &Path) -> Result<()> {
-            fs::create_dir_all(dst)?;
-            for entry in fs::read_dir(src)? {
-                let entry = entry?;
-                let ty = entry.file_type()?;
-                let src_path = entry.path();
-                let dst_path = dst.join(entry.file_name());
-
-                if ty.is_dir() {
-                    // Skip .git directories
-                    if entry.file_name() == ".git" {
-                        continue;
-                    }
-                    copy_recursive(&src_path, &dst_path)?;
-                } else {
-                    fs::copy(&src_path, &dst_path)?;
-                }
-            }
-            Ok(())
-        }
-        copy_recursive(src, dst)
     }
 }
 
@@ -222,31 +428,153 @@ pub struct CacheStats {
 
 impl CacheStats {
     pub fn human_size(&self) -> String {
-        let size = self.size as f64;
-        if size < 1024.0 {
-            format!("{} B", size)
-        } else if size < 1024.0 * 1024.0 {
-            format!("{:.2} KB", size / 1024.0)
-        } else if size < 1024.0 * 1024.0 * 1024.0 {
-            format!("{:.2} MB", size / (1024.0 * 1024.0))
-        } else {
-            format!("{:.2} GB", size / (1024.0 * 1024.0 * 1024.0))
-        }
+        human_readable_size(self.size)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use tempfile::TempDir;
 
     #[test]
-    fn test_cache_operations() {
+    fn test_dependency_cache_operations() {
         let temp_dir = TempDir::new().unwrap();
         let cache_dir = temp_dir.path().join("cache");
         let cache = DependencyCache::new(cache_dir.clone(), true);
 
         cache.init().unwrap();
         assert!(cache_dir.exists());
+    }
+
+    #[test]
+    fn test_global_cache_init() {
+        let temp_dir = TempDir::new().unwrap();
+        let cache = GlobalCache::with_dir(temp_dir.path().to_path_buf(), true);
+
+        cache.init().unwrap();
+        assert!(temp_dir.path().exists());
+    }
+
+    #[test]
+    fn test_global_cache_has_package() {
+        let temp_dir = TempDir::new().unwrap();
+        let cache = GlobalCache::with_dir(temp_dir.path().to_path_buf(), true);
+        cache.init().unwrap();
+
+        // Package doesn't exist initially
+        assert!(!cache.has_package("test-pkg", "1.0.0"));
+
+        // Create a dummy package
+        let pkg_path = cache.get_package_cache_path("test-pkg", "1.0.0");
+        fs::create_dir_all(&pkg_path).unwrap();
+        fs::write(pkg_path.join("test.txt"), "test content").unwrap();
+
+        // Now it should exist
+        assert!(cache.has_package("test-pkg", "1.0.0"));
+    }
+
+    #[test]
+    fn test_global_cache_store_and_retrieve() {
+        let temp_dir = TempDir::new().unwrap();
+        let cache = GlobalCache::with_dir(temp_dir.path().to_path_buf(), true);
+        cache.init().unwrap();
+
+        // Create a source directory
+        let source_dir = temp_dir.path().join("source");
+        fs::create_dir_all(&source_dir).unwrap();
+        fs::write(source_dir.join("file1.txt"), "content1").unwrap();
+        fs::write(source_dir.join("file2.txt"), "content2").unwrap();
+
+        // Store package
+        cache.store_package("my-pkg", "2.0.0", &source_dir).unwrap();
+        assert!(cache.has_package("my-pkg", "2.0.0"));
+
+        // Retrieve package
+        let dest_dir = temp_dir.path().join("dest");
+        cache
+            .retrieve_package("my-pkg", "2.0.0", &dest_dir)
+            .unwrap();
+
+        assert!(dest_dir.join("file1.txt").exists());
+        assert!(dest_dir.join("file2.txt").exists());
+        assert_eq!(
+            fs::read_to_string(dest_dir.join("file1.txt")).unwrap(),
+            "content1"
+        );
+    }
+
+    #[test]
+    fn test_global_cache_list_packages() {
+        let temp_dir = TempDir::new().unwrap();
+        let cache = GlobalCache::with_dir(temp_dir.path().to_path_buf(), true);
+        cache.init().unwrap();
+
+        // Initially empty
+        let packages = cache.list_packages().unwrap();
+        assert_eq!(packages.len(), 0);
+
+        // Add some packages
+        let pkg1 = cache.get_package_cache_path("pkg1", "1.0.0");
+        let pkg2 = cache.get_package_cache_path("pkg2", "2.0.0");
+        fs::create_dir_all(&pkg1).unwrap();
+        fs::create_dir_all(&pkg2).unwrap();
+
+        let packages = cache.list_packages().unwrap();
+        assert_eq!(packages.len(), 2);
+    }
+
+    #[test]
+    fn test_global_cache_stats() {
+        let temp_dir = TempDir::new().unwrap();
+        let cache = GlobalCache::with_dir(temp_dir.path().to_path_buf(), true);
+        cache.init().unwrap();
+
+        // Initially empty
+        let stats = cache.stats().unwrap();
+        assert_eq!(stats.package_count, 0);
+        assert_eq!(stats.total_size, 0);
+
+        // Add a package
+        let source_dir = temp_dir.path().join("source");
+        fs::create_dir_all(&source_dir).unwrap();
+        fs::write(source_dir.join("test.txt"), "test").unwrap();
+        cache.store_package("test", "1.0.0", &source_dir).unwrap();
+
+        let stats = cache.stats().unwrap();
+        assert_eq!(stats.package_count, 1);
+        assert!(stats.total_size > 0);
+    }
+
+    #[test]
+    fn test_global_cache_clear() {
+        let temp_dir = TempDir::new().unwrap();
+        let cache = GlobalCache::with_dir(temp_dir.path().to_path_buf(), true);
+        cache.init().unwrap();
+
+        // Add packages
+        let source_dir = temp_dir.path().join("source");
+        fs::create_dir_all(&source_dir).unwrap();
+        fs::write(source_dir.join("test.txt"), "test").unwrap();
+        cache.store_package("pkg1", "1.0.0", &source_dir).unwrap();
+        cache.store_package("pkg2", "2.0.0", &source_dir).unwrap();
+
+        assert!(cache.has_package("pkg1", "1.0.0"));
+        assert!(cache.has_package("pkg2", "2.0.0"));
+
+        // Clear cache
+        cache.clear().unwrap();
+
+        assert!(!cache.has_package("pkg1", "1.0.0"));
+        assert!(!cache.has_package("pkg2", "2.0.0"));
+    }
+
+    #[test]
+    fn test_human_readable_size() {
+        assert_eq!(human_readable_size(500), "500 B");
+        assert_eq!(human_readable_size(1024), "1.00 KB");
+        assert_eq!(human_readable_size(1024 * 1024), "1.00 MB");
+        assert_eq!(human_readable_size(1024 * 1024 * 1024), "1.00 GB");
     }
 }

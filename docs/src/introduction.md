@@ -9,8 +9,11 @@ Porters is a comprehensive project management tool designed specifically for C/C
 ### Key Features
 
 - 🚀 **Universal Build System Support** - Works with CMake, XMake, Meson, Make, and custom build systems
-- 📦 **Smart Dependency Management** - Supports Git, local paths, and registries
-- 🌍 **Global and Local Dependencies** - Install packages globally or isolate them per-project
+- 📦 **Smart Dependency Management** - Supports Git, local paths, and remote registries
+- 💾 **Global Cache System** - Share dependencies across projects with `~/.porters/cache/`
+- 🔌 **Offline Mode** - Work without network access using cached dependencies
+- � **Remote Registry** - Discover packages from GitHub-based package index
+- �🌍 **Global and Local Dependencies** - Install packages globally or isolate them per-project
 - 🔄 **Lock File Support** - Ensures reproducible builds across environments
 - 🎯 **Auto-Detection** - Automatically detects existing build systems and project structure
 - 🔧 **Interactive Project Creation** - Step-by-step project setup with customizable options
@@ -20,11 +23,12 @@ Porters is a comprehensive project management tool designed specifically for C/C
 - 📄 **Automatic License Generation** - Creates LICENSE files from 9+ SPDX templates (MIT, Apache-2.0, GPL, BSD, etc.)
 - 📝 **Comprehensive README Generation** - Auto-creates README with badges, usage examples, and project structure
 - 🏗️ **Application & Library Templates** - Complete scaffolding with examples, tests, and documentation
-- � **System Requirements Check** - Automatic detection of compilers and build tools on first run
-- 🌐 **Global Configuration** - User-wide settings and preferences in `~/.porters/config.toml`
+- 🔍 **System Requirements Check** - Automatic detection of compilers and build tools on first run
+- ⚙️ **Global Configuration** - User-wide settings and preferences in `~/.porters/config.toml`
 - 🛤️ **PATH Management** - Built-in commands to add/remove Cargo bin from system PATH
-- �📚 **GitHub Integration** - Seamlessly publish releases and manage versions
+- 📚 **GitHub Integration** - Seamlessly publish releases and manage versions
 - 🔄 **Self-Updating** - Keep Porters up-to-date with a single command
+- 📦 **Package Manager Integration** - Works with Conan, vcpkg, and XMake package managers
 
 ### Why Porters?
 

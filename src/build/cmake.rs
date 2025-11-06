@@ -106,30 +106,67 @@ impl BuildSystem for CMakeBuildSystem {
         // Find executable in build directory
         let build_dir = Path::new("build");
 
-        // Look for executable (this is a simple heuristic)
-        let exe = if cfg!(windows) {
-            // Look for .exe files
-            std::fs::read_dir(build_dir)?
-                .filter_map(|e| e.ok())
-                .find(|e| {
-                    e.path()
-                        .extension()
-                        .map(|ext| ext == "exe")
-                        .unwrap_or(false)
-                })
-        } else {
-            // Look for executable files
-            std::fs::read_dir(build_dir)?
-                .filter_map(|e| e.ok())
-                .find(|e| {
-                    e.metadata()
-                        .ok()
-                        .map(|m| m.permissions().mode() & 0o111 != 0)
-                        .unwrap_or(false)
-                })
-        };
+        // Helper function to search directory recursively for executables
+        fn find_executable(dir: &Path, depth: usize) -> Option<std::fs::DirEntry> {
+            if depth > 2 {
+                return None; // Limit recursion depth
+            }
+
+            if !dir.exists() {
+                return None;
+            }
+
+            // First try current directory
+            if cfg!(windows) {
+                // Look for .exe files
+                if let Ok(entries) = std::fs::read_dir(dir) {
+                    for entry in entries.filter_map(|e| e.ok()) {
+                        if entry
+                            .path()
+                            .extension()
+                            .map(|ext| ext == "exe")
+                            .unwrap_or(false)
+                        {
+                            return Some(entry);
+                        }
+                        // Recurse into subdirectories
+                        if entry.path().is_dir()
+                            && let Some(exe) = find_executable(&entry.path(), depth + 1)
+                        {
+                            return Some(exe);
+                        }
+                    }
+                }
+            } else {
+                // Look for executable files on Unix
+                if let Ok(entries) = std::fs::read_dir(dir) {
+                    for entry in entries.filter_map(|e| e.ok()) {
+                        if entry
+                            .metadata()
+                            .ok()
+                            .map(|m| m.permissions().mode() & 0o111 != 0)
+                            .unwrap_or(false)
+                        {
+                            return Some(entry);
+                        }
+                        // Recurse into subdirectories
+                        if entry.path().is_dir()
+                            && let Some(exe) = find_executable(&entry.path(), depth + 1)
+                        {
+                            return Some(exe);
+                        }
+                    }
+                }
+            }
+
+            None
+        }
+
+        let exe = find_executable(build_dir, 0);
 
         if let Some(exe) = exe {
+            print_info(&format!("🚀 Found executable: {}", exe.path().display()));
+
             let mut cmd = Command::new(exe.path());
             for arg in args {
                 cmd.arg(arg);
@@ -141,7 +178,8 @@ impl BuildSystem for CMakeBuildSystem {
                 return Err(anyhow::anyhow!("Execution failed with status: {}", status));
             }
         } else {
-            print_warning("No executable found in build directory");
+            print_warning("⚠️  No executable found in build directory");
+            print_info("💡 Make sure your CMakeLists.txt creates an executable target");
         }
 
         Ok(())

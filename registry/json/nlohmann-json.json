@@ -1,0 +1,26 @@
+{
+  "name": "nlohmann-json",
+  "description": "JSON for Modern C++ - a header-only C++ library for JSON parsing and serialization",
+  "repository": "https://github.com/nlohmann/json",
+  "version": "3.11.3",
+  "license": "MIT",
+  "build_system": "cmake",
+  "homepage": "https://json.nlohmann.me/",
+  "documentation": "https://json.nlohmann.me/api/basic_json/",
+  "dependencies": {},
+  "options": {
+    "multiple_headers": false,
+    "implicit_conversions": true
+  },
+  "install": {
+    "cmake": {
+      "find_package": "nlohmann_json",
+      "targets": ["nlohmann_json::nlohmann_json"]
+    }
+  },
+  "tags": ["json", "parsing", "serialization", "header-only", "modern-cpp"],
+  "platforms": ["linux", "windows", "macos", "freebsd", "android", "ios"],
+  "constraints": {
+    "min_cpp_standard": "11"
+  }
+}

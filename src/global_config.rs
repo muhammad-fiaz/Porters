@@ -34,9 +34,17 @@ pub struct GlobalPortersConfig {
     #[serde(default)]
     pub installed_extensions: Vec<String>,
 
-    /// Global dependencies cache info
+    /// Global dependencies cache configuration
     #[serde(default)]
     pub cache: CacheConfig,
+
+    /// Registry configuration
+    #[serde(default)]
+    pub registry: RegistryConfig,
+
+    /// Offline mode (disable all network activity)
+    #[serde(default)]
+    pub offline: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -62,7 +70,7 @@ pub struct UserPreferences {
     pub use_external_terminal: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheConfig {
     /// Enable dependency caching
     #[serde(default = "default_true")]
@@ -75,6 +83,56 @@ pub struct CacheConfig {
     /// Auto-clean old cache entries
     #[serde(default = "default_true")]
     pub auto_clean: bool,
+
+    /// Global cache directory (default: ~/.porters/cache/)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_dir: Option<PathBuf>,
+}
+
+impl Default for CacheConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_size_mb: default_cache_size(),
+            auto_clean: true,
+            cache_dir: None,
+        }
+    }
+}
+
+/// Registry configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistryConfig {
+    /// Registry URL (default: GitHub repository)
+    #[serde(default = "default_registry_url")]
+    pub url: String,
+
+    /// Auto-update registry index
+    #[serde(default = "default_true")]
+    pub auto_update: bool,
+
+    /// Registry index path (default: ~/.porters/registry-index/)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index_path: Option<PathBuf>,
+
+    /// Last registry update timestamp
+    #[serde(default)]
+    pub last_update: Option<String>,
+}
+
+impl Default for RegistryConfig {
+    fn default() -> Self {
+        Self {
+            url: default_registry_url(),
+            auto_update: true,
+            index_path: None,
+            last_update: None,
+        }
+    }
+}
+
+fn default_registry_url() -> String {
+    "https://github.com/muhammad-fiaz/porters".to_string()
 }
 
 fn default_true() -> bool {
@@ -96,6 +154,8 @@ impl Default for GlobalPortersConfig {
             preferences: UserPreferences::default(),
             installed_extensions: Vec::new(),
             cache: CacheConfig::default(),
+            registry: RegistryConfig::default(),
+            offline: false,
         }
     }
 }
@@ -112,6 +172,26 @@ impl GlobalPortersConfig {
         Ok(Self::global_dir()?.join("config.toml"))
     }
 
+    /// Get the global cache directory
+    #[allow(dead_code)]
+    pub fn cache_dir(&self) -> Result<PathBuf> {
+        if let Some(ref cache_dir) = self.cache.cache_dir {
+            Ok(cache_dir.clone())
+        } else {
+            Ok(Self::global_dir()?.join("cache"))
+        }
+    }
+
+    /// Get the registry index directory
+    #[allow(dead_code)]
+    pub fn registry_index_dir(&self) -> Result<PathBuf> {
+        if let Some(ref index_path) = self.registry.index_path {
+            Ok(index_path.clone())
+        } else {
+            Ok(Self::global_dir()?.join("registry-index"))
+        }
+    }
+
     /// Ensure the global .porters directory exists
     pub fn ensure_global_dir() -> Result<PathBuf> {
         let dir = Self::global_dir()?;
@@ -119,6 +199,31 @@ impl GlobalPortersConfig {
             fs::create_dir_all(&dir).context("Failed to create .porters directory")?;
         }
         Ok(dir)
+    }
+
+    /// Ensure cache directory exists
+    #[allow(dead_code)]
+    pub fn ensure_cache_dir(&self) -> Result<PathBuf> {
+        let cache_dir = self.cache_dir()?;
+        if !cache_dir.exists() {
+            fs::create_dir_all(&cache_dir).context("Failed to create cache directory")?;
+        }
+        Ok(cache_dir)
+    }
+
+    /// Ensure registry index directory exists
+    #[allow(dead_code)]
+    pub fn ensure_registry_index_dir(&self) -> Result<PathBuf> {
+        let index_dir = self.registry_index_dir()?;
+        if !index_dir.exists() {
+            fs::create_dir_all(&index_dir).context("Failed to create registry index directory")?;
+        }
+        Ok(index_dir)
+    }
+
+    /// Check if offline mode is enabled (checks both global and project config)
+    pub fn is_offline(&self) -> bool {
+        self.offline
     }
 
     /// Load global config or create default if it doesn't exist
@@ -372,5 +477,90 @@ impl SystemCheck {
         }
 
         true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_global_config_default() {
+        let config = GlobalPortersConfig::default();
+        assert_eq!(config.porters_version, env!("CARGO_PKG_VERSION"));
+        assert!(config.cache.enabled);
+        assert_eq!(config.cache.max_size_mb, 1024);
+        assert!(!config.offline);
+        assert_eq!(config.registry.url, default_registry_url());
+    }
+
+    #[test]
+    fn test_cache_config_default() {
+        let cache = CacheConfig::default();
+        assert!(cache.enabled);
+        assert_eq!(cache.max_size_mb, 1024);
+        assert!(cache.auto_clean);
+        assert!(cache.cache_dir.is_none());
+    }
+
+    #[test]
+    fn test_registry_config_default() {
+        let registry = RegistryConfig::default();
+        assert_eq!(registry.url, default_registry_url());
+        assert!(registry.auto_update);
+        assert!(registry.index_path.is_none());
+        assert!(registry.last_update.is_none());
+    }
+
+    #[test]
+    fn test_global_config_is_offline() {
+        let mut config = GlobalPortersConfig::default();
+        assert!(!config.is_offline());
+
+        config.offline = true;
+        assert!(config.is_offline());
+    }
+
+    #[test]
+    fn test_global_config_cache_dir() {
+        let config = GlobalPortersConfig::default();
+        let cache_dir = config.cache_dir().unwrap();
+
+        // Should return ~/.porters/cache
+        assert!(cache_dir.to_string_lossy().contains(".porters"));
+        assert!(cache_dir.to_string_lossy().contains("cache"));
+    }
+
+    #[test]
+    fn test_global_config_registry_index_dir() {
+        let config = GlobalPortersConfig::default();
+        let index_dir = config.registry_index_dir().unwrap();
+
+        // Should return ~/.porters/registry-index
+        assert!(index_dir.to_string_lossy().contains(".porters"));
+        assert!(index_dir.to_string_lossy().contains("registry-index"));
+    }
+
+    #[test]
+    fn test_global_config_ensure_cache_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let mut config = GlobalPortersConfig::default();
+        config.cache.cache_dir = Some(temp_dir.path().join("custom-cache"));
+
+        let cache_dir = config.ensure_cache_dir().unwrap();
+        assert!(cache_dir.exists());
+        assert!(cache_dir.to_string_lossy().contains("custom-cache"));
+    }
+
+    #[test]
+    fn test_global_config_ensure_registry_index_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let mut config = GlobalPortersConfig::default();
+        config.registry.index_path = Some(temp_dir.path().join("custom-index"));
+
+        let index_dir = config.ensure_registry_index_dir().unwrap();
+        assert!(index_dir.exists());
+        assert!(index_dir.to_string_lossy().contains("custom-index"));
     }
 }

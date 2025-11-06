@@ -1,0 +1,27 @@
+{
+  "name": "fmt",
+  "description": "A modern formatting library providing a fast and safe alternative to C stdio and C++ iostreams",
+  "repository": "https://github.com/fmtlib/fmt",
+  "version": "10.2.1",
+  "license": "MIT",
+  "build_system": "cmake",
+  "homepage": "https://fmt.dev/",
+  "documentation": "https://fmt.dev/latest/",
+  "dependencies": {},
+  "options": {
+    "shared": false,
+    "static": true,
+    "header_only": false
+  },
+  "install": {
+    "cmake": {
+      "find_package": "fmt",
+      "targets": ["fmt::fmt", "fmt::fmt-header-only"]
+    }
+  },
+  "tags": ["formatting", "string", "printf", "modern-cpp", "performance"],
+  "platforms": ["linux", "windows", "macos", "freebsd", "android", "ios"],
+  "constraints": {
+    "min_cpp_standard": "11"
+  }
+}

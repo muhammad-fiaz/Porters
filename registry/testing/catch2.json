@@ -1,0 +1,28 @@
+{
+  "name": "catch2",
+  "description": "Modern, C++-native, header-only test framework for unit-tests, TDD and BDD",
+  "repository": "https://github.com/catchorg/Catch2",
+  "version": "3.5.0",
+  "license": "BSL-1.0",
+  "build_system": "cmake",
+  "homepage": "https://github.com/catchorg/Catch2",
+  "documentation": "https://github.com/catchorg/Catch2/blob/devel/docs/Readme.md",
+  "dependencies": {},
+  "options": {
+    "shared": false,
+    "static": true,
+    "examples": false
+  },
+  "install": {
+    "cmake": {
+      "find_package": "Catch2",
+      "targets": ["Catch2::Catch2", "Catch2::Catch2WithMain"],
+      "components": ["Main"]
+    }
+  },
+  "tags": ["testing", "unit-testing", "tdd", "bdd", "header-only"],
+  "platforms": ["linux", "windows", "macos", "freebsd"],
+  "constraints": {
+    "min_cpp_standard": "14"
+  }
+}

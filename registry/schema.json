@@ -1,0 +1,223 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://muhammad-fiaz.github.io/Porters/schemas/package.json",
+  "title": "Porters Package Definition",
+  "description": "Schema for Porters package registry definitions",
+  "type": "object",
+  "required": ["name", "description", "repository", "version", "license", "build_system"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Package name (lowercase, hyphenated)"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 120,
+      "description": "Short description of the package"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "description": "Git repository URL"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$",
+      "description": "Latest stable version (SemVer format)"
+    },
+    "license": {
+      "type": "string",
+      "description": "License identifier (SPDX format)",
+      "examples": ["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause"]
+    },
+    "build_system": {
+      "type": "string",
+      "enum": ["cmake", "meson", "xmake", "autotools", "bazel", "custom"],
+      "description": "Primary build system used by the package"
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Version requirement (SemVer range)"
+      },
+      "description": "Map of dependency names to version requirements"
+    },
+    "dev_dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Development-only dependencies (testing, benchmarks, etc.)"
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "shared": {
+          "type": "boolean",
+          "description": "Build shared libraries"
+        },
+        "static": {
+          "type": "boolean",
+          "description": "Build static libraries"
+        },
+        "tests": {
+          "type": "boolean",
+          "description": "Build tests"
+        },
+        "examples": {
+          "type": "boolean",
+          "description": "Build examples"
+        },
+        "benchmarks": {
+          "type": "boolean",
+          "description": "Build benchmarks"
+        }
+      },
+      "additionalProperties": true,
+      "description": "Build options"
+    },
+    "install": {
+      "type": "object",
+      "properties": {
+        "cmake": {
+          "type": "object",
+          "properties": {
+            "find_package": {
+              "type": "string",
+              "description": "CMake find_package name"
+            },
+            "targets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "CMake target names"
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional CMake components"
+            }
+          }
+        },
+        "pkg_config": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "pkg-config module name"
+            }
+          }
+        }
+      },
+      "description": "Installation metadata for different build systems"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "uniqueItems": true,
+      "description": "Searchable tags for categorization"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Project homepage URL"
+    },
+    "documentation": {
+      "type": "string",
+      "format": "uri",
+      "description": "Documentation URL"
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["linux", "windows", "macos", "freebsd", "android", "ios", "wasm"]
+      },
+      "uniqueItems": true,
+      "description": "Supported platforms (omit for all platforms)"
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "min_cpp_standard": {
+          "type": "string",
+          "enum": ["98", "03", "11", "14", "17", "20", "23", "26"],
+          "description": "Minimum C++ standard required"
+        },
+        "max_cpp_standard": {
+          "type": "string",
+          "enum": ["98", "03", "11", "14", "17", "20", "23", "26"],
+          "description": "Maximum C++ standard supported"
+        },
+        "compilers": {
+          "type": "object",
+          "properties": {
+            "gcc": {
+              "type": "string",
+              "description": "GCC version requirement (e.g., '>=7.0')"
+            },
+            "clang": {
+              "type": "string",
+              "description": "Clang version requirement"
+            },
+            "msvc": {
+              "type": "string",
+              "description": "MSVC version requirement"
+            }
+          },
+          "description": "Compiler version requirements"
+        },
+        "arch": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["x86", "x86_64", "arm", "arm64", "riscv64"]
+          },
+          "description": "Supported architectures"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Required environment variables"
+        }
+      },
+      "description": "Build constraints and requirements"
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "dependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["description"]
+      },
+      "description": "Optional features with their own dependencies"
+    }
+  }
+}

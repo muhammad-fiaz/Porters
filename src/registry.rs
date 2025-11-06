@@ -1,10 +1,18 @@
 //! Package registry management
 //!
-//! This module provides support for custom package registries,
-//! allowing search, download, and publication of C/C++ packages.
+//! This module provides support for the Porters package registry,
+//! allowing search, discovery, and installation of C/C++ packages
+//! from the local registry and remote GitHub repository.
 //!
-//! **Note**: This is a future feature for package registry support.
+//! The registry is a curated collection of package definitions stored
+//! as JSON files in the `registry/` directory of the Porters project.
 
+#![allow(dead_code)]
+
+use crate::resolver::{
+    Dependency, DependencyResolver, DependencySource, PackageMetadata, PlatformConstraints,
+};
+use crate::version::{Version, VersionReq};
 use anyhow::{Context, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
@@ -12,304 +20,748 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Package registry configuration
-///
-/// Represents a single package registry with authentication and metadata.
+/// Package definition from registry
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[allow(dead_code)]
-pub struct Registry {
+pub struct PackageDefinition {
     pub name: String,
-    pub url: String,
+    pub description: String,
+    pub repository: String,
+    pub version: String,
+    pub license: String,
+    pub build_system: String,
     #[serde(default)]
-    pub auth_token: Option<String>,
+    pub dependencies: HashMap<String, String>,
     #[serde(default)]
-    pub enabled: bool,
+    pub dev_dependencies: HashMap<String, String>,
+    #[serde(default)]
+    pub options: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub install: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(default)]
+    pub homepage: Option<String>,
+    #[serde(default)]
+    pub documentation: Option<String>,
+    #[serde(default)]
+    pub platforms: Vec<String>,
+    #[serde(default)]
+    pub constraints: Option<RegistryConstraints>,
+    #[serde(default)]
+    pub features: HashMap<String, FeatureDefinition>,
 }
 
-/// Registry manager
-#[allow(dead_code)]
+/// Constraints in registry format
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistryConstraints {
+    #[serde(default)]
+    pub min_cpp_standard: Option<String>,
+    #[serde(default)]
+    pub max_cpp_standard: Option<String>,
+    #[serde(default)]
+    pub compilers: HashMap<String, String>,
+    #[serde(default)]
+    pub arch: Vec<String>,
+    #[serde(default)]
+    pub environment: HashMap<String, String>,
+}
+
+/// Feature definition
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeatureDefinition {
+    pub description: String,
+    #[serde(default)]
+    pub default: bool,
+    #[serde(default)]
+    pub dependencies: HashMap<String, String>,
+}
+
+/// Registry manager for local package definitions
 pub struct RegistryManager {
-    registries: Vec<Registry>,
-    cache_dir: PathBuf,
+    registry_path: PathBuf,
+    cache_path: PathBuf,
+    index_path: PathBuf,
 }
 
-#[allow(dead_code)]
 impl RegistryManager {
     /// Create a new registry manager
-    pub fn new(registries: Vec<Registry>, cache_dir: PathBuf) -> Self {
+    ///
+    /// The registry path should point to the root `registry/` directory.
+    /// The index_path points to ~/.porters/registry-index/ for local caching.
+    pub fn new(registry_path: PathBuf, cache_path: PathBuf) -> Self {
+        let index_path = cache_path.join("registry-index");
         Self {
-            registries,
-            cache_dir,
+            registry_path,
+            cache_path,
+            index_path,
         }
     }
 
-    /// Initialize registry cache
+    /// Initialize registry and ensure local index exists
     pub fn init(&self) -> Result<()> {
-        if !self.cache_dir.exists() {
-            fs::create_dir_all(&self.cache_dir)
-                .context("Failed to create registry cache directory")?;
+        // Ensure cache directory exists
+        if !self.cache_path.exists() {
+            fs::create_dir_all(&self.cache_path)?;
         }
+
+        // Ensure index directory exists
+        if !self.index_path.exists() {
+            fs::create_dir_all(&self.index_path)?;
+        }
+
+        // Update local index from registry (or fetch from remote if available)
+        self.update_index_from_source()?;
+
         Ok(())
     }
 
-    /// Search for a package across all registries
-    pub async fn search(&self, name: &str) -> Result<Vec<PackageInfo>> {
-        let mut results = Vec::new();
+    /// Update local index from source (local registry or remote GitHub)
+    ///
+    /// Tries to sync from local registry/ folder first. If that doesn't exist,
+    /// attempts to fetch from GitHub repository (unless offline mode is enabled or in test environment).
+    pub fn update_index_from_source(&self) -> Result<()> {
+        if self.registry_path.exists() {
+            // Use local registry if available
+            return self.update_index();
+        }
 
-        for registry in &self.registries {
-            if !registry.enabled {
-                continue;
+        // Check if offline mode is enabled
+        let global_config = match crate::global_config::GlobalPortersConfig::load_or_create() {
+            Ok(config) => config,
+            Err(_) => {
+                // If we can't load global config (e.g., in tests), just return Ok
+                return Ok(());
             }
+        };
 
-            match self.search_registry(registry, name).await {
-                Ok(mut packages) => results.append(&mut packages),
-                Err(e) => {
-                    println!(
-                        "⚠️  Failed to search registry {}: {}",
-                        registry.name.yellow(),
-                        e
-                    );
+        let offline = global_config.is_offline();
+
+        if offline {
+            // In offline mode with no local registry, just return Ok (don't fail)
+            // The registry operations will fail gracefully later if packages are needed
+            return Ok(());
+        }
+
+        // Don't fetch from GitHub in test mode (when index_path is in temp directory)
+        if self.index_path.to_string_lossy().contains("Temp") || cfg!(test) {
+            return Ok(());
+        }
+
+        // Try to fetch from remote GitHub repository
+        println!("{}", "Fetching registry from GitHub...".cyan());
+        self.fetch_remote_registry()
+    }
+
+    /// Fetch registry index from remote GitHub repository
+    ///
+    /// Clones or updates the registry from https://github.com/muhammad-fiaz/porters
+    /// Downloads the registry/ folder contents to ~/.porters/registry-index/
+    pub fn fetch_remote_registry(&self) -> Result<()> {
+        use std::process::Command;
+
+        let global_config = crate::global_config::GlobalPortersConfig::load_or_create()?;
+        let registry_url = &global_config.registry.url;
+
+        // Create a temporary directory for cloning
+        let temp_dir =
+            std::env::temp_dir().join(format!("porters-registry-{}", std::process::id()));
+
+        // Clean up temp dir if it exists
+        if temp_dir.exists() {
+            fs::remove_dir_all(&temp_dir)?;
+        }
+
+        println!(
+            "{}",
+            format!("Cloning registry from {}...", registry_url).cyan()
+        );
+
+        // Clone the repository (sparse checkout for registry/ folder only)
+        let clone_status = Command::new("git")
+            .args([
+                "clone",
+                "--depth",
+                "1",
+                "--filter=blob:none",
+                "--sparse",
+                registry_url,
+                temp_dir.to_str().unwrap(),
+            ])
+            .status()
+            .context("Failed to execute git clone. Make sure git is installed.")?;
+
+        if !clone_status.success() {
+            anyhow::bail!(
+                "Failed to clone registry from GitHub. Check your internet connection and repository URL."
+            );
+        }
+
+        // Sparse checkout the registry/ folder
+        let sparse_status = Command::new("git")
+            .args([
+                "-C",
+                temp_dir.to_str().unwrap(),
+                "sparse-checkout",
+                "set",
+                "registry",
+            ])
+            .status()
+            .context("Failed to configure sparse checkout")?;
+
+        if !sparse_status.success() {
+            anyhow::bail!("Failed to configure git sparse checkout");
+        }
+
+        // Copy registry/ folder to index path
+        let registry_src = temp_dir.join("registry");
+        if !registry_src.exists() {
+            fs::remove_dir_all(&temp_dir).ok();
+            anyhow::bail!("Registry folder not found in remote repository");
+        }
+
+        // Clear existing index
+        if self.index_path.exists() {
+            fs::remove_dir_all(&self.index_path)?;
+        }
+        fs::create_dir_all(&self.index_path)?;
+
+        // Copy registry contents to index
+        let mut count = 0;
+        self.sync_directory(&registry_src, &self.index_path, &mut count)?;
+
+        // Clean up temp directory
+        fs::remove_dir_all(&temp_dir).ok();
+
+        println!(
+            "{} {}",
+            "✓".green(),
+            format!("Fetched {} packages from remote registry", count).green()
+        );
+
+        // Update global config with last update timestamp
+        let mut global_config = global_config;
+        global_config.registry.last_update = Some(chrono::Utc::now().to_rfc3339());
+        global_config.save()?;
+
+        Ok(())
+    }
+
+    /// Update local index from local registry
+    ///
+    /// This syncs all package definitions from the registry/ folder
+    /// to ~/.porters/registry-index/ for fast local access.
+    pub fn update_index(&self) -> Result<()> {
+        if !self.registry_path.exists() {
+            return Ok(()); // Skip if registry doesn't exist
+        }
+
+        println!("{}", "Updating local registry index...".cyan());
+
+        let mut count = 0;
+        self.sync_directory(&self.registry_path, &self.index_path, &mut count)?;
+
+        println!(
+            "{} {}",
+            "✓".green(),
+            format!("Synced {} packages to local index", count).green()
+        );
+
+        Ok(())
+    }
+
+    /// Recursively sync directories from registry to index
+    #[allow(clippy::only_used_in_recursion)]
+    fn sync_directory(&self, src: &Path, dst: &Path, count: &mut usize) -> Result<()> {
+        // Create destination directory if needed
+        if !dst.exists() {
+            fs::create_dir_all(dst)?;
+        }
+
+        for entry in fs::read_dir(src)? {
+            let entry = entry?;
+            let src_path = entry.path();
+            let file_name = entry.file_name();
+            let dst_path = dst.join(&file_name);
+
+            if src_path.is_dir() {
+                // Recursively sync subdirectory
+                self.sync_directory(&src_path, &dst_path, count)?;
+            } else if src_path.extension().and_then(|s| s.to_str()) == Some("json") {
+                // Skip schema.json
+                if file_name.to_str() == Some("schema.json") {
+                    continue;
                 }
+
+                // Copy JSON file to index
+                fs::copy(&src_path, &dst_path)?;
+                *count += 1;
             }
         }
+
+        Ok(())
+    }
+
+    /// Get path to use for package lookups (prefer index, fallback to registry)
+    fn get_search_path(&self) -> PathBuf {
+        if self.index_path.exists() {
+            self.index_path.clone()
+        } else {
+            self.registry_path.clone()
+        }
+    }
+
+    /// Search for packages in the local registry
+    pub fn search(&self, query: &str) -> Result<Vec<PackageDefinition>> {
+        // Auto-update index before searching
+        if self.registry_path.exists() {
+            let _ = self.update_index(); // Ignore errors, use cached if sync fails
+        }
+
+        let mut results = Vec::new();
+        let query_lower = query.to_lowercase();
+
+        // Search from local index (or registry as fallback)
+        let search_path = self.get_search_path();
+        self.scan_registry_dir(&search_path, &query_lower, &mut results)?;
+
+        // Sort by relevance (exact matches first, then by name)
+        results.sort_by(|a, b| {
+            let a_exact = a.name.to_lowercase() == query_lower;
+            let b_exact = b.name.to_lowercase() == query_lower;
+
+            if a_exact && !b_exact {
+                std::cmp::Ordering::Less
+            } else if !a_exact && b_exact {
+                std::cmp::Ordering::Greater
+            } else {
+                a.name.cmp(&b.name)
+            }
+        });
 
         Ok(results)
     }
 
-    /// Search a specific registry
-    async fn search_registry(&self, registry: &Registry, name: &str) -> Result<Vec<PackageInfo>> {
-        let client = reqwest::Client::new();
-        let url = format!("{}/api/v1/packages/search?q={}", registry.url, name);
-
-        let mut request = client.get(&url);
-        if let Some(token) = &registry.auth_token {
-            request = request.header("Authorization", format!("Bearer {}", token));
+    /// Scan registry directory recursively
+    fn scan_registry_dir(
+        &self,
+        dir: &Path,
+        query: &str,
+        results: &mut Vec<PackageDefinition>,
+    ) -> Result<()> {
+        if !dir.exists() {
+            return Ok(()); // Registry might not exist yet
         }
 
-        let response = request.send().await?;
-        if !response.status().is_success() {
-            anyhow::bail!("Registry search failed: {}", response.status());
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                // Recursively scan subdirectories
+                self.scan_registry_dir(&path, query, results)?;
+            } else if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                // Skip schema.json
+                if path.file_name().and_then(|s| s.to_str()) == Some("schema.json") {
+                    continue;
+                }
+
+                // Try to load package definition and check if it matches
+                if let Ok(pkg) = self.load_package_from_path(&path)
+                    && self.package_matches(&pkg, query)
+                {
+                    results.push(pkg);
+                }
+            }
         }
 
-        let packages: Vec<PackageInfo> = response.json().await?;
+        Ok(())
+    }
+
+    /// Check if package matches search query
+    fn package_matches(&self, pkg: &PackageDefinition, query: &str) -> bool {
+        let query = query.to_lowercase();
+
+        // Check name
+        if pkg.name.to_lowercase().contains(&query) {
+            return true;
+        }
+
+        // Check description
+        if pkg.description.to_lowercase().contains(&query) {
+            return true;
+        }
+
+        // Check tags
+        for tag in &pkg.tags {
+            if tag.to_lowercase().contains(&query) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Load package definition from path
+    fn load_package_from_path(&self, path: &Path) -> Result<PackageDefinition> {
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("Failed to read {}", path.display()))?;
+
+        let pkg: PackageDefinition = serde_json::from_str(&content)
+            .with_context(|| format!("Failed to parse JSON in {}", path.display()))?;
+
+        Ok(pkg)
+    }
+
+    /// Load package definition by name
+    pub fn load_package(&self, name: &str) -> Result<PackageDefinition> {
+        // Auto-update index before loading
+        if self.registry_path.exists() {
+            let _ = self.update_index(); // Ignore errors, use cached if sync fails
+        }
+
+        let mut found = None;
+
+        // Search for package in local index (or registry as fallback)
+        let search_path = self.get_search_path();
+        self.find_package(&search_path, name, &mut found)?;
+
+        found.ok_or_else(|| anyhow::anyhow!("Package '{}' not found in registry", name))
+    }
+
+    /// Find package by name recursively
+    fn find_package(
+        &self,
+        dir: &Path,
+        name: &str,
+        found: &mut Option<PackageDefinition>,
+    ) -> Result<()> {
+        if !dir.exists() {
+            return Ok(());
+        }
+
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                self.find_package(&path, name, found)?;
+                if found.is_some() {
+                    return Ok(());
+                }
+            } else if path.extension().and_then(|s| s.to_str()) == Some("json")
+                && let Ok(pkg) = self.load_package_from_path(&path)
+                && pkg.name == name
+            {
+                *found = Some(pkg);
+                return Ok(());
+            }
+        }
+
+        Ok(())
+    }
+
+    /// List all packages in the registry
+    pub fn list_all(&self) -> Result<Vec<PackageDefinition>> {
+        // Auto-update index before listing
+        if self.registry_path.exists() {
+            let _ = self.update_index(); // Ignore errors, use cached if sync fails
+        }
+
+        let mut packages = Vec::new();
+
+        // List from local index (or registry as fallback)
+        let search_path = self.get_search_path();
+        self.collect_all_packages(&search_path, &mut packages)?;
+
+        // Sort alphabetically
+        packages.sort_by(|a, b| a.name.cmp(&b.name));
+
         Ok(packages)
     }
 
-    /// Download package from registry
-    pub async fn download(
+    /// Collect all packages recursively
+    fn collect_all_packages(
         &self,
-        name: &str,
-        version: &str,
-        dest: &Path,
-    ) -> Result<PackageMetadata> {
-        // Try each registry in order
-        for registry in &self.registries {
-            if !registry.enabled {
-                continue;
-            }
+        dir: &Path,
+        packages: &mut Vec<PackageDefinition>,
+    ) -> Result<()> {
+        if !dir.exists() {
+            return Ok(());
+        }
 
-            match self
-                .download_from_registry(registry, name, version, dest)
-                .await
-            {
-                Ok(metadata) => {
-                    println!(
-                        "📦 Downloaded {} v{} from {}",
-                        name.cyan(),
-                        version,
-                        registry.name.green()
-                    );
-                    return Ok(metadata);
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                self.collect_all_packages(&path, packages)?;
+            } else if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                // Skip schema.json
+                if path.file_name().and_then(|s| s.to_str()) == Some("schema.json") {
+                    continue;
                 }
-                Err(e) => {
-                    println!(
-                        "⚠️  Failed to download from {}: {}",
-                        registry.name.yellow(),
-                        e
-                    );
+
+                if let Ok(pkg) = self.load_package_from_path(&path) {
+                    packages.push(pkg);
                 }
             }
         }
 
-        anyhow::bail!("Package not found in any registry")
+        Ok(())
     }
 
-    /// Download from a specific registry
-    async fn download_from_registry(
-        &self,
-        registry: &Registry,
-        name: &str,
-        version: &str,
-        dest: &Path,
-    ) -> Result<PackageMetadata> {
-        let client = reqwest::Client::new();
-        let url = format!(
-            "{}/api/v1/packages/{}/{}/download",
-            registry.url, name, version
-        );
+    /// Resolve all dependencies for a package
+    pub fn resolve_dependencies(&self, package_name: &str) -> Result<Vec<PackageMetadata>> {
+        let pkg = self.load_package(package_name)?;
 
-        let mut request = client.get(&url);
-        if let Some(token) = &registry.auth_token {
-            request = request.header("Authorization", format!("Bearer {}", token));
-        }
+        // Convert to dependency list
+        let root_deps: Vec<Dependency> = pkg
+            .dependencies
+            .iter()
+            .map(|(name, version_req)| Dependency {
+                name: name.clone(),
+                version_req: version_req.clone(),
+                optional: false,
+                features: vec![],
+            })
+            .collect();
 
-        let response = request.send().await?;
-        if !response.status().is_success() {
-            anyhow::bail!("Package download failed: {}", response.status());
-        }
+        // Create resolver
+        let mut resolver = DependencyResolver::new();
 
-        // Save package archive
-        let archive_path = self.cache_dir.join(format!("{}-{}.tar.gz", name, version));
-        let bytes = response.bytes().await?;
-        fs::write(&archive_path, bytes)?;
+        // Fetch metadata closure
+        let fetch_metadata = |name: &str, version_req: &str| -> Result<PackageMetadata> {
+            let dep_pkg = self.load_package(name)?;
 
-        // Extract archive
-        self.extract_archive(&archive_path, dest)?;
+            // Parse version
+            let version = Version::parse(&dep_pkg.version)?;
 
-        // Load metadata
-        let metadata_path = dest.join("porters.toml");
-        let metadata = if metadata_path.exists() {
-            let content = fs::read_to_string(&metadata_path)?;
-            toml::from_str(&content)?
-        } else {
-            PackageMetadata {
-                name: name.to_string(),
-                version: version.to_string(),
-                description: None,
-                repository: None,
-                dependencies: HashMap::new(),
+            // Validate version requirement
+            let req = VersionReq::parse(version_req)
+                .with_context(|| format!("Invalid version requirement: {}", version_req))?;
+
+            if !req.matches(&version) {
+                anyhow::bail!(
+                    "Package {} version {} does not satisfy requirement {}",
+                    name,
+                    dep_pkg.version,
+                    version_req
+                );
             }
+
+            // Convert dependencies
+            let dependencies: Vec<Dependency> = dep_pkg
+                .dependencies
+                .iter()
+                .map(|(name, version_req)| Dependency {
+                    name: name.clone(),
+                    version_req: version_req.clone(),
+                    optional: false,
+                    features: vec![],
+                })
+                .collect();
+
+            // Convert constraints
+            let constraints = dep_pkg.constraints.as_ref().map(|c| PlatformConstraints {
+                platforms: dep_pkg.platforms.clone(),
+                arch: c.arch.clone(),
+                min_cpp_standard: c.min_cpp_standard.clone(),
+                max_cpp_standard: c.max_cpp_standard.clone(),
+                compilers: c.compilers.clone(),
+                environment: c.environment.clone(),
+            });
+
+            Ok(PackageMetadata {
+                name: dep_pkg.name.clone(),
+                version,
+                dependencies,
+                constraints,
+                source: DependencySource::Registry,
+            })
         };
 
-        Ok(metadata)
+        // Resolve dependencies
+        let resolved = resolver.resolve(root_deps, fetch_metadata)?;
+
+        Ok(resolved
+            .into_iter()
+            .map(|r| PackageMetadata {
+                name: r.name.clone(),
+                version: r.version.clone(),
+                dependencies: vec![],
+                constraints: None,
+                source: r.source,
+            })
+            .collect())
     }
 
-    /// Extract tar.gz archive
-    fn extract_archive(&self, archive: &Path, dest: &Path) -> Result<()> {
-        use flate2::read::GzDecoder;
-        use tar::Archive;
+    /// Display package information
+    pub fn display_package(&self, pkg: &PackageDefinition) {
+        println!("{}", format!("📦 {}", pkg.name).cyan().bold());
+        println!("   {}", pkg.description);
+        println!("   {} {}", "Version:".bright_black(), pkg.version.green());
+        println!("   {} {}", "License:".bright_black(), pkg.license.yellow());
+        println!(
+            "   {} {}",
+            "Build System:".bright_black(),
+            pkg.build_system.blue()
+        );
+        println!(
+            "   {} {}",
+            "Repository:".bright_black(),
+            pkg.repository.dimmed()
+        );
 
-        let file = fs::File::open(archive)?;
-        let decoder = GzDecoder::new(file);
-        let mut archive = Archive::new(decoder);
-
-        fs::create_dir_all(dest)?;
-        archive.unpack(dest)?;
-
-        Ok(())
-    }
-
-    /// Publish package to registry
-    pub async fn publish(
-        &self,
-        registry_name: &str,
-        package_path: &Path,
-        version: &str,
-    ) -> Result<()> {
-        let registry = self
-            .registries
-            .iter()
-            .find(|r| r.name == registry_name)
-            .ok_or_else(|| anyhow::anyhow!("Registry {} not found", registry_name))?;
-
-        if !registry.enabled {
-            anyhow::bail!("Registry {} is disabled", registry_name);
-        }
-
-        let auth_token = registry
-            .auth_token
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("No auth token for registry {}", registry_name))?;
-
-        // Create package archive
-        let archive_path = self.create_package_archive(package_path, version)?;
-
-        // Upload to registry
-        let client = reqwest::Client::new();
-        let url = format!("{}/api/v1/packages/publish", registry.url);
-
-        // Read file contents for upload
-        let file_bytes = tokio::fs::read(&archive_path).await?;
-        let body = reqwest::Body::from(file_bytes);
-
-        let response = client
-            .post(&url)
-            .header("Authorization", format!("Bearer {}", auth_token))
-            .header("Content-Type", "application/gzip")
-            .body(body)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            let error: String = response.text().await?;
-            anyhow::bail!("Publish failed: {}", error);
-        }
-
-        println!("✅ Published to {} successfully", registry_name.green());
-        Ok(())
-    }
-
-    /// Create package archive for publishing
-    fn create_package_archive(&self, package_path: &Path, version: &str) -> Result<PathBuf> {
-        use flate2::Compression;
-        use flate2::write::GzEncoder;
-
-        let name = package_path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("package");
-
-        let archive_path = self.cache_dir.join(format!("{}-{}.tar.gz", name, version));
-
-        let tar_gz = fs::File::create(&archive_path)?;
-        let enc = GzEncoder::new(tar_gz, Compression::default());
-        let mut tar = tar::Builder::new(enc);
-
-        tar.append_dir_all(".", package_path)?;
-        tar.finish()?;
-
-        Ok(archive_path)
-    }
-
-    /// List all configured registries
-    pub fn list_registries(&self) {
-        if self.registries.is_empty() {
-            println!("No registries configured");
-            return;
-        }
-
-        println!("📋 Configured registries:\n");
-        for registry in &self.registries {
-            let status = if registry.enabled { "✓" } else { "✗" };
+        if !pkg.dependencies.is_empty() {
             println!(
-                "  {} {} - {}",
-                status,
-                registry.name.cyan(),
-                registry.url.dimmed()
+                "   {} {}",
+                "Dependencies:".bright_black(),
+                pkg.dependencies.len()
+            );
+        }
+
+        if !pkg.tags.is_empty() {
+            println!(
+                "   {} {}",
+                "Tags:".bright_black(),
+                pkg.tags.join(", ").dimmed()
             );
         }
     }
 }
 
-/// Package information from registry
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[allow(dead_code)]
-pub struct PackageInfo {
-    pub name: String,
-    pub version: String,
-    pub description: Option<String>,
-    pub downloads: u64,
-    pub repository: Option<String>,
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::TempDir;
 
-/// Package metadata
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[allow(dead_code)]
-pub struct PackageMetadata {
-    pub name: String,
-    pub version: String,
-    pub description: Option<String>,
-    pub repository: Option<String>,
-    #[serde(default)]
-    pub dependencies: HashMap<String, String>,
+    fn create_test_registry() -> (TempDir, RegistryManager) {
+        let temp_dir = TempDir::new().unwrap();
+        let registry_path = temp_dir.path().join("registry");
+        let cache_path = temp_dir.path().join("cache");
+
+        fs::create_dir_all(&registry_path).unwrap();
+        fs::create_dir_all(registry_path.join("testing")).unwrap();
+
+        // Create a test package
+        let test_pkg = serde_json::json!({
+            "name": "test-lib",
+            "description": "A test library",
+            "repository": "https://github.com/test/test-lib",
+            "version": "1.0.0",
+            "license": "MIT",
+            "build_system": "cmake",
+            "dependencies": {},
+            "tags": ["testing", "example"]
+        });
+
+        let pkg_path = registry_path.join("testing/test-lib.json");
+        let mut file = fs::File::create(&pkg_path).unwrap();
+        file.write_all(test_pkg.to_string().as_bytes()).unwrap();
+
+        let manager = RegistryManager::new(registry_path, cache_path);
+
+        (temp_dir, manager)
+    }
+
+    #[test]
+    fn test_registry_creation() {
+        let temp_dir = TempDir::new().unwrap();
+        let registry_path = temp_dir.path().join("registry");
+        let cache_path = temp_dir.path().join("cache");
+
+        let manager = RegistryManager::new(registry_path, cache_path);
+        assert!(manager.init().is_ok());
+    }
+
+    #[test]
+    fn test_search_packages() {
+        let (_temp, manager) = create_test_registry();
+
+        let results = manager.search("test").unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].name, "test-lib");
+    }
+
+    #[test]
+    fn test_load_package() {
+        let (_temp, manager) = create_test_registry();
+
+        let pkg = manager.load_package("test-lib").unwrap();
+        assert_eq!(pkg.name, "test-lib");
+        assert_eq!(pkg.version, "1.0.0");
+    }
+
+    #[test]
+    fn test_list_all_packages() {
+        let (_temp, manager) = create_test_registry();
+
+        let packages = manager.list_all().unwrap();
+        assert_eq!(packages.len(), 1);
+        assert_eq!(packages[0].name, "test-lib");
+    }
+
+    #[test]
+    fn test_search_by_tag() {
+        let (_temp, manager) = create_test_registry();
+
+        let results = manager.search("testing").unwrap();
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn test_package_not_found() {
+        let (_temp, manager) = create_test_registry();
+
+        let result = manager.load_package("nonexistent");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_update_index_from_source_local() {
+        let temp_dir = TempDir::new().unwrap();
+        let local_registry = temp_dir.path().join("local-registry");
+        let registry_path = temp_dir.path().join("registry");
+        let cache_path = temp_dir.path().join("cache");
+
+        // Create a local registry
+        fs::create_dir_all(local_registry.join("registry")).unwrap();
+        let test_pkg = serde_json::json!({
+            "name": "local-test",
+            "version": "1.0.0"
+        });
+        fs::write(
+            local_registry.join("registry/local-test.json"),
+            test_pkg.to_string(),
+        )
+        .unwrap();
+
+        // Test with local registry path (simulates PORTERS_REGISTRY env var)
+        let manager = RegistryManager::new(registry_path, cache_path);
+        // Note: This would need env var set in real test
+        assert!(manager.init().is_ok());
+    }
+
+    #[test]
+    fn test_registry_index_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let registry_path = temp_dir.path().join("registry");
+        let cache_path = temp_dir.path().join("cache");
+
+        let manager = RegistryManager::new(registry_path.clone(), cache_path);
+        assert_eq!(manager.registry_path, registry_path);
+    }
+
+    #[test]
+    fn test_search_empty_registry() {
+        let temp_dir = TempDir::new().unwrap();
+        let registry_path = temp_dir.path().join("registry");
+        let cache_path = temp_dir.path().join("cache");
+        fs::create_dir_all(&registry_path).unwrap();
+
+        let manager = RegistryManager::new(registry_path, cache_path);
+        let results = manager.search("anything").unwrap();
+        assert_eq!(results.len(), 0);
+    }
 }

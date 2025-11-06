@@ -600,7 +600,7 @@ porters install boost --git https://github.com/boostorg/boost --tag boost-1.80.0
 
 ## `porters sync`
 
-Synchronize dependencies from `porters.toml`.
+Synchronize dependencies from `porters.toml` with global cache support.
 
 **Usage:**
 ```bash
@@ -610,16 +610,20 @@ porters sync [OPTIONS]
 **Options:**
 - `--dev` - Include development dependencies
 - `--optional` - Include optional dependencies
+- `--no-cache` - Disable cache, force re-download all dependencies
 
 **Behavior:**
 - Reads `porters.toml`
+- **Checks global cache first** (`~/.porters/cache/`)
 - Downloads missing dependencies to `ports/`
+- **Stores new dependencies in global cache** for future reuse
 - Resolves version constraints
 - Updates `porters.lock`
+- **Supports offline mode** (uses only cached dependencies)
 
 **Examples:**
 ```bash
-# Sync regular dependencies
+# Sync regular dependencies (cache-first)
 porters sync
 
 # Sync with dev dependencies
@@ -627,7 +631,16 @@ porters sync --dev
 
 # Sync everything
 porters sync --dev --optional
+
+# Force re-download (bypass cache)
+porters sync --no-cache
 ```
+
+**Cache Behavior:**
+- First checks `~/.porters/cache/<package>/<version>/`
+- If found, copies from cache to `ports/`
+- If not found, downloads from Git and caches globally
+- In offline mode, only uses cached dependencies
 
 ---
 
@@ -649,6 +662,185 @@ porters lock
 **Example:**
 ```bash
 porters lock
+```
+
+---
+
+## `porters registry`
+
+Manage Porters package registry operations.
+
+**Usage:**
+```bash
+porters registry <SUBCOMMAND>
+```
+
+**Subcommands:**
+
+### `porters registry search`
+
+Search for packages in the registry.
+
+**Usage:**
+```bash
+porters registry search <QUERY> [OPTIONS]
+```
+
+**Options:**
+- `--tag <TAG>` - Filter by tag (e.g., graphics, networking)
+- `--limit <N>` - Limit results (default: 20)
+
+**Examples:**
+```bash
+# Search for packages
+porters registry search json
+
+# Search by tag
+porters registry search --tag graphics
+
+# Limit results
+porters registry search fmt --limit 5
+```
+
+### `porters registry list`
+
+List all available packages in the registry.
+
+**Usage:**
+```bash
+porters registry list
+```
+
+**Example:**
+```bash
+porters registry list
+```
+
+### `porters registry update`
+
+Update the local registry index from remote source.
+
+**Usage:**
+```bash
+porters registry update
+```
+
+**Behavior:**
+- Fetches latest package metadata from GitHub
+- Updates `~/.porters/registry-index/`
+- Uses Git sparse checkout for efficiency
+- Respects offline mode setting
+
+**Example:**
+```bash
+porters registry update
+```
+
+**Note:** Registry auto-updates are configurable in `~/.porters/config.toml`:
+```toml
+[registry]
+auto_update = true  # Auto-update when checking for packages
+```
+
+---
+
+## `porters clean`
+
+Clean build artifacts and temporary files.
+
+**Usage:**
+```bash
+porters clean
+```
+
+**Behavior:**
+- Removes `build/` directory
+- Removes `.porters/cache/` directory
+- Preserves `ports/` dependencies
+- Preserves `porters.lock`
+
+**Example:**
+```bash
+porters clean
+```
+
+---
+
+## `porters clean-cache`
+
+Clean dependency cache (local and/or global).
+
+**Usage:**
+```bash
+porters clean-cache [OPTIONS]
+```
+
+**Options:**
+- `--force, -f` - Clean global cache as well (default: local only)
+
+**Behavior:**
+- **Without `--force`**: Cleans only `.porters/cache/` (project-local)
+- **With `--force`**: Also cleans `~/.porters/cache/` (global cache)
+
+**Examples:**
+```bash
+# Clean local cache only
+porters clean-cache
+
+# Clean both local and global cache
+porters clean-cache --force
+```
+
+**Warning:** Cleaning global cache will require re-downloading dependencies for all projects.
+
+---
+
+## `porters update`
+
+Update dependencies to latest compatible versions.
+
+**Usage:**
+```bash
+porters update
+```
+
+**Behavior:**
+- Checks for newer versions of dependencies
+- Respects version constraints in `porters.toml`
+- Updates `porters.lock` with new versions
+- Downloads updated dependencies
+
+**Example:**
+```bash
+porters update
+```
+
+---
+
+## `porters update-deps`
+
+Update all dependencies to latest versions (ignoring constraints).
+
+**Usage:**
+```bash
+porters update-deps [OPTIONS]
+```
+
+**Options:**
+- `--latest` - Update to absolute latest versions (ignore semver constraints)
+
+**Behavior:**
+- Updates all dependencies to latest compatible versions
+- With `--latest`: Ignores semver constraints in `porters.toml`
+- Updates `porters.lock`
+
+**Examples:**
+```bash
+# Update to latest compatible
+porters update-deps
+
+# Update to absolute latest (may break compatibility)
+porters update-deps --latest
 ```
 
 ---
@@ -1354,12 +1546,47 @@ Porters respects these environment variables:
 - `GITHUB_TOKEN` - GitHub personal access token for publishing
 - `PORTERS_CONFIG` - Path to global config (default: `~/.porters/config.toml`)
 - `PORTERS_CACHE` - Path to global cache (default: `~/.porters/cache/`)
+- `PORTERS_OFFLINE` - Enable offline mode (values: `1`, `true`, `yes`)
+- `HOME` (Unix) / `USERPROFILE` (Windows) - User home directory
 
 **Example:**
 ```bash
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxxx
 porters publish --version 1.0.0
+
+# Enable offline mode
+export PORTERS_OFFLINE=1
+porters sync  # Will use only cached dependencies
+
+# Custom cache directory
+export PORTERS_CACHE=/mnt/fast-ssd/porters-cache
+porters sync
 ```
+
+**Offline Mode:**
+
+Enable offline mode to prevent all network access:
+
+1. **Via Environment Variable:**
+   ```bash
+   export PORTERS_OFFLINE=1
+   ```
+
+2. **Via Global Config** (`~/.porters/config.toml`):
+   ```toml
+   offline = true
+   ```
+
+3. **Via Project Config** (`porters.toml`):
+   ```toml
+   offline = true
+   ```
+
+When offline mode is enabled:
+- All dependencies must be cached
+- Registry searches use local cache only
+- No Git clones or fetches
+- Clear error messages for missing resources
 
 ---
 
