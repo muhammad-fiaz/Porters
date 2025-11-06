@@ -864,6 +864,7 @@ fn get_project_details() -> Result<ProjectDetails> {
     ))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_project_structure(
     language: &str,
     project_type: &str,
