@@ -14,7 +14,7 @@ extra-watch-dirs = []
 mathjax-support = true
 git-repository-url = "https://github.com/muhammad-fiaz/Porters"
 edit-url-template = "https://github.com/muhammad-fiaz/Porters/edit/main/docs/{path}"
-site-url = "https://muhammad-fiaz.github.io/porters/"
+site-url = "https://muhammad-fiaz.github.io/Porters/"
 
 [output.html.fold]
 enable = true
@@ -22,6 +22,4 @@ level = 0
 
 [output.html.playground]
 editable = false
-
-[preprocessor.index]
 
