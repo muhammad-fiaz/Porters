@@ -132,41 +132,153 @@ jobs:
         id: release_notes
         run: |
           VERSION=${{ steps.get_version.outputs.VERSION }}
-          echo "Extracting release notes for version $VERSION"
+          TAG_NAME=${{ steps.get_version.outputs.TAG_NAME }}
+          echo "Generating release notes for version $VERSION"
           
-          # Extract section from CHANGELOG.md
-          if [ -f CHANGELOG.md ]; then
-            sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$ d' > release_notes.md
+          # Create release notes header
+          cat > release_notes.md << EOF
+          # Porters v$VERSION
+          
+          A universal C/C++ project manager and build orchestrator with GitHub-integrated package publishing.
+          
+          ## What's New
+          
+          ### ✨ Features Added
+          EOF
+          
+          # Get commits since last tag or from beginning if first release
+          if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
+            LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+            echo "Generating changelog from $LAST_TAG to $TAG_NAME"
+            git log --pretty=format:"%s" $LAST_TAG..HEAD | while read -r line; do
+              # Skip merge commits and format as bullet points
+              if [[ ! "$line" =~ ^Merge ]]; then
+                echo "- $line" >> release_notes.md
+              fi
+            done
           else
-            echo "Version $VERSION" > release_notes.md
-            echo "" >> release_notes.md
-            echo "See [CHANGELOG.md](CHANGELOG.md) for details." >> release_notes.md
+            echo "First release, including all commits"
+            git log --pretty=format:"%s" | head -20 | while read -r line; do
+              if [[ ! "$line" =~ ^Merge ]]; then
+                echo "- $line" >> release_notes.md
+              fi
+            done
           fi
           
-          # Add installation instructions
+          # Add installation section
           cat >> release_notes.md << 'EOF'
           
-          ## Installation
+          ## 📦 Installation
           
-          ### Via Cargo
+          ### Via Cargo (Recommended)
           ```bash
           cargo install porters
+          ```
+          
+          ### Quick Manual Install
+          
+          **Windows:**
+          ```powershell
+          git clone https://github.com/muhammad-fiaz/porters
+          cd porters
+          .\install.ps1
+          ```
+          
+          **Linux/macOS:**
+          ```bash
+          git clone https://github.com/muhammad-fiaz/porters
+          cd porters
+          chmod +x install.sh
+          ./install.sh
           ```
           
           ### Binary Downloads
           
           | Platform | Architecture | Download |
           |----------|--------------|----------|
-          | Linux | x86_64 (GNU) | [porters-linux-x86_64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-linux-x86_64.tar.gz) |
-          | Linux | x86_64 (musl) | [porters-linux-x86_64-musl.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-linux-x86_64-musl.tar.gz) |
-          | Windows | x86_64 | [porters-windows-x86_64.exe.zip](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-windows-x86_64.exe.zip) |
-          | macOS | Intel (x86_64) | [porters-macos-x86_64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-macos-x86_64.tar.gz) |
-          | macOS | Apple Silicon (ARM64) | [porters-macos-aarch64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${{ steps.get_version.outputs.VERSION }}/porters-macos-aarch64.tar.gz) |
+          | Linux | x86_64 (GNU) | [porters-linux-x86_64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${VERSION}/porters-linux-x86_64.tar.gz) |
+          | Linux | x86_64 (musl) | [porters-linux-x86_64-musl.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${VERSION}/porters-linux-x86_64-musl.tar.gz) |
+          | Windows | x86_64 | [porters-windows-x86_64.exe.zip](https://github.com/muhammad-fiaz/porters/releases/download/v${VERSION}/porters-windows-x86_64.exe.zip) |
+          | macOS | Intel (x86_64) | [porters-macos-x86_64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${VERSION}/porters-macos-x86_64.tar.gz) |
+          | macOS | Apple Silicon (ARM64) | [porters-macos-aarch64.tar.gz](https://github.com/muhammad-fiaz/porters/releases/download/v${VERSION}/porters-macos-aarch64.tar.gz) |
           
-          ### Upgrade Existing Installation
+          #### 📥 After Downloading Binary:
+          
+          **Windows:**
+          1. Extract the `.zip` file
+          2. Run the binary once - it will automatically detect if it's not in PATH
+          3. Follow the on-screen instructions to add to PATH, or manually add:
+             ```powershell
+             # Add current directory to PATH (run as Administrator)
+             [Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\path\to\porters", "User")
+             ```
+          4. Open a **new terminal** and run `porters --version`
+          5. Delete the extracted folder after confirming it works
+          
+          **Linux/macOS:**
+          1. Extract the `.tar.gz` file:
+             ```bash
+             tar -xzf porters-*.tar.gz
+             ```
+          2. Move to a directory in your PATH:
+             ```bash
+             sudo mv porters /usr/local/bin/
+             # or for user-only install:
+             mkdir -p ~/.local/bin
+             mv porters ~/.local/bin/
+             export PATH="$HOME/.local/bin:$PATH"
+             ```
+          3. Make executable:
+             ```bash
+             chmod +x /usr/local/bin/porters
+             # or: chmod +x ~/.local/bin/porters
+             ```
+          4. Open a **new terminal** and run `porters --version`
+          5. Delete the extracted folder after confirming it works
+          
+          > **⚠️ Important:** After installation, open a **new terminal window** for PATH changes to take effect.
+          
+          ### 🔄 Upgrade Existing Installation
+          
+          **All Installation Methods (including binary installs):**
           ```bash
           porters upgrade
           ```
+          
+          The `porters upgrade` command works for all installation methods:
+          - ✅ **Cargo installations**: Updates via `cargo install`
+          - ✅ **Binary installations**: Downloads latest release from GitHub
+          - ✅ **Manual installations**: Fetches and replaces with latest binary
+          
+          > **Note:** Binary-based installations will auto-update by downloading the appropriate binary for your platform from GitHub releases.
+          
+          ## 🚀 Quick Start
+          
+          ### Create a New Project
+          ```bash
+          porters create my-awesome-project
+          ```
+          
+          ### Execute Files Directly
+          ```bash
+          porters execute hello.c
+          porters execute main.cpp
+          ```
+          
+          ## 📸 Screenshots
+          
+          ### Project Creation
+          ![Project Creation](https://github.com/user-attachments/assets/project-creation-demo.png)
+          
+          ### Dependency Management
+          ![Dependency Graph](https://github.com/user-attachments/assets/dependency-graph-demo.png)
+          
+          ### Build System Integration
+          ![Build Integration](https://github.com/user-attachments/assets/build-system-demo.png)
+          
+          ---
+          
+          **Full Documentation:** https://muhammad-fiaz.github.io/Porters/
           EOF
 
       - name: Update Release

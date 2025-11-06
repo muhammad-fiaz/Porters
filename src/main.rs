@@ -4002,7 +4002,18 @@ fn add_to_path(overwrite: bool) -> Result<()> {
     use std::env;
     use std::path::PathBuf;
 
-    // Get cargo bin directory
+    // Get current executable location (for binary installations)
+    let current_exe = if let Ok(exe_path) = env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            parent.to_path_buf()
+        } else {
+            anyhow::bail!("Cannot determine current executable directory");
+        }
+    } else {
+        anyhow::bail!("Cannot determine current executable path");
+    };
+
+    // Get cargo bin directory (for cargo installations)
     let cargo_bin = if let Ok(cargo_home) = env::var("CARGO_HOME") {
         PathBuf::from(cargo_home).join("bin")
     } else if let Ok(home) = env::var("HOME") {
@@ -4013,7 +4024,18 @@ fn add_to_path(overwrite: bool) -> Result<()> {
         anyhow::bail!("Cannot determine cargo bin path");
     };
 
-    let cargo_bin_str = cargo_bin.to_string_lossy().to_string();
+    // Determine which path to add
+    let is_cargo_install = current_exe.to_string_lossy().contains(".cargo")
+        || current_exe.to_string_lossy().contains("cargo")
+        || cargo_bin == current_exe;
+
+    let path_to_add = if is_cargo_install {
+        &cargo_bin
+    } else {
+        &current_exe
+    };
+
+    let path_str = path_to_add.to_string_lossy().to_string();
 
     // Check if already in PATH
     if let Ok(path_var) = env::var("PATH") {
@@ -4025,12 +4047,12 @@ fn add_to_path(overwrite: bool) -> Result<()> {
 
         let already_exists = paths
             .iter()
-            .any(|p| p.trim() == cargo_bin_str || p.trim() == cargo_bin.to_str().unwrap_or(""));
+            .any(|p| p.trim() == path_str || p.trim() == path_to_add.to_str().unwrap_or(""));
 
         if already_exists && !overwrite {
             print_success("✅ Porters is already in your PATH!");
             println!();
-            println!("ℹ️  Path: {}", cargo_bin_str);
+            println!("ℹ️  Path: {}", path_str);
             println!();
             println!("If you want to overwrite the existing PATH entry, use:");
             println!("  porters add-to-path --overwrite");
@@ -4046,6 +4068,14 @@ fn add_to_path(overwrite: bool) -> Result<()> {
     print_step("Adding porters to system PATH");
     println!();
 
+    if is_cargo_install {
+        println!("ℹ️  Installation type: Cargo");
+    } else {
+        println!("ℹ️  Installation type: Binary Download");
+    }
+    println!("ℹ️  Adding path: {}", path_str);
+    println!();
+
     if cfg!(windows) {
         println!("📋 Windows Instructions:");
         println!();
@@ -4055,7 +4085,7 @@ fn add_to_path(overwrite: bool) -> Result<()> {
         println!("  \"Path\",");
         println!(
             "  [Environment]::GetEnvironmentVariable(\"Path\", \"User\") + \";{}\",",
-            cargo_bin_str
+            path_str
         );
         println!("  \"User\"");
         println!(")");
@@ -4065,12 +4095,12 @@ fn add_to_path(overwrite: bool) -> Result<()> {
         println!("  1. Search 'Environment Variables' in Start Menu");
         println!("  2. Click 'Environment Variables'");
         println!("  3. Under 'User variables', select 'Path' and click 'Edit'");
-        println!("  4. Click 'New' and add: {}", cargo_bin_str);
+        println!("  4. Click 'New' and add: {}", path_str);
         println!("  5. Click 'OK' on all dialogs");
         println!("  6. Restart your terminal");
         println!();
         println!("Option 3: Current Session Only (Temporary)");
-        println!("  $env:Path += \";{}\"", cargo_bin_str);
+        println!("  $env:Path += \";{}\"", path_str);
     } else {
         println!("📋 Linux/macOS Instructions:");
         println!();
@@ -4078,18 +4108,23 @@ fn add_to_path(overwrite: bool) -> Result<()> {
         println!("(~/.bashrc, ~/.zshrc, or ~/.profile)");
         println!();
         println!("{}", "=".repeat(60));
-        println!("export PATH=\"{}:$PATH\"", cargo_bin_str);
+        println!("export PATH=\"{}:$PATH\"", path_str);
         println!("{}", "=".repeat(60));
         println!();
         println!("Then reload your shell configuration:");
         println!("  source ~/.bashrc    # or source ~/.zshrc");
         println!();
         println!("Current Session Only (Temporary):");
-        println!("  export PATH=\"{}:$PATH\"", cargo_bin_str);
+        println!("  export PATH=\"{}:$PATH\"", path_str);
     }
 
     println!();
     print_success("✨ Instructions provided above!");
+    println!();
+    println!("After adding to PATH:");
+    println!("  1. Open a NEW terminal window");
+    println!("  2. Run: porters --version");
+    println!("  3. You can now use 'porters upgrade' to update automatically");
     println!();
 
     Ok(())
@@ -4192,7 +4227,18 @@ fn check_path_setup() {
     use std::env;
     use std::path::PathBuf;
 
-    // Get cargo bin directory
+    // Get current executable location (for binary installations)
+    let current_exe = if let Ok(exe_path) = env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            parent.to_path_buf()
+        } else {
+            return;
+        }
+    } else {
+        return;
+    };
+
+    // Get cargo bin directory (for cargo installations)
     let cargo_bin = if let Ok(cargo_home) = env::var("CARGO_HOME") {
         PathBuf::from(cargo_home).join("bin")
     } else if let Ok(home) = env::var("HOME") {
@@ -4203,9 +4249,10 @@ fn check_path_setup() {
         return; // Can't determine cargo bin path
     };
 
+    let current_exe_str = current_exe.to_string_lossy().to_string();
     let cargo_bin_str = cargo_bin.to_string_lossy().to_string();
 
-    // Check if cargo bin is in PATH
+    // Check if either location is in PATH
     if let Ok(path_var) = env::var("PATH") {
         let paths: Vec<&str> = if cfg!(windows) {
             path_var.split(';').collect()
@@ -4213,12 +4260,17 @@ fn check_path_setup() {
             path_var.split(':').collect()
         };
 
-        // Already in PATH
-        if paths
-            .iter()
-            .any(|p| p.trim() == cargo_bin_str || p.trim() == cargo_bin.to_str().unwrap_or(""))
-        {
-            return;
+        // Check if current exe location or cargo bin is in PATH
+        let in_path = paths.iter().any(|p| {
+            let trimmed = p.trim();
+            trimmed == current_exe_str
+                || trimmed == cargo_bin_str
+                || trimmed == current_exe.to_str().unwrap_or("")
+                || trimmed == cargo_bin.to_str().unwrap_or("")
+        });
+
+        if in_path {
+            return; // Already in PATH
         }
     }
 
@@ -4228,10 +4280,25 @@ fn check_path_setup() {
         return; // Already showed message
     }
 
+    // Determine installation type
+    let is_cargo_install = current_exe_str.contains(".cargo")
+        || current_exe_str.contains("cargo")
+        || cargo_bin == current_exe;
+
     // Show PATH setup message
     println!("\n{}", "=".repeat(80));
     println!("⚠️  Porters is not in your system PATH");
     println!("{}", "=".repeat(80));
+    println!();
+
+    if is_cargo_install {
+        println!("ℹ️  Installation type: Cargo");
+        println!("ℹ️  Binary location: {}", cargo_bin_str);
+    } else {
+        println!("ℹ️  Installation type: Binary Download");
+        println!("ℹ️  Binary location: {}", current_exe_str);
+    }
+
     println!();
     println!("ℹ️  You can add porters to PATH automatically using:");
     println!("    porters add-to-path");
@@ -4239,6 +4306,20 @@ fn check_path_setup() {
     println!("Or remove it later with:");
     println!("    porters remove-from-path");
     println!();
+
+    if !is_cargo_install {
+        println!("💡 Tip for binary installations:");
+        println!("   Move porters to a standard location first:");
+        if cfg!(windows) {
+            println!("   - C:\\Program Files\\porters\\ (recommended)");
+            println!("   - C:\\Users\\<YourName>\\AppData\\Local\\Programs\\porters\\");
+        } else {
+            println!("   - /usr/local/bin/ (requires sudo)");
+            println!("   - ~/.local/bin/ (user-only)");
+        }
+        println!();
+    }
+
     println!("{}", "=".repeat(80));
     println!();
 
