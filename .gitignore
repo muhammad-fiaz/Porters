@@ -1,6 +1,6 @@
 # Rust build artifacts
 /target
-/docs/book
+# /docs/book
 
 # Cargo.lock (uncomment if you want to commit it)
 # Cargo.lock
