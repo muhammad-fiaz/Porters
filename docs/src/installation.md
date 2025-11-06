@@ -116,21 +116,65 @@ chmod +x /usr/local/bin/porters
 **For Windows:**
 Move `porters.exe` to a directory in your PATH (e.g., `C:\Program Files\Porters\`)
 
-### Building from Source
+## Building from Source
 
-Clone the repository and build:
+If you want to build Porters from source (for development or custom builds):
+
+### Step 1: Clone the Repository
 
 ```bash
 # Clone the repository
 git clone https://github.com/muhammad-fiaz/Porters.git
 cd Porters
+```
 
-# Build in release mode
+### Step 2: Build the Project
+
+```bash
+# Build in release mode for optimal performance
 cargo build --release
+```
 
-# The binary will be in target/release/porters
-# Copy it to your PATH
-sudo cp target/release/porters /usr/local/bin/  # Linux/macOS
+### Step 3: Install the Binary
+
+After building, you need to install the binary to your system PATH:
+
+**Linux/macOS:**
+```bash
+# Copy to system PATH
+sudo cp target/release/porters /usr/local/bin/
+
+# Make it executable
+sudo chmod +x /usr/local/bin/porters
+```
+
+**Windows (PowerShell as Administrator):**
+```powershell
+# Copy to a directory in PATH (e.g., Program Files)
+cp target\release\porters.exe "C:\Program Files\Porters\porters.exe"
+
+# Or add to user PATH
+$portersPath = "$env:USERPROFILE\.porters\bin"
+New-Item -ItemType Directory -Force -Path $portersPath
+cp target\release\porters.exe "$portersPath\porters.exe"
+
+# Add to PATH permanently
+[Environment]::SetEnvironmentVariable(
+  "Path",
+  [Environment]::GetEnvironmentVariable("Path", "User") + ";$portersPath",
+  "User"
+)
+```
+
+### Step 4: Verify Installation
+
+```bash
+porters --version
+```
+
+You should see output similar to:
+```
+porters 0.1.0
 ```
 
 ## Verify Installation
