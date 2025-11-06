@@ -41,18 +41,13 @@ use anyhow::Result;
 use std::path::PathBuf;
 
 /// Package installation scope
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum InstallScope {
     /// Install to project-local ports/ directory
+    #[default]
     Local,
     /// Install to global ~/.porters/packages directory
     Global,
-}
-
-impl Default for InstallScope {
-    fn default() -> Self {
-        Self::Local
-    }
 }
 
 impl std::fmt::Display for InstallScope {
