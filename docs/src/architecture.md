@@ -19,11 +19,12 @@ Porters follows a modular architecture with clear separation of concerns:
 │  • Config (config.rs)                   │
 │  • Scanner (scan.rs)                    │
 │  • Dependencies (deps/)                 │
-│  • Build Systems (build/)               │
+│  • Build Systems (buildsystem.rs)       │
 │  • Package Managers (pkg_managers/)     │
-│  • Global Config (global.rs)            │
+│  • Global Packages (global_packages.rs) │
+│  • Global Config (global_config.rs)     │
 │  • Lock File (lockfile.rs)              │
-│  • Binary Cache (bin_cache.rs)          │
+│  • Cache System (cache.rs)              │
 │  • Registry (registry.rs)               │
 └─────────────┬───────────────────────────┘
               │
@@ -93,7 +94,7 @@ Core dependency resolution:
 - Lock file management
 - Transitive dependency tracking
 
-### Build Systems (`build/`)
+### Build Systems (`buildsystem.rs`)
 
 Integration with build tools:
 
@@ -103,16 +104,77 @@ Integration with build tools:
 - **Make** support
 - **Ninja** support
 - Custom commands
+- Automatic detection
+- Build system validation
 
-### Global Configuration (`global.rs`)
+### Global Packages (`global_packages.rs`)
 
-Manages global state:
+Manages global state and project paths:
 
 - `~/.porters/` directory structure
-- Global package registry
+- Project directory helpers
+- Lock file paths
+- Dependency directory paths
 - Settings persistence
-- Parallel job configuration
-- Global package installations
+
+### Global Configuration (`global_config.rs`)
+
+**NEW**: Enhanced global configuration system:
+
+Features:
+- **Offline Mode**: Blocks all network activity when enabled
+- **Cache Configuration**: Configurable cache directory and size limits
+- **Registry Configuration**: Remote registry URL and auto-update settings
+- **User Preferences**: Default author, email, license, language
+- **System Requirements Check**: Automatic compiler and build tool detection
+
+Configuration Location: `~/.porters/config.toml`
+
+Example:
+```toml
+porters_version = "0.0.1"
+offline = false
+auto_update_check = true
+
+[preferences]
+author = "Your Name"
+email = "you@example.com"
+license = "MIT"
+default_language = "cpp"
+
+[cache]
+enabled = true
+max_size_mb = 1024
+auto_clean = true
+
+[registry]
+url = "https://github.com/muhammad-fiaz/porters"
+auto_update = true
+```
+
+### Cache System (`cache.rs`)
+
+**NEW**: Dual-layer caching architecture:
+
+#### GlobalCache
+- Centralized cache in `~/.porters/cache/`
+- Shared across all projects
+- Cache-first dependency resolution
+- Offline mode support
+- Package storage, retrieval, and listing
+- Cache statistics and cleanup
+
+#### DependencyCache
+- Project-local cache in `.porters/cache/`
+- Build artifacts and temporary files
+- Hash-based verification
+- Download caching
+
+Features:
+- SHA-256 checksum validation
+- Automatic cache invalidation
+- Human-readable size reporting
+- .git directory exclusion during copy
 
 ### Lock File (`lockfile.rs`)
 
@@ -123,24 +185,28 @@ Ensures reproducible builds:
 - Transitive dependency tracking
 - Timestamp management
 - Git commit resolution
-
-### Binary Cache (`bin_cache.rs`)
-
-Performance optimization:
-
-- Compiled binary caching
-- Download caching
-- Build artifact reuse
-- Cache invalidation strategies
+- Offline mode compatibility
 
 ### Registry (`registry.rs`)
 
-Package registry integration:
+**NEW**: Enhanced package registry with remote sync:
 
-- Package discovery
+Features:
+- Package discovery and search
 - Version resolution
 - Metadata management
-- Custom registry support (planned)
+- **Remote Registry Sync**: Git sparse checkout from GitHub
+- **Offline Mode Support**: Works without network when registry is cached
+- **Auto-Update**: Configurable automatic registry updates
+- Tag-based searching
+- Package listing
+
+Registry Location: `~/.porters/registry-index/`
+
+Integration:
+- Syncs from configured GitHub repository
+- Falls back to local registry in offline mode
+- Caches registry metadata for performance
 
 ## Data Flow
 
@@ -208,7 +274,14 @@ User: porters build
 
 ```text
 .porters/
-├── config.toml           # Global settings
+├── config.toml           # Global configuration (offline, cache, registry)
+├── cache/                # Global dependency cache (NEW)
+│   ├── <package>/       # Cached packages by name
+│   │   └── <version>/   # Version-specific cache
+│   └── ...
+├── registry-index/       # Remote registry cache (NEW)
+│   ├── packages/        # Package metadata
+│   └── .git/            # Git sparse checkout data
 ├── packages/             # Globally installed packages
 │   ├── conan/           # Conan global packages
 │   │   └── conanfile.txt
@@ -216,10 +289,7 @@ User: porters build
 │   │   └── vcpkg.json
 │   └── xmake/           # XMake global packages
 │       └── xmake.lua
-└── cache/                # Download and build cache
-    ├── sources/         # Downloaded source archives
-    ├── build/           # Build cache
-    └── registry/        # Registry metadata cache
+└── temp/                 # Temporary files
 ```
 
 ### Project Directory
@@ -300,16 +370,49 @@ Supports multiple build systems instead of enforcing one.
 
 **Rationale**: Respects existing project structures and developer preferences.
 
-### 5. Git-First Dependency Model
+### 5. Cache-First Dependency Model
+
+**NEW**: Prioritizes global cache before network access.
+
+**Resolution Order**:
+1. Check global cache (`~/.porters/cache/`)
+2. Check local cache (`.porters/cache/`)
+3. Download from network (if not offline)
+4. Store in global cache for reuse
+
+**Rationale**:
+- Drastically reduces network usage
+- Enables true offline development
+- Shares dependencies across projects
+- Faster setup for common libraries
+
+### 6. Offline Mode Support
+
+**NEW**: Complete functionality without network access.
+
+**When Enabled**:
+- Uses only cached dependencies
+- Blocks all network requests
+- Falls back to local registry
+- Clear error messages for missing resources
+
+**Rationale**:
+- Supports air-gapped environments
+- Reliable builds without internet
+- Prevents unexpected network failures
+- Faster CI/CD pipelines
+
+### 7. Git-First Dependency Model
 
 Prioritizes Git repositories over package registries.
 
 **Rationale**:
 - C/C++ ecosystem heavily Git-based
 - Simpler initial implementation
-- Future registry support planned
+- Direct source access
+- Registry support available via remote sync
 
-### 6. Package Manager Integration (NEW)
+### 8. Package Manager Integration
 
 Integrates with existing C/C++ package managers rather than replacing them.
 
@@ -327,6 +430,7 @@ Type-safe distinction between local and global installations.
 - Prevents accidental scope mixing
 - Clear intent in code
 - Compile-time safety
+- Default to Local for project isolation
 
 ## Technology Stack
 

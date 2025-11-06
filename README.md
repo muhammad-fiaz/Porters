@@ -150,7 +150,7 @@ cargo install --git https://github.com/muhammad-fiaz/Porters.git
 
 > ⚠️ **Note:** Nightly builds may contain unstable features and bugs. Use stable releases for production.
 
-### Quick Manual Install
+### Manually Clone & Install
 
 **Windows:**
 ```powershell
