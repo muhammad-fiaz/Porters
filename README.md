@@ -1,5 +1,5 @@
 <div align="center">
-<img alt="porters_logo" src="https://github.com/user-attachments/assets/17c507aa-3131-49b6-a682-e2ae55c3841c" />
+<img alt="porters_logo" src="https://github.com/user-attachments/assets/19d1d1cd-12d6-4917-b808-16f2d9632dcd" />
 
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/v/porters" alt="Crates.io"></a>
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/d/porters" alt="Crates.io Downloads"></a>
