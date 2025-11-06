@@ -3,7 +3,7 @@
 
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/v/porters" alt="Crates.io"></a>
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/d/porters" alt="Crates.io Downloads"></a>
-<a href="https://muhammad-fiaz.github.io/porters/"><img src="https://img.shields.io/badge/docs-muhammad--fiaz.github.io-blue" alt="Documentation"></a>
+<a href="https://muhammad-fiaz.github.io/Porters/"><img src="https://img.shields.io/badge/docs-muhammad--fiaz.github.io-blue" alt="Documentation"></a>
 <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-%3E%3D1.70-orange.svg" alt="Rust"></a>
 <a href="https://github.com/muhammad-fiaz/porters"><img src="https://img.shields.io/github/stars/muhammad-fiaz/porters" alt="GitHub stars"></a>
 <a href="https://github.com/muhammad-fiaz/porters/issues"><img src="https://img.shields.io/github/issues/muhammad-fiaz/porters" alt="GitHub issues"></a>
@@ -16,7 +16,7 @@
 
 <p><em>A universal C/C++ project manager and build orchestrator with GitHub-integrated package publishing</em></p>
 
-**📚 [Documentation](https://muhammad-fiaz.github.io/Porters/) | [Configurations](https://muhammad-fiaz.github.io/Porters/configuration/) | [Quick Start](https://muhammad-fiaz.github.io/porters/getting-started/)**
+**📚 [Documentation](https://muhammad-fiaz.github.io/Porters/) | [Configurations](https://muhammad-fiaz.github.io/Porters/configuration/) | [Quick Start](https://muhammad-fiaz.github.io/Porters/getting-started/)**
 
 </div>
 
@@ -193,16 +193,14 @@ porters execute main.cpp arg1 arg2
 
 **100% Automatic - Zero Configuration:**
 - ✅ **Any C/C++ File** - `.c`, `.cpp`, `.cxx`, `.cc`, `.c++`, `.cp`
-- ✅ **Compiler Auto-Detection** - Finds gcc/clang/g++/clang++
+- ✅ **Compiler Auto-Detection** - Finds gcc/clang/g++/clang++  
 - ✅ **Dependency Resolution** - Reads `porters.toml` if present
 - ✅ **Include/Lib Paths** - Automatically injected from dependencies
 - ✅ **Works Standalone** - Execute files even outside a project
 
-See [EXECUTE_GUIDE.md](./EXECUTE_GUIDE.md) for detailed documentation.
+See [Execute Guide](https://muhammad-fiaz.github.io/Porters/execute.html) for detailed documentation.
 
-## 📋 Commands
-
-```bash
+## 📋 Commands```bash
 porters create <name>         # Create new project
 porters init                  # Initialize existing project
 porters add <package>         # Add dependency
@@ -359,7 +357,7 @@ description = "Format code"
 script = "scripts/format.sh"
 ```
 
-See the [Extension Guide](https://muhammad-fiaz.github.io/porters/extensions.html) for details.
+See the [Extension Guide](https://muhammad-fiaz.github.io/Porters/extensions.html) for details.
 
 <details>
 <summary>🔨 Supported Build Systems (17+)</summary>
@@ -475,12 +473,12 @@ This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE)
 
 ## 📚 Documentation
 
-- [📖 Complete Documentation](https://muhammad-fiaz.github.io/porters/)
-- [🚀 Getting Started](https://muhammad-fiaz.github.io/porters/getting-started.html)
-- [🔌 Extension Guide](https://muhammad-fiaz.github.io/porters/extensions.html)
-- [📦 Dependency Management](https://muhammad-fiaz.github.io/porters/dependencies.html)
-- [🔨 Build Systems](https://muhammad-fiaz.github.io/porters/building.html)
-- [🛠️ Configuration Reference](https://muhammad-fiaz.github.io/porters/configuration.html)
+- [📖 Complete Documentation](https://muhammad-fiaz.github.io/Porters/)
+- [🚀 Getting Started](https://muhammad-fiaz.github.io/Porters/getting-started.html)
+- [🔌 Extension Guide](https://muhammad-fiaz.github.io/Porters/extensions.html)
+- [📦 Dependency Management](https://muhammad-fiaz.github.io/Porters/dependencies.html)
+- [🔨 Build Systems](https://muhammad-fiaz.github.io/Porters/building.html)
+- [🛠️ Configuration Reference](https://muhammad-fiaz.github.io/Porters/configuration.html)
 
 ## 🐛 Issues & Support
 
