@@ -8,6 +8,10 @@ documentation = "https://muhammad-fiaz.github.io/Porters"
 homepage = "https://muhammad-fiaz.github.io/Porters"
 description = "A universal C/C++ project manager and build orchestrator"
 license = "Apache-2.0"
+readme = "README.md"
+keywords = ["c", "cpp", "build", "cmake", "package-manager"]
+categories = ["development-tools", "command-line-utilities"]
+exclude = ["docs/book/", ".github/", "target/"]
 
 [[bin]]
 name = "porters"
