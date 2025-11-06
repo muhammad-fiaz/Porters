@@ -345,7 +345,8 @@ porters extension install my-ext --path ./my-extension
 porters extension create my-awesome-extension
 ```
 
-### Extension Example
+<details>
+<summary>🔌 Extension Example</summary>
 
 ```toml
 # extension.toml
@@ -361,6 +362,8 @@ name = "format"
 description = "Format code"
 script = "scripts/format.sh"
 ```
+
+</details>
 
 See the [Extension Guide](https://muhammad-fiaz.github.io/Porters/extensions.html) for details.
 
