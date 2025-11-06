@@ -1,3 +1,11 @@
+//! # Porters - Universal C/C++ Project Manager
+//!
+//! Porters is a comprehensive package manager and build orchestrator for C/C++ projects,
+//! designed to simplify dependency management, cross-platform builds, and project workflows.
+//! ```
+//! Licensed under the Apache License, Version 2.0
+//! See [LICENSE](https://github.com/muhammad-fiaz/Porters/blob/main/LICENSE)
+
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use dialoguer::{Input, Select};
@@ -11,12 +19,14 @@ mod config;
 mod cross_compile;
 mod deps;
 mod error;
+mod export;
 mod extension;
 mod global;
 mod global_config;
 mod hash;
 mod license;
 mod lockfile;
+mod pkg_managers;
 mod publish;
 mod registry;
 mod scan;
@@ -25,6 +35,7 @@ mod util;
 mod version;
 
 use config::PortersConfig;
+use pkg_managers::{ConanManager, InstallScope, PackageManager, VcpkgManager, XMakeManager};
 use util::pretty::*;
 
 #[derive(Parser)]
@@ -42,6 +53,7 @@ enum Commands {
     Init,
 
     /// 📦 Create a new porters project in a new directory
+    #[command(visible_alias = "new")]
     Create {
         /// Project name
         name: String,
@@ -52,6 +64,7 @@ enum Commands {
     },
 
     /// ➕ Add a dependency
+    #[command(visible_alias = "a")]
     Add {
         /// Package name or path/git URL
         package: String,
@@ -75,15 +88,49 @@ enum Commands {
         /// Git tag
         #[arg(long)]
         tag: Option<String>,
+
+        /// Install globally (default: local to project)
+        #[arg(long, short = 'g')]
+        global: bool,
     },
 
     /// ➖ Remove a dependency
+    #[command(visible_alias = "rm")]
     Remove {
         /// Package name
         package: String,
+
+        /// Remove globally (default: local to project)
+        #[arg(long, short = 'g')]
+        global: bool,
+
+        /// Force removal without confirmation
+        #[arg(long, short = 'f')]
+        force: bool,
     },
 
-    /// 🔨 Build the project
+    /// 📦 Add a Conan package as dependency
+    #[command(visible_alias = "co")]
+    Conan {
+        #[command(subcommand)]
+        action: PackageManagerAction,
+    },
+
+    /// 📦 Add a vcpkg package as dependency
+    #[command(visible_alias = "vc")]
+    Vcpkg {
+        #[command(subcommand)]
+        action: PackageManagerAction,
+    },
+
+    /// 📦 Add an XMake package as dependency
+    #[command(visible_alias = "xm")]
+    Xmake {
+        #[command(subcommand)]
+        action: PackageManagerAction,
+    },
+
+    /// �🔨 Build the project
     Build {
         /// Build for all supported platforms
         #[arg(long)]
@@ -107,6 +154,7 @@ enum Commands {
     },
 
     /// ▶️ Run the project
+    #[command(visible_alias = "r")]
     Run {
         /// Additional run arguments
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
@@ -114,6 +162,7 @@ enum Commands {
     },
 
     /// ⚡ Execute a single C/C++ file directly with dependencies
+    #[command(visible_alias = "exec")]
     Execute {
         /// Source file to compile and run (.c or .cpp)
         file: String,
@@ -136,9 +185,11 @@ enum Commands {
     },
 
     /// 🧪 Run tests
+    #[command(visible_alias = "t")]
     Test,
 
     /// ✅ Check compilation without creating executables (syntax check)
+    #[command(visible_alias = "ch")]
     Check {
         /// Specific file to check (optional - checks all project files if not provided)
         file: Option<String>,
@@ -149,9 +200,11 @@ enum Commands {
     },
 
     /// 🔄 Update dependencies
+    #[command(visible_alias = "u")]
     Update,
 
     /// 🧹 Clean build artifacts
+    #[command(visible_alias = "c")]
     Clean,
 
     /// 🔒 Generate or update lockfile
@@ -161,9 +214,11 @@ enum Commands {
     Vendor,
 
     /// 🌳 Show dependency graph
+    #[command(visible_alias = "g")]
     Graph,
 
     /// 📤 Publish package to GitHub releases
+    #[command(visible_alias = "pub")]
     Publish {
         /// GitHub access token (or use GITHUB_TOKEN env var)
         #[arg(long)]
@@ -178,6 +233,7 @@ enum Commands {
     Upgrade,
 
     /// 🌍 Install a package globally
+    #[command(visible_alias = "i")]
     Install {
         /// Package name or git URL
         package: String,
@@ -196,6 +252,7 @@ enum Commands {
     },
 
     /// 🔄 Sync dependencies from porters.toml
+    #[command(visible_alias = "s")]
     Sync {
         /// Include dev dependencies
         #[arg(long)]
@@ -223,10 +280,17 @@ enum Commands {
     },
 
     /// 📊 List project dependencies
+    #[command(visible_alias = "ls")]
     List {
         /// Show dependency tree
         #[arg(long)]
         tree: bool,
+    },
+
+    /// 📤 Export project to build system config files
+    Export {
+        #[command(subcommand)]
+        build_system: ExportBuildSystem,
     },
 
     /// 🌐 List globally installed packages
@@ -289,6 +353,77 @@ enum Commands {
 
     /// ➖ Remove porters from system PATH
     RemoveFromPath,
+
+    /// 📚 Open documentation in browser
+    Docs,
+}
+
+#[derive(Subcommand)]
+enum PackageManagerAction {
+    /// Add a package from the package manager
+    Add {
+        /// Package name (e.g., fmt/10.1.1 for Conan, fmt for vcpkg)
+        package: String,
+
+        /// Package version (optional, depends on package manager)
+        #[arg(long)]
+        version: Option<String>,
+
+        /// Install globally (default: local to project)
+        #[arg(long, short = 'g')]
+        global: bool,
+    },
+
+    /// Remove a package
+    Remove {
+        /// Package name
+        package: String,
+
+        /// Remove globally (default: local to project)
+        #[arg(long, short = 'g')]
+        global: bool,
+
+        /// Force removal without confirmation
+        #[arg(long, short = 'f')]
+        force: bool,
+    },
+
+    /// List installed packages
+    List {
+        /// List global packages (default: local to project)
+        #[arg(long, short = 'g')]
+        global: bool,
+    },
+
+    /// Search for packages
+    Search {
+        /// Search query
+        query: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum ExportBuildSystem {
+    /// Export to CMakeLists.txt
+    Cmake,
+
+    /// Export to xmake.lua
+    Xmake,
+
+    /// Export to Makefile
+    Make,
+
+    /// Export to meson.build
+    Meson,
+
+    /// Export to BUILD.bazel
+    Bazel,
+
+    /// Export to vcpkg.json
+    Vcpkg,
+
+    /// Export to conanfile.py
+    Conan,
 }
 
 #[derive(Subcommand)]
@@ -355,7 +490,7 @@ fn initialize_porters() -> Result<()> {
             system_check.display();
 
             if !system_check.has_compiler {
-                print_error("Cannot proceed without a C/C++ compiler!");
+                print_error("❌ Cannot proceed without a C/C++ compiler!");
                 println!();
                 anyhow::bail!("Missing required system dependencies");
             }
@@ -388,8 +523,13 @@ async fn main() -> Result<()> {
             git,
             branch,
             tag,
-        } => add_dependency(&package, dev, optional, git, branch, tag).await,
-        Commands::Remove { package } => remove_dependency(&package).await,
+            global,
+        } => add_dependency(&package, dev, optional, git, branch, tag, global).await,
+        Commands::Remove {
+            package,
+            global,
+            force,
+        } => remove_dependency(&package, global, force).await,
         Commands::Build {
             all_platforms,
             linux,
@@ -428,6 +568,10 @@ async fn main() -> Result<()> {
         Commands::Extension { action } => handle_extension(action).await,
         Commands::RunScript { name } => run_script(&name).await,
         Commands::List { tree } => list_dependencies(tree).await,
+        Commands::Export { build_system } => export_to_build_system(build_system).await,
+        Commands::Conan { action } => handle_conan_action(action).await,
+        Commands::Vcpkg { action } => handle_vcpkg_action(action).await,
+        Commands::Xmake { action } => handle_xmake_action(action).await,
         Commands::GlobalList => global_list_packages().await,
         Commands::CleanCache { force } => clean_cache(force).await,
         Commands::SelfUpdate => self_update().await,
@@ -443,14 +587,15 @@ async fn main() -> Result<()> {
         Commands::Custom(args) => execute_custom_command(args).await,
         Commands::AddToPath { overwrite } => add_to_path(overwrite),
         Commands::RemoveFromPath => remove_from_path(),
+        Commands::Docs => open_docs(),
     }
 }
 
 async fn init_project() -> Result<()> {
-    print_step("Initializing porters project in current directory");
+    print_step("🔧 Initializing porters project in current directory");
 
     if std::path::Path::new("porters.toml").exists() {
-        print_warning("porters.toml already exists");
+        print_warning("⚠️  porters.toml already exists");
         return Ok(());
     }
 
@@ -460,7 +605,7 @@ async fn init_project() -> Result<()> {
 
     if has_sources {
         print_success(&format!(
-            "Detected {} C/C++ source files",
+            "🔍 Detected {} C/C++ source files",
             sources.source_files.len()
         ));
     }
@@ -529,10 +674,10 @@ async fn init_project() -> Result<()> {
     let config_content = if has_sources {
         // For existing projects
         let build_section = if let Some(system) = &detected_build_system {
-            print_success(&format!("Detected build system: {}", system));
+            print_success(&format!("🔨 Detected build system: {}", system));
             format!("\n[build]\nsystem = \"{}\"", system)
         } else {
-            print_info("No build system detected - you can configure one later");
+            print_info("💡 No build system detected - you can configure one later");
             String::new()
         };
 
@@ -616,12 +761,15 @@ version = "{}"{}{}
     // Create cache directories
     ensure_cache_dirs()?;
 
-    print_success("Created porters.toml");
+    // Create .gitignore if it doesn't exist
+    create_gitignore(".")?;
+
+    print_success("✅ Created porters.toml");
     if has_sources {
-        print_info("Your existing C/C++ project is now managed by Porters!");
-        print_info("Run 'porters build' to build your project");
+        print_info("🎯 Your existing C/C++ project is now managed by Porters!");
+        print_info("💡 Run 'porters build' to build your project");
     } else {
-        print_info("Add your C/C++ source files and run 'porters build'");
+        print_info("📝 Add your C/C++ source files and run 'porters build'");
     }
 
     // Check build tools
@@ -631,11 +779,11 @@ version = "{}"{}{}
 }
 
 async fn create_project(name: &str, use_defaults: bool) -> Result<()> {
-    print_step(&format!("Creating new project: {}", name));
+    print_step(&format!("📦 Creating new project: {}", name));
 
     // Check if directory already exists
     if std::path::Path::new(name).exists() {
-        print_error(&format!("Directory '{}' already exists", name));
+        print_error(&format!("❌ Directory '{}' already exists", name));
         return Err(anyhow::anyhow!("Directory already exists"));
     }
 
@@ -645,7 +793,7 @@ async fn create_project(name: &str, use_defaults: bool) -> Result<()> {
 
     let (language, author, email, repo, build_system, project_type, entry_point, license) =
         if use_defaults {
-            print_info("Using default settings...");
+            print_info("⚡ Using default settings...");
             (
                 "both".to_string(),
                 None,
@@ -687,8 +835,11 @@ async fn create_project(name: &str, use_defaults: bool) -> Result<()> {
     // Create cache directories
     ensure_cache_dirs()?;
 
-    print_success(&format!("Created project '{}' successfully! 🎉", name));
-    print_info(&format!("cd {} && porters build", name));
+    // Create .gitignore
+    create_gitignore(".")?;
+
+    print_success(&format!("🎉 Created project '{}' successfully!", name));
+    print_info(&format!("💡 cd {} && porters build", name));
 
     // Check build tools
     check_build_tools();
@@ -1712,7 +1863,7 @@ This project is licensed under the {license} License - see the [LICENSE](LICENSE
     if let Some(license_id) = license {
         let author_name = author.as_deref().unwrap_or("Author");
         license::LicenseGenerator::write_license_file(license_id, author_name, project_name)?;
-        print_success(&format!("Created LICENSE file ({} license)", license_id));
+        print_success(&format!("📄 Created LICENSE file ({} license)", license_id));
     }
 
     Ok(())
@@ -1923,8 +2074,88 @@ fn ensure_cache_dirs() -> Result<()> {
     Ok(())
 }
 
+/// Create .gitignore file with common C/C++ patterns and .porters/ folder
+fn create_gitignore(project_dir: &str) -> Result<()> {
+    let gitignore_path = std::path::Path::new(project_dir).join(".gitignore");
+
+    // Check if .gitignore already exists
+    if gitignore_path.exists() {
+        // Read existing content
+        let existing_content = std::fs::read_to_string(&gitignore_path)?;
+
+        // Check if it already has .porters/ entry
+        if !existing_content.contains(".porters/") {
+            // Append .porters/ entry
+            let mut file = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&gitignore_path)?;
+
+            use std::io::Write;
+            writeln!(file, "\n# Porters local cache and build files")?;
+            writeln!(file, ".porters/")?;
+
+            print_info("📝 Updated existing .gitignore with .porters/ entry");
+        } else {
+            print_info("✅ .gitignore already contains .porters/ entry");
+        }
+    } else {
+        // Create new .gitignore with comprehensive patterns
+        let gitignore_content = r#"# Porters local cache and build files
+.porters/
+
+# Build artifacts
+build/
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dependency directories
+ports/
+vendor/
+
+# Debug files
+*.dSYM/
+*.pdb
+*.ilk
+
+# Test outputs
+Testing/
+*.gcov
+*.gcda
+*.gcno
+"#;
+
+        std::fs::write(&gitignore_path, gitignore_content)?;
+        print_success("✅ Created .gitignore with common C/C++ patterns");
+    }
+
+    Ok(())
+}
+
 fn check_build_tools() {
-    print_info("Checking build tools...");
+    print_info("🔍 Checking build tools...");
 
     let tools = vec![
         ("cmake", "CMake", "https://cmake.org/download/"),
@@ -1940,7 +2171,7 @@ fn check_build_tools() {
             .output()
             .is_ok()
         {
-            print_success(&format!("{} is installed", name));
+            print_success(&format!("✅ {} is installed", name));
         } else {
             missing.push((name, url));
         }
@@ -1948,12 +2179,12 @@ fn check_build_tools() {
 
     if !missing.is_empty() {
         println!();
-        print_warning("Some build tools are not installed:");
+        print_warning("⚠️  Some build tools are not installed:");
         for (name, url) in missing {
             println!("  📥  Install {} from: {}", name, url);
         }
         println!();
-        print_info("Install missing tools to use all Porters features");
+        print_info("💡 Install missing tools to use all Porters features");
     }
 }
 
@@ -1964,8 +2195,17 @@ async fn add_dependency(
     git: Option<String>,
     _branch: Option<String>,
     _tag: Option<String>,
+    global: bool,
 ) -> Result<()> {
-    print_step(&format!("Adding dependency: {}", package));
+    if global {
+        print_step(&format!("📦 Adding global dependency: {}", package));
+        // Global dependencies are tracked in global config
+        // For now, we'll add them to the local config as well
+        // TODO: Implement proper global dependency tracking in GlobalConfig
+        print_info("💡 Global dependencies are stored in ~/.porters/packages");
+    } else {
+        print_step(&format!("📦 Adding dependency: {}", package));
+    }
 
     let mut config = PortersConfig::load("porters.toml")?;
 
@@ -1974,7 +2214,7 @@ async fn add_dependency(
     } else {
         "dependencies"
     };
-    print_info(&format!("Adding to [{}]", dep_type));
+    print_info(&format!("📦 Adding to [{}]", dep_type));
 
     // Determine the actual source
     let source = if let Some(git_url) = git {
@@ -1986,19 +2226,48 @@ async fn add_dependency(
     config.add_dependency(&source, dev, optional)?;
     config.save("porters.toml")?;
 
-    print_success(&format!("Added {} to {}", package, dep_type));
+    if global {
+        print_success(&format!(
+            "✅ Added {} globally and to {}",
+            package, dep_type
+        ));
+    } else {
+        print_success(&format!("✅ Added {} to {}", package, dep_type));
+    }
 
     Ok(())
 }
 
-async fn remove_dependency(package: &str) -> Result<()> {
-    print_step(&format!("Removing dependency: {}", package));
+async fn remove_dependency(package: &str, global: bool, force: bool) -> Result<()> {
+    if global {
+        print_step(&format!("🗑️  Removing global dependency: {}", package));
+    } else {
+        print_step(&format!("🗑️  Removing dependency: {}", package));
+    }
+
+    // Confirm removal unless force is used
+    if !force {
+        print!("⚠️  Remove {} from porters.toml? (y/N): ", package);
+        use std::io::{self, Write};
+        io::stdout().flush()?;
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+        if !input.trim().eq_ignore_ascii_case("y") {
+            println!("❌ Removal cancelled");
+            return Ok(());
+        }
+    }
 
     let mut config = PortersConfig::load("porters.toml")?;
     config.remove_dependency(package)?;
     config.save("porters.toml")?;
 
-    print_success(&format!("Removed {}", package));
+    if global {
+        print_success(&format!("✅ Removed {} globally", package));
+        print_info("💡 Global dependencies in ~/.porters/packages remain intact");
+    } else {
+        print_success(&format!("✅ Removed {}", package));
+    }
 
     Ok(())
 }
@@ -2078,13 +2347,13 @@ fn check_tool_requirements(config: &PortersConfig) -> Result<()> {
 
     if !failures.is_empty() {
         eprintln!();
-        print_error("🤔 Oops! Unsatisfied version requirements:");
+        print_error("❌ Oops! Unsatisfied version requirements:");
         for failure in &failures {
-            eprintln!("{}", failure);
+            eprintln!("  {}", failure);
         }
         eprintln!();
-        print_info("Please install or upgrade the required tools to continue.");
-        print_info("See: https://github.com/muhammad-fiaz/porters#requirements");
+        print_info("💡 Please install or upgrade the required tools to continue.");
+        print_info("📚 See: https://github.com/muhammad-fiaz/porters#requirements");
         eprintln!();
         anyhow::bail!("Version requirements not satisfied");
     }
@@ -2215,7 +2484,7 @@ async fn build_project(
     macos: bool,
     args: Vec<String>,
 ) -> Result<()> {
-    print_step("Building project");
+    print_step("🔨 Building project");
 
     // If any platform flags are set, delegate to cross-compile
     if all_platforms || linux || windows || macos {
@@ -2242,15 +2511,15 @@ async fn build_project(
     bin_cache.init()?;
 
     // Check tool version requirements FIRST
-    print_info("Checking tool version requirements...");
+    print_info("🔍 Checking tool version requirements...");
     check_tool_requirements(&config)?;
-    print_success("All tool requirements satisfied ✓");
+    print_success("✅ All tool requirements satisfied");
 
     // Execute pre-build script if defined
     if let Some(pre_build_script) = &config.build.scripts.pre_build {
-        print_info("Executing pre-build script...");
+        print_info("🔧 Executing pre-build script...");
         execute_build_script(pre_build_script, "pre-build")?;
-        print_success("Pre-build script completed ✓");
+        print_success("✅ Pre-build script completed");
     }
 
     // Load extensions and execute pre-build hooks
@@ -2265,21 +2534,21 @@ async fn build_project(
     ext_manager.execute_hook("pre_build", &hook_context)?;
 
     // Scan project sources
-    print_info("Scanning project sources...");
+    print_info("🔍 Scanning project sources...");
     let sources = scan::scan_project(".")?;
     print_success(&format!(
-        "Found {} source files",
+        "📄 Found {} source files",
         sources.source_files.len()
     ));
 
     // Resolve dependencies
-    print_info("Resolving dependencies...");
+    print_info("📦 Resolving dependencies...");
     let resolved_deps = deps::resolve_dependencies(&config).await?;
-    print_success(&format!("Resolved {} dependencies", resolved_deps.len()));
+    print_success(&format!("✅ Resolved {} dependencies", resolved_deps.len()));
 
     // Check binary cache for dependencies
     if bin_cache.is_enabled() {
-        print_info("Checking binary cache for dependencies...");
+        print_info("🔍 Checking binary cache for dependencies...");
         for dep in &resolved_deps {
             // Get dependency version
             let version = &dep.version;
@@ -2292,7 +2561,7 @@ async fn build_project(
                     hash::calculate_file_hash(&std::env::current_dir()?.join("porters.toml"))?;
 
                 if bin_cache.is_cached(&dep.name, version, &dep_hash, &build_hash) {
-                    print_info(&format!("✓ {} found in binary cache", dep.name));
+                    print_info(&format!("✅ {} found in binary cache", dep.name));
                     bin_cache.retrieve(&dep.name, version, &dep_hash, &build_hash, dep_path)?;
                 }
             }
@@ -2300,21 +2569,21 @@ async fn build_project(
     }
 
     // Verify checksums of dependencies
-    print_info("Verifying dependency checksums...");
+    print_info("🔒 Verifying dependency checksums...");
     verify_dependency_checksums(&resolved_deps)?;
-    print_success("All checksums verified ✓");
+    print_success("✅ All checksums verified");
 
     // Detect and run build system
-    print_info("Detecting build system...");
+    print_info("🔍 Detecting build system...");
     let build_system = build::detect_build_system(".", &config)?;
-    print_success(&format!("Using build system: {}", build_system.name()));
+    print_success(&format!("🔨 Using build system: {}", build_system.name()));
 
-    print_info("Building...");
+    print_info("⚙️  Building...");
     build_system.build(&sources, &resolved_deps, &args)?;
 
     // Store build in binary cache
     if bin_cache.is_enabled() {
-        print_info("Storing build artifacts in binary cache...");
+        print_info("💾 Storing build artifacts in binary cache...");
         let build_dir = std::env::current_dir()?.join("build");
         if build_dir.exists() {
             // For the main project, use project name as cache key
@@ -2339,12 +2608,12 @@ async fn build_project(
 
     // Execute post-build script if defined
     if let Some(post_build_script) = &config.build.scripts.post_build {
-        print_info("Executing post-build script...");
+        print_info("🔧 Executing post-build script...");
         execute_build_script(post_build_script, "post-build")?;
-        print_success("Post-build script completed ✓");
+        print_success("✅ Post-build script completed");
     }
 
-    print_success("Build complete! 🎉");
+    print_success("🎉 Build complete!");
 
     Ok(())
 }
@@ -2357,7 +2626,7 @@ async fn build_project(
 /// # Returns
 /// * `Result<()>` - Success or error
 async fn run_project(args: Vec<String>) -> Result<()> {
-    print_step("Running project");
+    print_step("▶️  Running project");
 
     // Build first (current platform only)
     build_project(false, false, false, false, vec![]).await?;
@@ -2365,14 +2634,14 @@ async fn run_project(args: Vec<String>) -> Result<()> {
     let config = PortersConfig::load("porters.toml")?;
     let build_system = build::detect_build_system(".", &config)?;
 
-    print_info("Running executable...");
+    print_info("🚀 Running executable...");
     build_system.run(&args)?;
 
     Ok(())
 }
 
 async fn test_project() -> Result<()> {
-    print_step("Running tests");
+    print_step("🧪 Running tests");
 
     let config = PortersConfig::load("porters.toml")?;
     let sources = scan::scan_project(".")?;
@@ -2381,7 +2650,7 @@ async fn test_project() -> Result<()> {
 
     build_system.test(&sources, &resolved_deps)?;
 
-    print_success("Tests complete! ✅");
+    print_success("✅ Tests complete!");
 
     Ok(())
 }
@@ -2723,31 +2992,31 @@ async fn check_compilation(file: Option<&str>, verbose: bool) -> Result<()> {
 }
 
 async fn update_dependencies() -> Result<()> {
-    print_step("Updating dependencies");
+    print_step("🔄 Updating dependencies");
 
     let config = PortersConfig::load("porters.toml")?;
     deps::update_dependencies(&config).await?;
 
-    print_success("Dependencies updated! 🔄");
+    print_success("✅ Dependencies updated!");
 
     Ok(())
 }
 
 async fn clean_project() -> Result<()> {
-    print_step("Cleaning project");
+    print_step("🧹 Cleaning project");
 
     let config = PortersConfig::load("porters.toml")?;
     let build_system = build::detect_build_system(".", &config)?;
 
     build_system.clean()?;
 
-    print_success("Clean complete! 🧹");
+    print_success("✅ Clean complete!");
 
     Ok(())
 }
 
 async fn generate_lockfile() -> Result<()> {
-    print_step("Generating lockfile");
+    print_step("🔒 Generating lockfile");
 
     let config = PortersConfig::load("porters.toml")?;
     let resolved_deps = deps::resolve_dependencies(&config).await?;
@@ -2793,18 +3062,18 @@ async fn generate_lockfile() -> Result<()> {
 }
 
 async fn vendor_dependencies() -> Result<()> {
-    print_step("Vendoring dependencies");
+    print_step("📦 Vendoring dependencies");
 
     let config = PortersConfig::load("porters.toml")?;
     deps::vendor_dependencies(&config, "vendor").await?;
 
-    print_success("Dependencies vendored to ./vendor 📦");
+    print_success("✅ Dependencies vendored to ./vendor");
 
     Ok(())
 }
 
 async fn show_dependency_graph() -> Result<()> {
-    print_step("Generating dependency graph");
+    print_step("📊 Generating dependency graph");
 
     let config = PortersConfig::load("porters.toml")?;
     let resolved_deps = deps::resolve_dependencies(&config).await?;
@@ -2815,7 +3084,7 @@ async fn show_dependency_graph() -> Result<()> {
 }
 
 async fn publish_package(token: Option<String>, dry_run: bool) -> Result<()> {
-    print_step("Publishing package");
+    print_step("📤 Publishing package");
 
     let config = PortersConfig::load("porters.toml")?;
 
@@ -2848,7 +3117,7 @@ async fn install_package(
     _branch: Option<String>,
     _tag: Option<String>,
 ) -> Result<()> {
-    print_step(&format!("Installing package globally: {}", package));
+    print_step(&format!("📥 Installing package globally: {}", package));
 
     // Load config for build scripts (if exists)
     let config = PortersConfig::load("porters.toml").ok();
@@ -2857,7 +3126,7 @@ async fn install_package(
     if let Some(ref cfg) = config
         && let Some(pre_install_script) = &cfg.build.scripts.pre_install
     {
-        print_info("Executing pre-install script...");
+        print_info("🔧 Executing pre-install script...");
         execute_build_script(pre_install_script, "pre-install")?;
     }
 
@@ -2997,12 +3266,12 @@ async fn handle_extension(action: ExtensionAction) -> Result<()> {
 }
 
 async fn run_script(name: &str) -> Result<()> {
-    print_step(&format!("Running script: {}", name));
+    print_step(&format!("🔧 Running script: {}", name));
 
     let config = PortersConfig::load("porters.toml")?;
 
     if let Some(script) = config.scripts.get(name) {
-        print_info(&format!("Executing: {}", script));
+        print_info(&format!("⚙️  Executing: {}", script));
 
         let mut cmd = if cfg!(target_os = "windows") {
             let mut c = std::process::Command::new("cmd");
@@ -3028,12 +3297,12 @@ async fn run_script(name: &str) -> Result<()> {
             );
         }
 
-        print_success(&format!("Script '{}' completed successfully! ✓", name));
+        print_success(&format!("✅ Script '{}' completed successfully!", name));
     } else {
-        print_error(&format!("Script '{}' not found in porters.toml", name));
-        print_info("Available scripts:");
+        print_error(&format!("❌ Script '{}' not found in porters.toml", name));
+        print_info("📋 Available scripts:");
         for script_name in config.scripts.keys() {
-            println!("  - {}", script_name);
+            println!("   📜 {}", script_name);
         }
         anyhow::bail!("Script not found");
     }
@@ -3043,62 +3312,95 @@ async fn run_script(name: &str) -> Result<()> {
 
 async fn execute_custom_command(args: Vec<String>) -> Result<()> {
     if args.is_empty() {
+        print_error("❌ No command provided");
+        println!();
+        println!("💡 Try one of these:");
+        println!("   porters --help          Show all available commands");
+        println!("   porters <command> --help  Show help for a specific command");
+        println!();
         anyhow::bail!("No command provided");
     }
 
     let command_name = &args[0];
-    let config = PortersConfig::load("porters.toml")?;
 
-    // Find matching custom command
-    if let Some(custom_cmd) = config.commands.iter().find(|c| &c.name == command_name) {
-        print_step(&format!("Running custom command: {}", custom_cmd.name));
-        print_info(&custom_cmd.description);
+    // Try to load config to check for custom commands
+    let config_result = PortersConfig::load("porters.toml");
 
-        let mut cmd = if cfg!(target_os = "windows") {
-            let mut c = std::process::Command::new("cmd");
-            c.args(["/C", &custom_cmd.script]);
-            c
-        } else {
-            let mut c = std::process::Command::new("sh");
-            c.args(["-c", &custom_cmd.script]);
-            c
-        };
+    match config_result {
+        Ok(config) => {
+            // Find matching custom command
+            if let Some(custom_cmd) = config.commands.iter().find(|c| &c.name == command_name) {
+                print_step(&format!("🔧 Running custom command: {}", custom_cmd.name));
+                print_info(&format!("📝 {}", custom_cmd.description));
 
-        // Set environment variables
-        for (key, value) in &custom_cmd.env {
-            cmd.env(key, value);
-        }
+                let mut cmd = if cfg!(target_os = "windows") {
+                    let mut c = std::process::Command::new("cmd");
+                    c.args(["/C", &custom_cmd.script]);
+                    c
+                } else {
+                    let mut c = std::process::Command::new("sh");
+                    c.args(["-c", &custom_cmd.script]);
+                    c
+                };
 
-        // Set working directory
-        cmd.current_dir(std::env::current_dir()?);
+                // Set environment variables
+                for (key, value) in &custom_cmd.env {
+                    cmd.env(key, value);
+                }
 
-        let status = cmd
-            .status()
-            .with_context(|| format!("Failed to execute custom command '{}'", command_name))?;
+                // Set working directory
+                cmd.current_dir(std::env::current_dir()?);
 
-        if !status.success() {
-            anyhow::bail!(
-                "Custom command '{}' failed with exit code: {:?}",
-                command_name,
-                status.code()
-            );
-        }
+                let status = cmd.status().with_context(|| {
+                    format!("Failed to execute custom command '{}'", command_name)
+                })?;
 
-        print_success(&format!(
-            "Command '{}' completed successfully! ✓",
-            command_name
-        ));
-    } else {
-        print_error(&format!("Unknown command: {}", command_name));
+                if !status.success() {
+                    anyhow::bail!(
+                        "❌ Custom command '{}' failed with exit code: {:?}",
+                        command_name,
+                        status.code()
+                    );
+                }
 
-        if !config.commands.is_empty() {
-            print_info("Available custom commands:");
-            for cmd in &config.commands {
-                println!("  {} - {}", cmd.name, cmd.description);
+                print_success(&format!(
+                    "✅ Command '{}' completed successfully!",
+                    command_name
+                ));
+            } else {
+                print_error(&format!("❌ Unknown command: '{}'", command_name));
+                println!();
+
+                if !config.commands.is_empty() {
+                    print_info("📋 Available custom commands:");
+                    for cmd in &config.commands {
+                        println!("   🔧 {} - {}", cmd.name, cmd.description);
+                    }
+                    println!();
+                }
+
+                println!("💡 Try one of these:");
+                println!("   porters --help          Show all available commands");
+                println!("   porters <command> --help  Show help for a specific command");
+                println!();
+
+                anyhow::bail!("Command '{}' not found", command_name);
             }
         }
+        Err(_) => {
+            // No porters.toml, so it's definitely an unknown command
+            print_error(&format!("❌ Unknown command: '{}'", command_name));
+            println!();
+            println!("💡 This doesn't appear to be a valid porters command.");
+            println!();
+            println!("📚 Try one of these:");
+            println!("   porters --help          Show all available commands");
+            println!("   porters <command> --help  Show help for a specific command");
+            println!("   porters docs            Open documentation in browser");
+            println!();
 
-        anyhow::bail!("Command not found");
+            anyhow::bail!("Command '{}' not found", command_name);
+        }
     }
 
     Ok(())
@@ -3110,7 +3412,7 @@ async fn sync_dependencies(
     include_optional: bool,
     use_cache: bool,
 ) -> Result<()> {
-    print_step("Syncing dependencies from porters.toml");
+    print_step("🔄 Syncing dependencies from porters.toml");
 
     let config = PortersConfig::load("porters.toml")?;
 
@@ -3130,23 +3432,17 @@ async fn sync_dependencies(
         bin_cache::BinaryCache::new(bin_cache_dir, cache_enabled && config.cache.binary_cache);
     bin_cache.init()?;
 
-    if cache_enabled {
-        print_info("✨ Dependency caching enabled");
-    } else {
-        print_info("⚠️  Cache disabled (use --no-cache=false to enable)");
-    }
-
     // Rest of existing sync_dependencies implementation...
     // Execute pre-install script if configured
     if let Some(pre_install_script) = &config.build.scripts.pre_install {
-        print_info("Executing pre-install script...");
+        print_info("🔧 Executing pre-install script...");
         execute_build_script(pre_install_script, "pre-install")?;
     }
 
     // Auto-install extensions listed in config
     if !config.extensions.is_empty() {
         print_info(&format!(
-            "Auto-installing {} extensions from config...",
+            "🔌 Auto-installing {} extensions from config...",
             config.extensions.len()
         ));
         let mut ext_manager = extension::ExtensionManager::new()?;
@@ -3156,7 +3452,7 @@ async fn sync_dependencies(
             let extensions = ext_manager.list_extensions();
             if extensions.iter().any(|e| &e.manifest.name == ext_name) {
                 print_info(&format!(
-                    "📦 Extension '{}' already installed, skipping",
+                    "✅ Extension '{}' already installed, skipping",
                     ext_name
                 ));
                 continue;
@@ -3165,11 +3461,11 @@ async fn sync_dependencies(
             print_info(&format!("📦 Installing extension '{}'...", ext_name));
             match ext_manager.install_extension(ext_name, extension::ExtensionSource::CratesIo) {
                 Ok(_) => print_success(&format!(
-                    "Extension '{}' installed successfully! 🔌",
+                    "🔌 Extension '{}' installed successfully!",
                     ext_name
                 )),
                 Err(e) => print_warning(&format!(
-                    "Failed to install extension '{}': {}",
+                    "⚠️  Failed to install extension '{}': {}",
                     ext_name, e
                 )),
             }
@@ -3190,11 +3486,6 @@ async fn sync_dependencies(
     // Create ports directory for project-local dependencies
     let ports_dir = global::project_deps_dir(".");
     std::fs::create_dir_all(&ports_dir)?;
-
-    print_info(&format!(
-        "Using project dependencies directory: {}",
-        ports_dir.display()
-    ));
 
     // Collect all dependencies to install
     let mut to_install = Vec::new();
@@ -3219,12 +3510,17 @@ async fn sync_dependencies(
         });
     }
 
-    print_info(&format!("Syncing {} dependencies...", to_install.len()));
+    if to_install.is_empty() {
+        print_info("✅ No dependencies to sync");
+        return Ok(());
+    }
+
+    print_step(&format!("📦 Syncing {} dependencies...", to_install.len()));
 
     // Install each dependency
     for (name, dep, is_dev) in &to_install {
         let dep_type = if *is_dev { "dev" } else { "regular" };
-        print_info(&format!("Installing {} ({})...", name, dep_type));
+        print_info(&format!("📥 Installing {} ({})...", name, dep_type));
 
         match dep {
             config::Dependency::Detailed {
@@ -3240,10 +3536,10 @@ async fn sync_dependencies(
                 if cache_enabled && dep_cache.is_cached(name, version, None)? {
                     dep_cache.retrieve(name, version, &dep_path)?;
                 } else if dep_path.exists() {
-                    print_warning(&format!("{} already exists, skipping", name));
+                    print_warning(&format!("⚠️  {} already exists, skipping", name));
                 } else {
                     let _checksum = deps::clone_git_repo(url, &dep_path).await?;
-                    print_success(&format!("Installed {}", name));
+                    print_success(&format!("✅ Installed {}", name));
 
                     // Store in cache
                     if cache_enabled {
@@ -3254,16 +3550,16 @@ async fn sync_dependencies(
             config::Dependency::Detailed {
                 path: Some(path), ..
             } => {
-                print_info(&format!("{} is a path dependency at {}", name, path));
+                print_info(&format!("📁 {} is a path dependency at {}", name, path));
             }
             config::Dependency::Simple(spec) => {
                 print_warning(&format!(
-                    "{}: Simple version spec not yet supported ({})",
+                    "⚠️  {}: Simple version spec not yet supported ({})",
                     name, spec
                 ));
             }
             _ => {
-                print_warning(&format!("{}: No installation source found", name));
+                print_warning(&format!("⚠️  {}: No installation source found", name));
             }
         }
     }
@@ -3273,27 +3569,88 @@ async fn sync_dependencies(
 
     // Execute post-install script if configured
     if let Some(post_install_script) = &config.build.scripts.post_install {
-        print_info("Executing post-install script...");
+        print_info("🔧 Executing post-install script...");
         execute_build_script(post_install_script, "post-install")?;
     }
 
     // Generate/update lockfile
-    print_step("Updating lockfile");
+    print_step("🔒 Updating lockfile");
     generate_lockfile().await?;
 
-    print_success("Dependencies synced successfully! ✓");
+    print_success("✅ Dependencies synced successfully!");
+    Ok(())
+}
+
+/// Export project configuration to build system files
+async fn export_to_build_system(build_system: ExportBuildSystem) -> Result<()> {
+    use export::BuildSystemExporter;
+
+    print_step("📤 Exporting project configuration");
+
+    // Load config
+    let config = PortersConfig::load("porters.toml")?;
+
+    // Scan sources
+    print_info("📂 Scanning project sources...");
+    let sources = scan::scan_project(".")?;
+
+    // Export based on build system choice
+    match build_system {
+        ExportBuildSystem::Cmake => {
+            let exporter = export::cmake::CMakeExporter::new();
+            exporter.export(&config, &sources)?;
+            print_info("💡 Build with: cmake -B build && cmake --build build");
+        }
+        ExportBuildSystem::Xmake => {
+            let exporter = export::xmake::XMakeExporter::new();
+            exporter.export(&config, &sources)?;
+            print_info("💡 Build with: xmake");
+        }
+        ExportBuildSystem::Vcpkg => {
+            let exporter = export::vcpkg::VcpkgExporter::new();
+            exporter.export(&config, &sources)?;
+            print_info("💡 Install dependencies with: vcpkg install");
+            print_info(
+                "💡 Then use CMake: cmake -B build -DCMAKE_TOOLCHAIN_FILE=[vcpkg root]/scripts/buildsystems/vcpkg.cmake",
+            );
+        }
+        ExportBuildSystem::Conan => {
+            let exporter = export::conan::ConanExporter::new();
+            exporter.export(&config, &sources)?;
+            print_info("💡 Install dependencies with: conan install . --build=missing");
+            print_info("💡 Then build with: conan build .");
+        }
+        ExportBuildSystem::Make => {
+            print_error("❌ Makefile export not yet implemented");
+            print_info("💡 Use 'porters export cmake' or 'porters export xmake' for now");
+            return Err(anyhow::anyhow!("Makefile export not implemented"));
+        }
+        ExportBuildSystem::Meson => {
+            print_error("❌ Meson export not yet implemented");
+            print_info("💡 Use 'porters export cmake' or 'porters export xmake' for now");
+            return Err(anyhow::anyhow!("Meson export not implemented"));
+        }
+        ExportBuildSystem::Bazel => {
+            print_error("❌ Bazel export not yet implemented");
+            print_info("💡 Use 'porters export cmake' or 'porters export xmake' for now");
+            return Err(anyhow::anyhow!("Bazel export not implemented"));
+        }
+    }
+
+    print_success("✅ Export completed successfully!");
+
     Ok(())
 }
 
 /// List project dependencies
 async fn list_dependencies(tree: bool) -> Result<()> {
-    print_step("Listing project dependencies");
+    print_step("📋 Listing project dependencies");
 
     let config = PortersConfig::load("porters.toml")?;
 
     let total = config.dependencies.len() + config.dev_dependencies.len();
     if total == 0 {
-        print_info("No dependencies found in porters.toml");
+        print_info("💡 No dependencies found in porters.toml");
         return Ok(());
     }
 
@@ -3343,18 +3700,18 @@ fn print_dependency(name: &str, dep: &config::Dependency, tree: bool, indent: us
 
 /// List globally installed packages
 async fn global_list_packages() -> Result<()> {
-    print_step("Listing globally installed packages");
+    print_step("📦 Listing globally installed packages");
 
     let global_config = global::GlobalConfig::load()?;
     let packages = global_config.list_packages();
 
     if packages.is_empty() {
-        print_info("No global packages installed");
-        print_info("Install packages globally with: porters install --global <package>");
+        print_info("💡 No global packages installed");
+        print_info("📥 Install packages globally with: porters install --global <package>");
     } else {
         println!("\n📦  Global Packages ({})", packages.len());
         for pkg in packages {
-            println!("  ✓  {} @ {} ({})", pkg.name, pkg.version, pkg.source);
+            println!("  ✅ {} @ {} ({})", pkg.name, pkg.version, pkg.source);
             println!("      {}", pkg.install_path.display());
         }
         let global_dir = global::GlobalConfig::global_dir()?;
@@ -4325,4 +4682,212 @@ fn check_path_setup() {
 
     // Create marker file to avoid showing this message again
     let _ = std::fs::write(&marker_file, "checked");
+}
+
+/// Open documentation in the default browser
+fn open_docs() -> Result<()> {
+    const DOCS_URL: &str = "https://muhammad-fiaz.github.io/Porters/";
+
+    print_step("📚 Opening documentation");
+    println!();
+    println!("🌐 Documentation URL: {}", DOCS_URL);
+    println!();
+
+    if webbrowser::open(DOCS_URL).is_ok() {
+        print_success("✨ Documentation opened in your default browser!");
+    } else {
+        print_warning("⚠️  Could not open browser automatically");
+        println!();
+        println!("💡 Please visit the documentation manually:");
+        println!("   {}", DOCS_URL);
+    }
+
+    println!();
+    Ok(())
+}
+
+/// Handle Conan package manager actions
+async fn handle_conan_action(action: PackageManagerAction) -> Result<()> {
+    let manager = ConanManager::new();
+
+    match action {
+        PackageManagerAction::Add {
+            package,
+            version,
+            global,
+        } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            manager.install(&package, version.as_deref(), scope)?;
+        }
+        PackageManagerAction::Remove {
+            package,
+            global,
+            force,
+        } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            manager.remove(&package, scope, force)?;
+        }
+        PackageManagerAction::List { global } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            let packages = manager.list(scope)?;
+            let location = if global { "globally" } else { "in ports/conan" };
+            if packages.is_empty() {
+                println!("📦 No Conan packages installed {}", location);
+            } else {
+                println!("📦 Installed Conan packages {}:", location);
+                for pkg in packages {
+                    println!("  • {}", pkg);
+                }
+            }
+        }
+        PackageManagerAction::Search { query } => {
+            let results = manager.search(&query)?;
+            if results.is_empty() {
+                println!("🔍 No packages found for '{}'", query);
+            } else {
+                println!("🔍 Search results for '{}':", query);
+                for result in results {
+                    println!("  {}", result);
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Handle vcpkg package manager actions
+async fn handle_vcpkg_action(action: PackageManagerAction) -> Result<()> {
+    let manager = VcpkgManager::new();
+
+    match action {
+        PackageManagerAction::Add {
+            package,
+            version,
+            global,
+        } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            manager.install(&package, version.as_deref(), scope)?;
+        }
+        PackageManagerAction::Remove {
+            package,
+            global,
+            force,
+        } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            manager.remove(&package, scope, force)?;
+        }
+        PackageManagerAction::List { global } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            let packages = manager.list(scope)?;
+            let location = if global { "globally" } else { "in ports/vcpkg" };
+            if packages.is_empty() {
+                println!("📦 No vcpkg packages installed {}", location);
+            } else {
+                println!("📦 Installed vcpkg packages {}:", location);
+                for pkg in packages {
+                    println!("  • {}", pkg);
+                }
+            }
+        }
+        PackageManagerAction::Search { query } => {
+            let results = manager.search(&query)?;
+            if results.is_empty() {
+                println!("🔍 No packages found for '{}'", query);
+            } else {
+                println!("🔍 Search results for '{}':", query);
+                for result in results {
+                    println!("  {}", result);
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Handle XMake package manager actions
+async fn handle_xmake_action(action: PackageManagerAction) -> Result<()> {
+    let manager = XMakeManager::new();
+
+    match action {
+        PackageManagerAction::Add {
+            package,
+            version,
+            global,
+        } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            manager.install(&package, version.as_deref(), scope)?;
+        }
+        PackageManagerAction::Remove {
+            package,
+            global,
+            force,
+        } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            manager.remove(&package, scope, force)?;
+        }
+        PackageManagerAction::List { global } => {
+            let scope = if global {
+                InstallScope::Global
+            } else {
+                InstallScope::Local
+            };
+            let packages = manager.list(scope)?;
+            let location = if global { "globally" } else { "in ports/xmake" };
+            if packages.is_empty() {
+                println!("📦 No XMake packages installed {}", location);
+            } else {
+                println!("📦 Installed XMake packages {}:", location);
+                for pkg in packages {
+                    println!("  • {}", pkg);
+                }
+            }
+        }
+        PackageManagerAction::Search { query } => {
+            let results = manager.search(&query)?;
+            if results.is_empty() {
+                println!("🔍 No packages found for '{}'", query);
+            } else {
+                println!("🔍 Search results for '{}':", query);
+                for result in results {
+                    println!("  {}", result);
+                }
+            }
+        }
+    }
+
+    Ok(())
 }

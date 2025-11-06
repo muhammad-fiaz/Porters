@@ -436,8 +436,129 @@ The `[run]` section in `porters.toml` is **completely optional**. Only add it if
 
 See [`porters execute` documentation](./commands.md#porters-execute) for more details.
 
+## Using Package Managers
+
+**NEW**: Porters integrates with popular C/C++ package managers, giving you access to thousands of libraries!
+
+### Supported Package Managers
+
+- **Conan** - C/C++ package manager with CMake integration
+- **vcpkg** - Microsoft's C/C++ package manager
+- **XMake** - Lua-based build system with package management
+
+### Quick Start with Package Managers
+
+**Install a package locally** (project-specific):
+
+```bash
+# Using Conan
+porters conan add fmt
+porters co add spdlog        # 'co' is a shortcut for 'conan'
+
+# Using vcpkg
+porters vcpkg add boost
+porters vc add catch2        # 'vc' is a shortcut for 'vcpkg'
+
+# Using XMake
+porters xmake add imgui
+porters xm add glfw          # 'xm' is a shortcut for 'xmake'
+```
+
+**Install a package globally** (shared across all projects):
+
+```bash
+# Global installation saves disk space
+porters conan add --global fmt
+porters vcpkg add -g boost   # -g is short for --global
+```
+
+### Local vs Global Packages
+
+**Local Installation** (`ports/{manager}/`):
+- ✅ Project-specific versions
+- ✅ Reproducible builds
+- ✅ No conflicts between projects
+- ✅ Tracked in version control
+
+**Global Installation** (`~/.porters/packages/{manager}/`):
+- ✅ Shared across all projects
+- ✅ Saves disk space
+- ✅ Faster project setup
+- ✅ Perfect for common libraries
+
+**Example Workflow:**
+
+```bash
+# One-time: Install common libraries globally
+porters co add --global fmt
+porters co add --global spdlog
+porters vc add --global catch2
+
+# In each new project, they're available immediately!
+cd my-new-project
+porters list --global       # See what's available
+```
+
+### Removing Packages
+
+**With confirmation** (safe):
+
+```bash
+porters conan remove fmt
+# Prompts: ⚠️  Remove fmt from ports/conan? (y/N):
+```
+
+**Force remove** (no confirmation):
+
+```bash
+porters conan remove --force fmt
+porters vc remove -f boost   # -f is short for --force
+```
+
+### Using Command Aliases
+
+All package manager commands support shortcuts:
+
+```bash
+# Full commands
+porters conan add fmt
+porters vcpkg add boost
+porters xmake add imgui
+
+# Shortcuts (faster!)
+porters co add fmt
+porters vc add boost
+porters xm add imgui
+```
+
+### Directory Structure with Package Managers
+
+```
+my-project/
+├── porters.toml
+├── .porters/              # Generated files (GITIGNORED)
+│   └── cache/            # Build cache, temp files
+├── ports/                # Local packages
+│   ├── conan/           # Conan local packages
+│   │   └── conanfile.txt
+│   ├── vcpkg/           # vcpkg local packages
+│   │   └── vcpkg.json
+│   └── xmake/           # XMake local packages
+│       └── xmake.lua
+└── build/                # Final build output
+
+~/.porters/               # Global directory
+└── packages/            # Global package installations
+    ├── conan/
+    ├── vcpkg/
+    └── xmake/
+```
+
+For complete details, see the [Package Managers Guide](./package-managers.md).
+
 ## What's Next?
 
 - Learn about [Dependency Management](./dependencies.md)
-- Explore [Build Configuration](./building.md)
-- Read the [Command Reference](./commands.md)
+- Explore [Package Managers](./package-managers.md) in detail
+- Read about [Build Configuration](./building.md)
+- Check the [Command Reference](./commands.md)

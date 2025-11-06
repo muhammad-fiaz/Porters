@@ -23,7 +23,7 @@ Porters is a comprehensive project management tool designed specifically for C/C
 - � **System Requirements Check** - Automatic detection of compilers and build tools on first run
 - 🌐 **Global Configuration** - User-wide settings and preferences in `~/.porters/config.toml`
 - 🛤️ **PATH Management** - Built-in commands to add/remove Cargo bin from system PATH
-- �📚 **GitHub Integration** - Seamlessly publish releases and manage versions
+- 📚 **GitHub Integration** - Seamlessly publish releases and manage versions
 - 🔄 **Self-Updating** - Keep Porters up-to-date with a single command
 
 ### Why Porters?

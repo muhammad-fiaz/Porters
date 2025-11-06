@@ -428,21 +428,41 @@ fn copy_dir_all(src: &Path, dst: &Path) -> Result<()> {
 }
 
 /// Clone a git repository to a destination path
+/// Clone a git repository with shallow clone for faster downloads
+///
+/// Uses --depth 1 to only fetch the latest commit, significantly faster
+/// and uses less bandwidth than full history clone.
 pub async fn clone_git_repo(url: &str, dest: &Path) -> Result<String> {
-    print_info(&format!("Cloning {} to {}...", url, dest.display()));
+    print_info(&format!("⬇️  Cloning {} (shallow)...", url));
 
     std::fs::create_dir_all(dest)?;
 
-    Repository::clone(url, dest).with_context(|| format!("Failed to clone repository: {}", url))?;
+    // Use shallow clone (--depth 1) for faster downloads - no full history needed!
+    let output = std::process::Command::new("git")
+        .args([
+            "clone",
+            "--depth",
+            "1",               // Shallow clone - only latest commit
+            "--single-branch", // Only the default branch
+            url,
+            &dest.to_string_lossy(),
+        ])
+        .output()
+        .with_context(|| format!("Failed to clone repository: {}", url))?;
 
-    print_success("Clone complete");
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!("Git clone failed for {}: {}", url, stderr));
+    }
+
+    print_success("✅ Clone complete (shallow)");
 
     // Calculate checksum of the cloned repository
-    print_info("Calculating checksum...");
+    print_info("📊 Calculating checksum...");
     let checksum = crate::hash::calculate_directory_hash(dest)
         .with_context(|| format!("Failed to calculate checksum for {}", dest.display()))?;
 
-    print_info(&format!("Checksum: {}", &checksum[..16]));
+    print_info(&format!("🔑 Checksum: {}", &checksum[..16]));
 
     Ok(checksum)
 }

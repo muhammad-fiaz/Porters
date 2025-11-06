@@ -158,6 +158,20 @@ pub struct BuildConfig {
     /// Example: "my-app" or "libmylib"
     #[serde(skip_serializing_if = "Option::is_none", rename = "output-name")]
     pub output_name: Option<String>,
+
+    /// Build output directory (default: "build")
+    /// All final executables and libraries go here
+    #[serde(skip_serializing_if = "Option::is_none", rename = "build-dir")]
+    pub build_dir: Option<String>,
+
+    /// Local cache directory for intermediate files (default: ".porters")
+    /// Used for build cache, CMake cache, object files, etc.
+    #[serde(skip_serializing_if = "Option::is_none", rename = "cache-dir")]
+    pub cache_dir: Option<String>,
+
+    /// Executable output name override (default: output-name or project name)
+    #[serde(skip_serializing_if = "Option::is_none", rename = "executable-name")]
+    pub executable_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -391,6 +405,34 @@ impl PortersConfig {
         }
 
         all
+    }
+
+    /// Get the build output directory (default: "build")
+    pub fn get_build_dir(&self) -> PathBuf {
+        self.build
+            .build_dir
+            .as_ref()
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("build"))
+    }
+
+    /// Get the executable output name
+    /// Priority: executable-name > output-name > project name
+    pub fn get_executable_name(&self) -> String {
+        self.build
+            .executable_name
+            .clone()
+            .or_else(|| self.build.output_name.clone())
+            .unwrap_or_else(|| self.project.name.clone())
+    }
+
+    /// Get the output name for build artifacts
+    /// Priority: output-name > project name
+    pub fn get_output_name(&self) -> String {
+        self.build
+            .output_name
+            .clone()
+            .unwrap_or_else(|| self.project.name.clone())
     }
 }
 

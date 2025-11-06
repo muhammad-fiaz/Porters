@@ -7,6 +7,7 @@
 - [Installation](./installation.md)
 - [Getting Started](./getting-started.md)
 - [Dependency Management](./dependencies.md)
+- [Package Managers](./package-managers.md)
 - [Building Projects](./building.md)
 - [Execute - Single File Execution](./execute.md)
 - [Publishing](./publishing.md)

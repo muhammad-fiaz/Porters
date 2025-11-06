@@ -175,6 +175,13 @@ jobs:
           cargo install porters
           ```
           
+          ### Nightly (Development) Build
+          Install the latest development version directly from GitHub:
+          ```bash
+          cargo install --git https://github.com/muhammad-fiaz/Porters.git
+          ```
+          > ⚠️ **Note:** Nightly builds may contain unstable features and bugs. Use stable releases for production.
+          
           ### Quick Manual Install
           
           **Windows:**

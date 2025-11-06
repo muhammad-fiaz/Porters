@@ -135,6 +135,15 @@ cargo install porters
 # Linux/macOS: export PATH="$HOME/.cargo/bin:$PATH"
 ```
 
+### Nightly (Development) Build
+Install the latest development version directly from GitHub:
+
+```bash
+cargo install --git https://github.com/muhammad-fiaz/Porters.git
+```
+
+> ⚠️ **Note:** Nightly builds may contain unstable features and bugs. Use stable releases for production.
+
 ### Quick Manual Install
 
 **Windows:**
@@ -510,4 +519,10 @@ if you found any issues please report them at [https://github.com/muhammad-fiaz/
 
 ---
 
-⭐ Star this repo if you find it useful!
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=muhammad-fiaz/porters&type=Date&bg=transparent)](https://github.com/muhammad-fiaz/porters/)
+
+**⭐ Star the repository if you find porters useful!**
+
+</div>
