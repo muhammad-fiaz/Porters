@@ -1092,7 +1092,7 @@ fn check_build_tools() {
         println!();
         print_warning("Some build tools are not installed:");
         for (name, url) in missing {
-            println!("  {} Install {} from: {}", "📥", name, url);
+            println!("  📥 Install {} from: {}", name, url);
         }
         println!();
         print_info("Install missing tools to use all Porters features");
@@ -1683,11 +1683,6 @@ async fn install_package(
 
     let source = if let Some(git_url) = git {
         git_url
-    } else if package.starts_with("http://")
-        || package.starts_with("https://")
-        || package.starts_with("git@")
-    {
-        package.to_string()
     } else {
         package.to_string()
     };

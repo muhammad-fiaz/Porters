@@ -176,7 +176,7 @@ impl DependencyResolver {
                 }
 
                 // Check version constraints
-                if let Some(constraint) = constraints
+                if let Some(constraint) = &**constraints
                     && !self.check_constraint(constraint)?
                 {
                     return Err(anyhow!(

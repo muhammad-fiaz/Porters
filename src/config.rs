@@ -127,7 +127,7 @@ pub enum Dependency {
         platforms: Option<Vec<String>>,
 
         #[serde(skip_serializing_if = "Option::is_none")]
-        constraints: Option<String>,
+        constraints: Box<Option<String>>,
 
         #[serde(skip_serializing_if = "Option::is_none")]
         checksum: Box<Option<String>>,
@@ -309,7 +309,7 @@ impl PortersConfig {
                 optional,
                 features: vec![],
                 platforms: None,
-                constraints: None,
+                constraints: Box::new(None),
                 checksum: Box::new(None::<String>),
             }
         } else if Path::new(package).exists() {
@@ -324,7 +324,7 @@ impl PortersConfig {
                 optional,
                 features: vec![],
                 platforms: None,
-                constraints: None,
+                constraints: Box::new(None),
                 checksum: Box::new(None::<String>),
             }
         } else {
@@ -339,7 +339,7 @@ impl PortersConfig {
                 optional,
                 features: vec![],
                 platforms: None,
-                constraints: None,
+                constraints: Box::new(None),
                 checksum: Box::new(None::<String>),
             }
         };
