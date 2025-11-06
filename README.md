@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://github.com/user-attachments/assets/placeholder-logo" alt="Porters logo" width="400" />
+<img width="1536" height="1024" alt="porters_logo" src="https://github.com/user-attachments/assets/17c507aa-3131-49b6-a682-e2ae55c3841c" />
 
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/v/porters" alt="Crates.io"></a>
 <a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/d/porters" alt="Crates.io Downloads"></a>
@@ -21,8 +21,6 @@
 </div>
 
 Porters is a modern, production-ready project manager for C/C++ that simplifies dependency management, build orchestration, and package publishing. Inspired by Cargo but designed specifically for C/C++ ecosystems.
-
-> This Project is in Active Development!
 
 <details>
 <summary>✨ Features</summary>
