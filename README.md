@@ -1,10 +1,24 @@
-# Porters
+<div align="center">
+<img src="https://github.com/user-attachments/assets/placeholder-logo" alt="Porters logo" width="400" />
 
-> A universal C/C++ project manager and build orchestrator with GitHub-integrated package publishing
+<a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/v/porters" alt="Crates.io"></a>
+<a href="https://crates.io/crates/porters"><img src="https://img.shields.io/crates/d/porters" alt="Crates.io Downloads"></a>
+<a href="https://muhammad-fiaz.github.io/porters/"><img src="https://img.shields.io/badge/docs-muhammad--fiaz.github.io-blue" alt="Documentation"></a>
+<a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-%3E%3D1.70-orange.svg" alt="Rust"></a>
+<a href="https://github.com/muhammad-fiaz/porters"><img src="https://img.shields.io/github/stars/muhammad-fiaz/porters" alt="GitHub stars"></a>
+<a href="https://github.com/muhammad-fiaz/porters/issues"><img src="https://img.shields.io/github/issues/muhammad-fiaz/porters" alt="GitHub issues"></a>
+<a href="https://github.com/muhammad-fiaz/porters/pulls"><img src="https://img.shields.io/github/issues-pr/muhammad-fiaz/porters" alt="GitHub pull requests"></a>
+<a href="https://github.com/muhammad-fiaz/porters"><img src="https://img.shields.io/github/last-commit/muhammad-fiaz/porters" alt="GitHub last commit"></a>
+<a href="https://github.com/muhammad-fiaz/porters/releases"><img src="https://img.shields.io/github/v/release/muhammad-fiaz/porters" alt="GitHub release"></a>
+<a href="https://github.com/muhammad-fiaz/porters"><img src="https://img.shields.io/github/license/muhammad-fiaz/porters" alt="License"></a>
+<a href="https://github.com/muhammad-fiaz/porters/actions"><img src="https://github.com/muhammad-fiaz/porters/workflows/CI/badge.svg" alt="CI"></a>
+<a href="https://github.com/muhammad-fiaz/porters/actions"><img src="https://github.com/muhammad-fiaz/porters/workflows/Release/badge.svg" alt="Release"></a>
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Rust](https://img.shields.io/badge/rust-2024-orange.svg)](https://www.rust-lang.org)
-[![Documentation](https://img.shields.io/badge/docs-book-green.svg)](https://muhammad-fiaz.github.io/porters/)
+<p><em>A universal C/C++ project manager and build orchestrator with GitHub-integrated package publishing</em></p>
+
+**📚 [Documentation](https://muhammad-fiaz.github.io/porters/) | [API Reference](https://muhammad-fiaz.github.io/porters/api-reference/) | [Quick Start](https://muhammad-fiaz.github.io/porters/getting-started/)**
+
+</div>
 
 Porters is a modern, production-ready project manager for C/C++ that simplifies dependency management, build orchestration, and package publishing. Inspired by Cargo but designed specifically for C/C++ ecosystems.
 
@@ -59,45 +73,48 @@ Porters is a modern, production-ready project manager for C/C++ that simplifies 
 
 </details>
 
-## 📍 Prerequisites
+<details>
+<summary>📍 Prerequisites</summary>
 
 Before installing Porters, ensure you have the following tools installed:
 
 ### Core Requirements
-- **Rust & Cargo** - Required for Porters itself (installation and core functionality)
-- **Git** - Required for dependency management and cloning repositories
+- **[Rust & Cargo](https://www.rust-lang.org/)** - Required for Porters itself (installation and core functionality)
+- **[Git](https://git-scm.com/)** - Required for dependency management and cloning repositories
 
 ### Build System Support (Install as needed)
 Porters auto-detects and supports 14+ build systems. Install the ones you plan to use:
 
 #### Modern Build Systems
-- **CMake** - Cross-platform build generator
-- **XMake** - Lua-based modern build system  
-- **Meson** - Fast, user-friendly build system
-- **Bazel** - Google's scalable build system
-- **Buck2** - Meta's fast build system
+- **[CMake](https://cmake.org/)** - Cross-platform build generator
+- **[XMake](https://xmake.io/)** - Lua-based modern build system  
+- **[Meson](https://mesonbuild.com/)** - Fast, user-friendly build system
+- **[Bazel](https://bazel.build/)** - Google's scalable build system
+- **[Buck2](https://buck2.build/)** - Meta's fast build system
 
 #### Traditional Build Systems
-- **Make** - Makefile-based builds
-- **Ninja** - Fast, lightweight build system
-- **Autotools** - configure/make (GNU Build System)
-- **SCons** - Python-based build tool
+- **[Make](https://www.gnu.org/software/make/)** - Makefile-based builds
+- **[Ninja](https://ninja-build.org/)** - Fast, lightweight build system
+- **[Autotools](https://www.gnu.org/software/automake/)** - configure/make (GNU Build System)
+- **[SCons](https://scons.org/)** - Python-based build tool
 
 #### Meta Build Systems
-- **Premake** - Project file generator (Visual Studio, Makefiles, Xcode)
-- **QMake** - Qt's build system
+- **[Premake](https://premake.github.io/)** - Project file generator (Visual Studio, Makefiles, Xcode)
+- **[QMake](https://doc.qt.io/qt-6/qmake-manual.html)** - Qt's build system
 
 #### Package Managers with Build Integration
-- **Conan** - C/C++ package manager with CMake integration
-- **vcpkg** - Microsoft's C++ library manager
+- **[Conan](https://conan.io/)** - C/C++ package manager with CMake integration
+- **[vcpkg](https://vcpkg.io/)** - Microsoft's C++ library manager
 
 #### Compilers
-- **GCC/G++** - GNU Compiler Collection
-- **Clang/Clang++** - LLVM compiler
-- **MSVC** - Microsoft Visual C++ (Windows)
-- **MinGW** - Minimalist GNU for Windows
+- **[GCC/G++](https://gcc.gnu.org/)** - GNU Compiler Collection
+- **[Clang/Clang++](https://clang.llvm.org/)** - LLVM compiler
+- **[MSVC](https://visualstudio.microsoft.com/vs/features/cplusplus/)** - Microsoft Visual C++ (Windows)
+- **[MinGW](https://www.mingw-w64.org/)** - Minimalist GNU for Windows
 
 **Note:** You don't need to install all build systems - Porters will auto-detect and use what's available for your projects.
+
+</details>
 
 ## 📦 Installation
 
